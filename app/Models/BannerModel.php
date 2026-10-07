@@ -24,9 +24,13 @@ class BannerModel extends Model
      */
     public function getBannersAtivos(): array
     {
-        return $this->where('ban_status !=', 'inativo')
-            ->orderBy('ban_ordem', 'ASC')
-            ->orderBy('ban_id', 'DESC')
-            ->findAll();
+        $builder = $this;
+        if ($this->db->fieldExists('ban_status', 'tb_banners')) {
+            $builder = $builder->where('ban_status !=', 'inativo');
+        }
+        if ($this->db->fieldExists('ban_ordem', 'tb_banners')) {
+            $builder = $builder->orderBy('ban_ordem', 'ASC');
+        }
+        return $builder->orderBy('ban_id', 'DESC')->findAll();
     }
 }

@@ -44,7 +44,7 @@ class ParceiroModel extends Model
             $builder->where('tb_cidades.cid_url', $params['cidade_slug']);
         }
 
-        if (!empty($params['somente_linefast'])) {
+        if (!empty($params['somente_linefast']) && $this->db->fieldExists('linefast_ativo', 'tb_parceiros')) {
             $builder->where('tb_parceiros.linefast_ativo', 1);
         }
 
@@ -57,7 +57,10 @@ class ParceiroModel extends Model
                 ->groupEnd();
         }
 
-        $builder->orderBy('tb_parceiros.par_ordem ASC, tb_parceiros.par_nome ASC');
+        if ($this->db->fieldExists('par_ordem', 'tb_parceiros')) {
+            $builder->orderBy('tb_parceiros.par_ordem', 'ASC');
+        }
+        $builder->orderBy('tb_parceiros.par_nome', 'ASC');
 
         if ($limit > 0) {
             $builder->limit($limit, $offset);

@@ -19,6 +19,19 @@ ALTER TABLE `tb_cartoes` ADD COLUMN IF NOT EXISTS `car_oferta` INT(11) DEFAULT 0
 ALTER TABLE `tb_parceiros` ADD COLUMN IF NOT EXISTS `linefast_partner_id` VARCHAR(100) DEFAULT NULL;
 ALTER TABLE `tb_parceiros` ADD COLUMN IF NOT EXISTS `linefast_ativo` TINYINT(1) DEFAULT 0;
 
+-- Colunas novas em tb_banners
+ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_titulo` VARCHAR(255) DEFAULT NULL;
+ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_badge` VARCHAR(100) DEFAULT NULL;
+ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_descricao` TEXT DEFAULT NULL;
+ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_botao_texto` VARCHAR(100) DEFAULT NULL;
+ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_botao_link` VARCHAR(255) DEFAULT NULL;
+ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_tipo_fundo` VARCHAR(50) DEFAULT 'degrade';
+ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_fundo_cor` VARCHAR(50) DEFAULT '#0d1b2a';
+ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_fundo_degrade` VARCHAR(255) DEFAULT NULL;
+ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_fundo_imagem` VARCHAR(255) DEFAULT NULL;
+ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_imagem_direita` VARCHAR(255) DEFAULT NULL;
+ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_status` VARCHAR(20) DEFAULT 'ativo';
+
 -- Tabela de Administradores
 CREATE TABLE IF NOT EXISTS `tb_administradores` (
   `adm_id` INT(11) NOT NULL AUTO_INCREMENT,
