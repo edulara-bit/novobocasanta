@@ -22,12 +22,14 @@
                                 }
 
                                 $bgStyle = '';
-                                if (($b['ban_tipo_fundo'] ?? '') === 'cor') {
-                                    $bgStyle = 'background-color: ' . ($b['ban_fundo_cor'] ?: '#0f172a') . ';';
-                                } elseif (($b['ban_tipo_fundo'] ?? '') === 'imagem' && !empty($fundoImg)) {
+                                $tipoFundo = $b['ban_tipo_fundo'] ?? 'degrade';
+                                if ($tipoFundo === 'cor') {
+                                    $bgStyle = 'background-color: ' . (!empty($b['ban_fundo_cor']) ? $b['ban_fundo_cor'] : '#0f172a') . ';';
+                                } elseif ($tipoFundo === 'imagem' && !empty($fundoImg)) {
                                     $bgStyle = "background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('" . esc($fundoImg) . "') center/cover no-repeat;";
                                 } else {
-                                    $bgStyle = 'background: ' . ($b['ban_fundo_degrade'] ?: 'linear-gradient(90deg, #991b1b 0%, #dc2626 50%, #ea580c 100%)') . ';';
+                                    $degrade = !empty($b['ban_fundo_degrade']) ? $b['ban_fundo_degrade'] : 'linear-gradient(90deg, #991b1b 0%, #dc2626 50%, #ea580c 100%)';
+                                    $bgStyle = 'background: ' . $degrade . ';';
                                 }
 
                                 $btnLink = $b['ban_botao_link'] ?? '#';
@@ -39,6 +41,7 @@
                                 if (!empty($rightImg) && !str_starts_with($rightImg, 'http')) {
                                     $rightImg = base_url($rightImg);
                                 }
+                                $bannerTitulo = $b['ban_titulo'] ?? 'Boca Santa Ofertas';
                             ?>
                             <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>">
                                 <div class="p-4 p-md-5 d-flex align-items-center" style="min-height: 330px; <?= $bgStyle ?>">
@@ -50,7 +53,7 @@
                                                 </span>
                                             <?php endif; ?>
                                             <h1 class="display-6 display-md-5 fw-extrabold text-white mb-3 text-shadow">
-                                                <?= esc($b['ban_titulo']) ?>
+                                                <?= esc($bannerTitulo) ?>
                                             </h1>
                                             <?php if (!empty($b['ban_descricao'])): ?>
                                                 <p class="lead text-white-50 mb-4 <?= !empty($rightImg) ? '' : 'col-lg-8' ?>">
@@ -67,7 +70,7 @@
                                         </div>
                                         <?php if (!empty($rightImg)): ?>
                                             <div class="col-12 col-md-5 col-lg-5 text-center text-md-end">
-                                                <img src="<?= esc($rightImg) ?>" alt="<?= esc($b['ban_titulo']) ?>" class="img-fluid banner-right-image" style="max-height: 280px; max-width: 100%; object-fit: contain; filter: drop-shadow(0 15px 25px rgba(0,0,0,0.3));">
+                                                <img src="<?= esc($rightImg) ?>" alt="<?= esc($bannerTitulo) ?>" class="img-fluid banner-right-image" style="max-height: 280px; max-width: 100%; object-fit: contain; filter: drop-shadow(0 15px 25px rgba(0,0,0,0.3));">
                                             </div>
                                         <?php endif; ?>
                                     </div>
