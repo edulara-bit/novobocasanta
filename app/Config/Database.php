@@ -200,5 +200,25 @@ class Database extends Config
         if (ENVIRONMENT === 'testing') {
             $this->defaultGroup = 'tests';
         }
+
+        $host = env('database.default.hostname') ?: getenv('database.default.hostname') ?: getenv('DB_HOST') ?: $_ENV['database.default.hostname'] ?? null;
+        if (!empty($host)) {
+            $this->default['hostname'] = $host;
+        }
+
+        $db = env('database.default.database') ?: getenv('database.default.database') ?: getenv('DB_DATABASE') ?: $_ENV['database.default.database'] ?? null;
+        if (!empty($db)) {
+            $this->default['database'] = $db;
+        }
+
+        $user = env('database.default.username') ?: getenv('database.default.username') ?: getenv('DB_USERNAME') ?: $_ENV['database.default.username'] ?? null;
+        if (!empty($user)) {
+            $this->default['username'] = $user;
+        }
+
+        $pass = env('database.default.password') ?: getenv('database.default.password') ?: getenv('DB_PASSWORD') ?: $_ENV['database.default.password'] ?? null;
+        if ($pass !== null && $pass !== false) {
+            $this->default['password'] = $pass;
+        }
     }
 }
