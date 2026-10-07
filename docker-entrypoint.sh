@@ -19,4 +19,27 @@ fi
 chown -R www-data:www-data /var/www/html/writable /var/www/html/public/upimg || true
 chmod -R 775 /var/www/html/writable /var/www/html/public/upimg || true
 
+# Executa migrações automáticas de schema do banco se necessário
+if [ -f /var/www/html/schema_updates.sql ]; then
+    php -r '
+        require "/var/www/html/vendor/autoload.php";
+        try {
+            $app = \Config\Services::codeigniter();
+            $app->initialize();
+            $db = \Config\Database::connect();
+            $sql = file_get_contents("/var/www/html/schema_updates.sql");
+            $queries = explode(";", $sql);
+            foreach ($queries as $q) {
+                $q = trim($q);
+                if (!empty($q)) {
+                    try { $db->query($q); } catch (\Throwable $e) {}
+                }
+            }
+            echo "Schema updates applied.\n";
+        } catch (\Throwable $e) {
+            echo "Schema auto-update skipped: " . $e->getMessage() . "\n";
+        }
+    ' || true
+fi
+
 exec "$@"
