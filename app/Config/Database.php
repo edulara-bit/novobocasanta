@@ -27,7 +27,7 @@ class Database extends Config
     public array $default = [
         'DSN'          => '',
         'hostname'     => 'mysql-boca',
-        'username'     => 'bocasanta',
+        'username'     => 'bocasanta_teste',
         'password'     => 'bocasanta123',
         'database'     => 'bocasanta_teste',
         'DBDriver'     => 'MySQLi',
