@@ -48,10 +48,12 @@ COPY . /var/www/html
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Ajusta permissões na pasta writable e uploads
-RUN chown -R www-data:www-data /var/www/html \
+RUN chmod +x /var/www/html/docker-entrypoint.sh \
+    && chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/writable \
     && chmod -R 775 /var/www/html/public/upimg
 
 EXPOSE 80
 
+ENTRYPOINT ["/var/www/html/docker-entrypoint.sh"]
 CMD ["apache2-foreground"]
