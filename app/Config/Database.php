@@ -28,7 +28,7 @@ class Database extends Config
         'DSN'          => '',
         'hostname'     => 'mysql-boca',
         'username'     => 'bocasanta',
-        'password'     => 'vfg67#weUR@4',
+        'password'     => 'bocasanta123',
         'database'     => 'bocasanta_teste',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
