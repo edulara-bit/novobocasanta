@@ -43,7 +43,7 @@
                                                 <img src="<?= esc($imgThumb) ?>" alt="" style="max-height: 45px; max-width: 60px; object-fit: contain;" class="border p-1 rounded bg-light mr-2">
                                             <?php endif; ?>
                                             <div>
-                                                <strong><?= esc($b['ban_titulo']) ?></strong>
+                                                <strong><?= esc($b['ban_titulo'] ?? 'Banner sem título') ?></strong>
                                                 <?php if (!empty($b['ban_descricao'])): ?>
                                                     <br><small class="text-muted text-truncate d-inline-block" style="max-width: 300px;"><?= esc($b['ban_descricao']) ?></small>
                                                 <?php endif; ?>
