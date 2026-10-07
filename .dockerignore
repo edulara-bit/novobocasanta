@@ -1,0 +1,11 @@
+.git
+.github
+Originais
+*.sql
+*.zip
+*.tar.gz
+node_modules
+writable/logs/*
+writable/cache/*
+writable/session/*
+writable/debugbar/*
