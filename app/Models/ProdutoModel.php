@@ -68,10 +68,12 @@ class ProdutoModel extends Model
         }
 
         if (!empty($params['somente_linefast'])) {
-            $builder->groupStart()
-                ->where('tb_produtos.origem', 'linefast')
-                ->orWhere('tb_produtos.linefast_product_id IS NOT NULL')
-                ->groupEnd();
+            if ($this->db->fieldExists('origem', 'tb_produtos')) {
+                $builder->groupStart()
+                    ->where('tb_produtos.origem', 'linefast')
+                    ->orWhere('tb_produtos.linefast_product_id IS NOT NULL')
+                    ->groupEnd();
+            }
         }
 
         if (!empty($params['busca'])) {
@@ -115,7 +117,7 @@ class ProdutoModel extends Model
      */
     public function getDetalhesOferta(int|string $idOrSlug): ?Produto
     {
-        $builder = $this->select('tb_produtos.*, tb_parceiros.par_nome, tb_parceiros.par_apelido, tb_parceiros.par_endereco, tb_parceiros.par_numero, tb_parceiros.par_complemento, tb_parceiros.par_bairro, tb_parceiros.par_cep, tb_parceiros.par_telefone, tb_parceiros.par_telefone2, tb_parceiros.par_telefone3, tb_parceiros.par_whatsapp, tb_parceiros.par_email, tb_parceiros.par_descricao as par_descricao_empresa, tb_parceiros.par_imagem, tb_parceiros.par_site, tb_parceiros.par_facebook, tb_parceiros.par_maps, tb_parceiros.linefast_partner_id, tb_parceiros.linefast_ativo, tb_cidades.cid_nome, tb_cidades.cid_url, tb_categorias.cat_titulo, tb_categorias.cat_url, ft.fot_imagem, ft.fot_thumb, ft.fot_parceiro')
+        $builder = $this->select('tb_produtos.*, tb_parceiros.par_nome, tb_parceiros.par_apelido, tb_parceiros.par_endereco, tb_parceiros.par_numero, tb_parceiros.par_complemento, tb_parceiros.par_bairro, tb_parceiros.par_cep, tb_parceiros.par_telefone, tb_parceiros.par_telefone2, tb_parceiros.par_telefone3, tb_parceiros.par_whatsapp, tb_parceiros.par_email, tb_parceiros.par_descricao as par_descricao_empresa, tb_parceiros.par_imagem, tb_parceiros.par_site, tb_parceiros.par_facebook, tb_parceiros.par_maps, tb_cidades.cid_nome, tb_cidades.cid_url, tb_categorias.cat_titulo, tb_categorias.cat_url, ft.fot_imagem, ft.fot_thumb, ft.fot_parceiro')
             ->join('tb_parceiros', 'tb_produtos.pro_parceiro = tb_parceiros.par_id', 'left')
             ->join('tb_cidades', 'tb_produtos.pro_cidade = tb_cidades.cid_id', 'left')
             ->join('tb_categorias', 'tb_produtos.pro_categoria = tb_categorias.cat_id', 'left')
