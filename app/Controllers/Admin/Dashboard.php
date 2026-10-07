@@ -23,8 +23,18 @@ class Dashboard extends BaseController
 
         $totalOfertas = $produtoModel->countAllResults();
         $totalParceiros = $parceiroModel->countAllResults();
-        $totalLinefast = $parceiroModel->where('linefast_ativo', 1)->countAllResults();
-        $solicitacoesLgpd = $db->table('tb_lgpd_requests')->where('status', 'pendente')->countAllResults();
+        
+        $totalLinefast = 0;
+        if ($db->fieldExists('linefast_ativo', 'tb_parceiros')) {
+            $totalLinefast = $parceiroModel->where('linefast_ativo', 1)->countAllResults();
+        }
+
+        $solicitacoesLgpd = 0;
+        if ($db->tableExists('tb_lgpd_requests')) {
+            $solicitacoesLgpd = $db->table('tb_lgpd_requests')->where('status', 'pendente')->countAllResults();
+        } elseif ($db->tableExists('tb_lgpd_solicitacoes')) {
+            $solicitacoesLgpd = $db->table('tb_lgpd_solicitacoes')->where('status', 'pendente')->countAllResults();
+        }
 
         $ultimasOfertas = $produtoModel->getOfertas(['ordem' => 'mais_recentes'], 6);
 

@@ -64,6 +64,38 @@ CREATE TABLE IF NOT EXISTS `tb_redirecionamentos` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabelas LGPD
+CREATE TABLE IF NOT EXISTS `tb_lgpd_consents` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `visitor_id` VARCHAR(100) NOT NULL,
+  `user_id` INT(11) DEFAULT NULL,
+  `ip_address` VARCHAR(45) DEFAULT NULL,
+  `ip_hash` VARCHAR(64) DEFAULT NULL,
+  `consent_essential` TINYINT(1) DEFAULT 1,
+  `consent_analytics` TINYINT(1) DEFAULT 0,
+  `consent_marketing` TINYINT(1) DEFAULT 0,
+  `user_agent` VARCHAR(255) DEFAULT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_visitor` (`visitor_id`),
+  KEY `idx_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `tb_lgpd_requests` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `user_id` INT(11) DEFAULT NULL,
+  `nome` VARCHAR(150) NOT NULL,
+  `email` VARCHAR(150) NOT NULL,
+  `tipo_requisicao` VARCHAR(50) NOT NULL,
+  `status` VARCHAR(50) DEFAULT 'pendente',
+  `observacoes` TEXT DEFAULT NULL,
+  `resposta_dpo` TEXT DEFAULT NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `tb_consentimentos` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `ip_address` VARCHAR(45) NOT NULL,

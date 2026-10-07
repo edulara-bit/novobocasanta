@@ -25,7 +25,11 @@ class Linefast extends BaseController
             return redirect()->to(base_url('admin/login'))->with('error', 'Por favor, faça login para acessar.');
         }
 
-        $parceiros = $this->parceiroModel->orderBy('linefast_ativo DESC, par_nome ASC')->findAll(100);
+        $builder = $this->parceiroModel;
+        if ($this->parceiroModel->db->fieldExists('linefast_ativo', 'tb_parceiros')) {
+            $builder = $builder->orderBy('linefast_ativo', 'DESC');
+        }
+        $parceiros = $builder->orderBy('par_nome', 'ASC')->findAll(100);
 
         return view('admin/linefast/index', [
             'title'     => 'Gerenciamento da Integração Linefast',
