@@ -34,6 +34,7 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
+        'noindex'       => \App\Filters\NoIndexFilter::class,
     ];
 
     /**
@@ -77,6 +78,7 @@ class Filters extends BaseFilters
             // 'invalidchars',
         ],
         'after' => [
+            'noindex',
             // 'honeypot',
             // 'secureheaders',
         ],

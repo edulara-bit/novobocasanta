@@ -1,6 +1,11 @@
 # Disable directory browsing
 Options -Indexes
 
+# Bloquear indexação em motores de busca (Google, Bing, etc.) durante homologação
+<IfModule mod_headers.c>
+    Header set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet"
+</IfModule>
+
 # ----------------------------------------------------------------------
 # Rewrite engine
 # ----------------------------------------------------------------------
