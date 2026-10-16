@@ -1,38 +1,57 @@
 -- ========================================================
--- ATUALIZAÇÕES AUTOMÁTICAS DE SCHEMA - NOVO BOCA SANTA CI4
+-- ATUALIZAÇÕES DE SCHEMA - NOVO BOCA SANTA (CodeIgniter 4)
+-- ========================================================
+-- DICA: Você também pode aplicar todas as alterações de forma
+-- 100% automática e segura via terminal com o comando:
+--
+--     php spark bocasanta:update-schema
+--
+-- Caso prefira executar via phpMyAdmin / MySQL, utilize os comandos abaixo:
 -- ========================================================
 
--- Colunas novas em tb_produtos
-ALTER TABLE `tb_produtos` ADD COLUMN IF NOT EXISTS `pro_cartao` INT(11) DEFAULT 0;
-ALTER TABLE `tb_produtos` ADD COLUMN IF NOT EXISTS `pro_melhor_preco` INT(11) DEFAULT 0;
-ALTER TABLE `tb_produtos` ADD COLUMN IF NOT EXISTS `origem` VARCHAR(50) DEFAULT 'local';
-ALTER TABLE `tb_produtos` ADD COLUMN IF NOT EXISTS `linefast_product_id` VARCHAR(100) DEFAULT NULL;
-ALTER TABLE `tb_produtos` ADD COLUMN IF NOT EXISTS `linefast_sku` VARCHAR(100) DEFAULT NULL;
-ALTER TABLE `tb_produtos` ADD COLUMN IF NOT EXISTS `linefast_stock` INT(11) DEFAULT 0;
-ALTER TABLE `tb_produtos` ADD COLUMN IF NOT EXISTS `linefast_buy_url` VARCHAR(255) DEFAULT NULL;
-ALTER TABLE `tb_produtos` ADD COLUMN IF NOT EXISTS `linefast_sync_at` DATETIME DEFAULT NULL;
+-- 1. CORREÇÃO DE AUTO INCREMENT (Evita duplicação de IDs)
+ALTER TABLE `tb_produtos` MODIFY COLUMN `pro_id` INT(11) NOT NULL AUTO_INCREMENT;
+ALTER TABLE `tb_parceiros` MODIFY COLUMN `par_id` INT(11) NOT NULL AUTO_INCREMENT;
 
--- Colunas novas em tb_cartoes
-ALTER TABLE `tb_cartoes` ADD COLUMN IF NOT EXISTS `car_oferta` INT(11) DEFAULT 0;
+-- 2. NOVAS COLUNAS EM tb_produtos
+-- (Se alguma coluna já existir no seu banco, ignore o aviso de duplicidade)
+ALTER TABLE `tb_produtos` ADD `pro_cartao` INT(11) DEFAULT 0;
+ALTER TABLE `tb_produtos` ADD `pro_melhor_preco` INT(11) DEFAULT 0;
+ALTER TABLE `tb_produtos` ADD `origem` VARCHAR(50) DEFAULT 'local';
+ALTER TABLE `tb_produtos` ADD `linefast_product_id` VARCHAR(100) DEFAULT NULL;
+ALTER TABLE `tb_produtos` ADD `linefast_sku` VARCHAR(100) DEFAULT NULL;
+ALTER TABLE `tb_produtos` ADD `linefast_stock` INT(11) DEFAULT 0;
+ALTER TABLE `tb_produtos` ADD `linefast_buy_url` VARCHAR(500) DEFAULT NULL;
+ALTER TABLE `tb_produtos` ADD `linefast_sync_at` DATETIME DEFAULT NULL;
 
--- Colunas novas em tb_parceiros
-ALTER TABLE `tb_parceiros` ADD COLUMN IF NOT EXISTS `linefast_partner_id` VARCHAR(100) DEFAULT NULL;
-ALTER TABLE `tb_parceiros` ADD COLUMN IF NOT EXISTS `linefast_ativo` TINYINT(1) DEFAULT 0;
+-- 3. NOVAS COLUNAS EM tb_cartoes
+ALTER TABLE `tb_cartoes` ADD `car_oferta` INT(11) DEFAULT 0;
+ALTER TABLE `tb_cartoes` ADD `car_percentagem` DECIMAL(10,2) DEFAULT 0.00;
+ALTER TABLE `tb_cartoes` ADD `car_minimo` DECIMAL(10,2) DEFAULT 0.00;
 
--- Colunas novas em tb_banners
-ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_titulo` VARCHAR(255) DEFAULT NULL;
-ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_badge` VARCHAR(100) DEFAULT NULL;
-ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_descricao` TEXT DEFAULT NULL;
-ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_botao_texto` VARCHAR(100) DEFAULT NULL;
-ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_botao_link` VARCHAR(255) DEFAULT NULL;
-ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_tipo_fundo` VARCHAR(50) DEFAULT 'degrade';
-ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_fundo_cor` VARCHAR(50) DEFAULT '#0d1b2a';
-ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_fundo_degrade` VARCHAR(255) DEFAULT NULL;
-ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_fundo_imagem` VARCHAR(255) DEFAULT NULL;
-ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_imagem_direita` VARCHAR(255) DEFAULT NULL;
-ALTER TABLE `tb_banners` ADD COLUMN IF NOT EXISTS `ban_status` VARCHAR(20) DEFAULT 'ativo';
+-- 4. NOVAS COLUNAS EM tb_parceiros
+ALTER TABLE `tb_parceiros` ADD `linefast_partner_id` VARCHAR(100) DEFAULT NULL;
+ALTER TABLE `tb_parceiros` ADD `linefast_ativo` TINYINT(1) DEFAULT 0;
+ALTER TABLE `tb_parceiros` ADD `linefast_is_test` TINYINT(1) NOT NULL DEFAULT 0;
 
--- Tabela de Administradores
+-- 5. NOVAS COLUNAS E AJUSTE DE VALORES PADRÃO EM tb_banners
+ALTER TABLE `tb_banners` MODIFY COLUMN `ban_url` VARCHAR(200) DEFAULT '';
+ALTER TABLE `tb_banners` MODIFY COLUMN `ban_cliente` INT(11) DEFAULT 0;
+ALTER TABLE `tb_banners` MODIFY COLUMN `ban_link` VARCHAR(300) DEFAULT '';
+ALTER TABLE `tb_banners` ADD `ban_titulo` VARCHAR(255) DEFAULT NULL;
+ALTER TABLE `tb_banners` ADD `ban_badge` VARCHAR(100) DEFAULT '⭐ DESTAQUE';
+ALTER TABLE `tb_banners` ADD `ban_descricao` TEXT DEFAULT NULL;
+ALTER TABLE `tb_banners` ADD `ban_botao_texto` VARCHAR(100) DEFAULT 'Conhecer Ofertas';
+ALTER TABLE `tb_banners` ADD `ban_botao_link` VARCHAR(255) DEFAULT 'anuncie';
+ALTER TABLE `tb_banners` ADD `ban_tipo_fundo` VARCHAR(50) DEFAULT 'degrade';
+ALTER TABLE `tb_banners` ADD `ban_fundo_cor` VARCHAR(50) DEFAULT '#0d1b2a';
+ALTER TABLE `tb_banners` ADD `ban_fundo_degrade` VARCHAR(255) DEFAULT NULL;
+ALTER TABLE `tb_banners` ADD `ban_fundo_imagem` VARCHAR(255) DEFAULT NULL;
+ALTER TABLE `tb_banners` ADD `ban_imagem_direita` VARCHAR(255) DEFAULT NULL;
+ALTER TABLE `tb_banners` ADD `ban_ordem` INT(11) DEFAULT 0;
+ALTER TABLE `tb_banners` ADD `ban_status` VARCHAR(20) DEFAULT 'ativo';
+
+-- 6. TABELA DE ADMINISTRADORES DO NOVO BOCA SANTA
 CREATE TABLE IF NOT EXISTS `tb_administradores` (
   `adm_id` INT(11) NOT NULL AUTO_INCREMENT,
   `adm_nome` VARCHAR(150) NOT NULL,
@@ -50,7 +69,7 @@ CREATE TABLE IF NOT EXISTS `tb_administradores` (
 INSERT IGNORE INTO `tb_administradores` (`adm_id`, `adm_nome`, `adm_login`, `adm_email`, `adm_senha`, `adm_nivel`, `adm_status`)
 VALUES (1, 'Eduardo Lara', 'eduardo', 'contato@edulara.com.br', '$2y$12$Nq1P2P5c67LhZJ5vYqWnneP6L4yQh1G8sXvUuJ/9H8uK5k1c6m3mG', 'admin', 1);
 
--- Tabela de Redirecionamentos SEO
+-- 7. TABELA DE REDIRECIONAMENTOS SEO
 CREATE TABLE IF NOT EXISTS `tb_redirecionamentos` (
   `red_id` INT(11) NOT NULL AUTO_INCREMENT,
   `red_origem` VARCHAR(255) NOT NULL,
@@ -63,7 +82,7 @@ CREATE TABLE IF NOT EXISTS `tb_redirecionamentos` (
   KEY `idx_red_origem` (`red_origem`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tabelas LGPD
+-- 8. TABELAS DE LGPD E PRIVACIDADE
 CREATE TABLE IF NOT EXISTS `tb_lgpd_consents` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `visitor_id` VARCHAR(100) NOT NULL,
@@ -127,13 +146,3 @@ CREATE TABLE IF NOT EXISTS `tb_lgpd_paginas` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_slug` (`slug`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Correção de Chave Primária e Auto Increment (Prevenção de Duplicação de Produtos e Parceiros)
-ALTER TABLE `tb_produtos` MODIFY COLUMN `pro_id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY;
-ALTER TABLE `tb_parceiros` MODIFY COLUMN `par_id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY;
-
--- Flag de Parceiro de Testes / Homologação Linefast (exclui do storefront Boca Santa)
-ALTER TABLE `tb_parceiros` ADD COLUMN IF NOT EXISTS `linefast_is_test` TINYINT(1) NOT NULL DEFAULT 0 AFTER `linefast_ativo`;
-
--- Correção de colunas com valor padrão na tabela tb_banners
-ALTER TABLE `tb_banners` MODIFY COLUMN `ban_url` VARCHAR(200) DEFAULT '', MODIFY COLUMN `ban_cliente` INT(11) DEFAULT 0, MODIFY COLUMN `ban_link` VARCHAR(300) DEFAULT '';
