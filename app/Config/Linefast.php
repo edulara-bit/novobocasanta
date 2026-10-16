@@ -9,7 +9,7 @@ class Linefast extends BaseConfig
     /**
      * URL base da API do Linefast
      */
-    public string $apiBaseUrl = 'https://api.linefast.com.br/v1/';
+    public string $apiBaseUrl = 'https://linefast.com.br/api/v1/';
 
     /**
      * Chave de API de integração
@@ -41,4 +41,14 @@ class Linefast extends BaseConfig
      * Timeout para chamadas HTTP (segundos)
      */
     public int $timeout = 15;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->apiBaseUrl = env('linefast.apiBaseUrl', env('LINEFAST_API_URL', $this->apiBaseUrl));
+        $this->apiKey = env('linefast.apiKey', env('LINEFAST_API_KEY', $this->apiKey));
+        $this->apiSecret = env('linefast.apiSecret', env('LINEFAST_API_SECRET', $this->apiSecret));
+        $this->cartUrl = env('linefast.cartUrl', env('LINEFAST_CART_URL', $this->cartUrl));
+    }
 }

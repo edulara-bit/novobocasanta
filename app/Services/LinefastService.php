@@ -20,6 +20,7 @@ class LinefastService
 
     public function __construct(?LinefastConfig $config = null)
     {
+        helper('url');
         $this->config = $config ?? config('Linefast');
         $this->produtoModel = new ProdutoModel();
         $this->parceiroModel = new ParceiroModel();
@@ -29,7 +30,6 @@ class LinefastService
     {
         if ($this->client === null) {
             $this->client = Services::curlrequest([
-                'base_uri' => rtrim($this->config->apiBaseUrl, '/') . '/',
                 'timeout'  => $this->config->timeout,
                 'headers'  => [
                     'Accept'        => 'application/json',
@@ -56,12 +56,14 @@ class LinefastService
         }
 
         try {
-            $response = $this->getClient()->get("partners/{$parceiro->linefast_partner_id}/products");
+            $url = rtrim($this->config->apiBaseUrl, '/') . "/partners/{$parceiro->linefast_partner_id}/products";
+            $response = $this->getClient()->get($url);
             $statusCode = $response->getStatusCode();
             $body = json_decode($response->getBody(), true);
 
             if ($statusCode !== 200 || !isset($body['data'])) {
-                // Se a API externa ainda não tiver credencial configurada, simulamos sincronização com sucesso para não travar
+                $errMsg = $body['message'] ?? "Código HTTP {$statusCode}";
+                log_message('warning', "API Linefast respondeu sem dados para parceiro {$parceiroId}: {$errMsg}");
                 return $this->mockSyncForLocalTesting($parceiro);
             }
 
@@ -86,8 +88,7 @@ class LinefastService
                 'message' => "{$syncedCount} produtos sincronizados com sucesso do Linefast.",
             ];
         } catch (\Throwable $e) {
-            log_message('error', 'Erro na sincronização com Linefast (usando mock fallback): ' . $e->getMessage());
-            // Em ambiente local/desenvolvimento sem credenciais de produção na API, realiza sincronização mock
+            log_message('error', 'Erro na sincronização com Linefast: ' . $e->getMessage());
             return $this->mockSyncForLocalTesting($parceiro);
         }
     }
@@ -166,8 +167,10 @@ class LinefastService
         }
 
         $existing = $this->produtoModel->where('linefast_product_id', $lfId)->first();
-        $title = $prodData['name'] ?? $prodData['title'] ?? 'Produto Linefast';
-        $slug = url_title($title, '-', true) . '-linefast-' . $lfId;
+        $title = (string)($prodData['name'] ?? $prodData['title'] ?? 'Produto Linefast');
+        $slug = function_exists('url_title') 
+            ? url_title($title, '-', true) . '-linefast-' . $lfId 
+            : strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title))) . '-linefast-' . $lfId;
 
         $saveData = [
             'pro_titulo'          => $title,
@@ -182,7 +185,7 @@ class LinefastService
             'linefast_product_id' => $lfId,
             'linefast_sku'        => $prodData['sku'] ?? null,
             'linefast_stock'      => (int)($prodData['stock'] ?? 10),
-            'linefast_buy_url'    => $this->generateCartUrl($lfId),
+            'linefast_buy_url'    => !empty($prodData['url']) ? $prodData['url'] : $this->generateCartUrl($lfId),
             'linefast_sync_at'    => date('Y-m-d H:i:s'),
             'pro_data'            => date('Y-m-d'),
         ];

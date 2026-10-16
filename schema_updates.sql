@@ -127,3 +127,7 @@ CREATE TABLE IF NOT EXISTS `tb_lgpd_paginas` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_slug` (`slug`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Correção de Chave Primária e Auto Increment (Prevenção de Duplicação de Produtos e Parceiros)
+ALTER TABLE `tb_produtos` MODIFY COLUMN `pro_id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY;
+ALTER TABLE `tb_parceiros` MODIFY COLUMN `par_id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY;
