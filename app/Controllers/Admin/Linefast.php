@@ -46,4 +46,26 @@ class Linefast extends BaseController
 
         return redirect()->to(base_url('admin/linefast'))->with('error', $result['message']);
     }
+
+    public function toggleTest(int $parceiroId)
+    {
+        if (!session()->get('admin_logged')) {
+            return redirect()->to(base_url('admin/login'))->with('error', 'Por favor, faça login para acessar.');
+        }
+
+        $parceiro = $this->parceiroModel->find($parceiroId);
+        if (!$parceiro) {
+            return redirect()->to(base_url('admin/linefast'))->with('error', 'Parceiro não encontrado.');
+        }
+
+        $current = (int)($parceiro->linefast_is_test ?? 0);
+        $newStatus = $current === 1 ? 0 : 1;
+
+        $this->parceiroModel->update($parceiroId, [
+            'linefast_is_test' => $newStatus,
+        ]);
+
+        $statusText = $newStatus === 1 ? 'marcado como Parceiro de Testes (ocultado do Boca Santa)' : 'marcado como Parceiro de Produção (visível no Boca Santa)';
+        return redirect()->to(base_url('admin/linefast'))->with('success', "Parceiro \"{$parceiro->getNome()}\" {$statusText}.");
+    }
 }

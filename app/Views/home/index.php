@@ -8,11 +8,13 @@
         <div class="col-12">
             <div id="carouselHeroBanners" class="carousel slide hero-banner-card overflow-hidden rounded-4 shadow-sm" data-bs-ride="carousel">
                 <?php if (!empty($banners)): ?>
-                    <div class="carousel-indicators">
-                        <?php foreach ($banners as $idx => $b): ?>
-                            <button type="button" data-bs-target="#carouselHeroBanners" data-bs-slide-to="<?= $idx ?>" class="<?= $idx === 0 ? 'active' : '' ?>" aria-current="<?= $idx === 0 ? 'true' : 'false' ?>"></button>
-                        <?php endforeach; ?>
-                    </div>
+                    <?php if (count($banners) > 1): ?>
+                        <div class="carousel-indicators">
+                            <?php foreach ($banners as $idx => $b): ?>
+                                <button type="button" data-bs-target="#carouselHeroBanners" data-bs-slide-to="<?= $idx ?>" class="<?= $idx === 0 ? 'active' : '' ?>" aria-current="<?= $idx === 0 ? 'true' : 'false' ?>"></button>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                     <div class="carousel-inner">
                         <?php foreach ($banners as $idx => $b): ?>
                             <?php
@@ -43,39 +45,47 @@
                                 }
                                 $bannerTitulo = $b['ban_titulo'] ?? 'Boca Santa Ofertas';
                             ?>
-                            <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>">
-                                <div class="p-4 p-md-5 d-flex align-items-center" style="min-height: 330px; <?= $bgStyle ?>">
-                                    <div class="row w-100 align-items-center g-4">
-                                        <div class="<?= !empty($rightImg) ? 'col-12 col-md-7 col-lg-7' : 'col-12' ?>">
-                                            <?php if (!empty($b['ban_badge'])): ?>
-                                                <span class="badge bg-warning text-dark fw-bold px-3 py-2 rounded-pill mb-3 d-inline-block shadow-sm">
-                                                    <?= esc($b['ban_badge']) ?>
-                                                </span>
-                                            <?php endif; ?>
-                                            <h1 class="display-6 display-md-5 fw-extrabold text-white mb-3 text-shadow">
-                                                <?= esc($bannerTitulo) ?>
-                                            </h1>
-                                            <?php if (!empty($b['ban_descricao'])): ?>
-                                                <p class="lead text-white-50 mb-4 <?= !empty($rightImg) ? '' : 'col-lg-8' ?>">
-                                                    <?= esc($b['ban_descricao']) ?>
-                                                </p>
-                                            <?php endif; ?>
-                                            <?php if (!empty($b['ban_botao_texto'])): ?>
-                                                <div>
-                                                    <a href="<?= esc($btnLink) ?>" class="btn btn-light btn-lg fw-bold rounded-pill px-4 text-dark shadow">
-                                                        <?= esc($b['ban_botao_texto']) ?> <i class="fa-solid fa-arrow-right ms-1 small"></i>
-                                                    </a>
+                            <?php if ($tipoFundo === 'imagem_unica'): ?>
+                                <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>">
+                                    <a href="<?= esc($btnLink) ?>" target="<?= str_starts_with($btnLink, 'http') ? '_blank' : '_self' ?>" class="d-block w-100 overflow-hidden text-decoration-none bg-dark" style="min-height: 250px;">
+                                        <img src="<?= esc($fundoImg) ?>" alt="<?= esc($bannerTitulo) ?>" class="d-block w-100" style="max-height: 380px; width: 100%; object-fit: cover;">
+                                    </a>
+                                </div>
+                            <?php else: ?>
+                                <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>">
+                                    <div class="p-4 p-md-5 d-flex align-items-center" style="min-height: 330px; <?= $bgStyle ?>">
+                                        <div class="row w-100 align-items-center g-4">
+                                            <div class="<?= !empty($rightImg) ? 'col-12 col-md-7 col-lg-7' : 'col-12' ?>">
+                                                <?php if (!empty($b['ban_badge'])): ?>
+                                                    <span class="badge bg-warning text-dark fw-bold px-3 py-2 rounded-pill mb-3 d-inline-block shadow-sm">
+                                                        <?= esc($b['ban_badge']) ?>
+                                                    </span>
+                                                <?php endif; ?>
+                                                <h1 class="display-6 display-md-5 fw-extrabold text-white mb-3 text-shadow">
+                                                    <?= esc($bannerTitulo) ?>
+                                                </h1>
+                                                <?php if (!empty($b['ban_descricao'])): ?>
+                                                    <p class="lead text-white-50 mb-4 <?= !empty($rightImg) ? '' : 'col-lg-8' ?>">
+                                                        <?= esc($b['ban_descricao']) ?>
+                                                    </p>
+                                                <?php endif; ?>
+                                                <?php if (!empty($b['ban_botao_texto'])): ?>
+                                                    <div>
+                                                        <a href="<?= esc($btnLink) ?>" class="btn btn-light btn-lg fw-bold rounded-pill px-4 text-dark shadow">
+                                                            <?= esc($b['ban_botao_texto']) ?> <i class="fa-solid fa-arrow-right ms-1 small"></i>
+                                                        </a>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                            <?php if (!empty($rightImg)): ?>
+                                                <div class="col-12 col-md-5 col-lg-5 text-center text-md-end">
+                                                    <img src="<?= esc($rightImg) ?>" alt="<?= esc($bannerTitulo) ?>" class="img-fluid banner-right-image" style="max-height: 280px; max-width: 100%; object-fit: contain; filter: drop-shadow(0 15px 25px rgba(0,0,0,0.3));">
                                                 </div>
                                             <?php endif; ?>
                                         </div>
-                                        <?php if (!empty($rightImg)): ?>
-                                            <div class="col-12 col-md-5 col-lg-5 text-center text-md-end">
-                                                <img src="<?= esc($rightImg) ?>" alt="<?= esc($bannerTitulo) ?>" class="img-fluid banner-right-image" style="max-height: 280px; max-width: 100%; object-fit: contain; filter: drop-shadow(0 15px 25px rgba(0,0,0,0.3));">
-                                            </div>
-                                        <?php endif; ?>
                                     </div>
                                 </div>
-                            </div>
+                            <?php endif; ?>
                         <?php endforeach; ?>
                     </div>
                 <?php else: ?>
@@ -117,12 +127,14 @@
                         </div>
                     </div>
                 <?php endif; ?>
-                <button class="carousel-control-prev" type="button" data-bs-target="#carouselHeroBanners" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#carouselHeroBanners" data-bs-slide="next">
-                    <span class="carousel-control-next-icon"></span>
-                </button>
+                <?php if (empty($banners) || count($banners) > 1): ?>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselHeroBanners" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carouselHeroBanners" data-bs-slide="next">
+                        <span class="carousel-control-next-icon"></span>
+                    </button>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -222,16 +234,21 @@
 
     <!-- SEÇÃO PRODUTOS LINEFAST -->
     <?php if (!empty($produtosLinefast)): ?>
-    <div class="mb-5 p-4 rounded-4 shadow-sm" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1px solid #bfdbfe;" id="secaoLinefast">
+    <div class="mb-5 p-4 rounded-4 shadow-sm" style="background: linear-gradient(135deg, #f0f4f9 0%, #e2e8f0 100%); border: 1px solid #cbd5e1;" id="secaoLinefast">
         <div class="section-header mb-3">
             <div>
-                <span class="badge bg-primary px-3 py-1 rounded-pill mb-2"><i class="fa-solid fa-bolt me-1"></i> COMPRA ONLINE LINEFAST</span>
-                <h2 class="section-title text-primary">Produtos Próprios & Estoque dos Parceiros</h2>
+                <span class="badge px-3 py-1 rounded-pill mb-2 shadow-sm" style="background-color: var(--bs-linefast); color: #ffffff;"><i class="fa-solid fa-bolt me-1 text-warning"></i> COMPRA ONLINE LINEFAST</span>
+                <h2 class="section-title" style="color: var(--bs-linefast);">Produtos Próprios & Estoque dos Parceiros</h2>
                 <p class="text-muted small mb-0">Compre online e receba rápido direto do parceiro via Linefast</p>
             </div>
-            <a href="https://linefast.com.br" target="_blank" class="btn btn-sm btn-primary rounded-pill fw-bold">
-                Conheça o Linefast <i class="fa-solid fa-arrow-up-right-from-square ms-1"></i>
-            </a>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <a href="https://api.whatsapp.com/send?phone=5519997696660&text=Ol%C3%A1%21+Vim+pelo+Boca+Santa+Ofertas+e+gostaria+de+saber+mais+sobre+o+Linefast." target="_blank" class="btn btn-sm btn-outline-success rounded-pill fw-bold bg-white shadow-sm" title="Falar no WhatsApp do Linefast">
+                    <i class="fa-brands fa-whatsapp text-success me-1"></i> (19) 99769-6660
+                </a>
+                <a href="https://linefast.com.br" target="_blank" class="btn btn-sm btn-linefast rounded-pill fw-bold shadow-sm">
+                    Conheça o Linefast <i class="fa-solid fa-arrow-up-right-from-square ms-1"></i>
+                </a>
+            </div>
         </div>
 
         <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
@@ -242,10 +259,10 @@
                             <a href="<?= $prod->getUrl($cidadeAtual['cid_url'] ?? 'piracicaba') ?>">
                                 <img src="<?= $prod->getImagemUrl() ?>" alt="<?= esc($prod->pro_titulo) ?>" loading="lazy">
                             </a>
-                            <span class="offer-badge-linefast"><i class="fa-solid fa-bolt"></i> Estoque</span>
+                            <span class="offer-badge-linefast" style="background: var(--bs-linefast);"><i class="fa-solid fa-bolt text-warning"></i> Estoque</span>
                         </div>
                         <div class="offer-card-body">
-                            <span class="offer-partner-name text-primary">
+                            <span class="offer-partner-name" style="color: var(--bs-linefast);">
                                 <i class="fa-solid fa-store"></i> <?= esc($prod->par_nome ?? 'Parceiro Linefast') ?>
                             </span>
                             <a href="<?= $prod->getUrl($cidadeAtual['cid_url'] ?? 'piracicaba') ?>" class="offer-card-title">
@@ -253,7 +270,7 @@
                             </a>
                             <div class="offer-price-box">
                                 <div>
-                                    <div class="price-current text-primary"><?= $prod->getPrecoVendaFormatado() ?></div>
+                                    <div class="price-current" style="color: var(--bs-linefast);"><?= $prod->getPrecoVendaFormatado() ?></div>
                                 </div>
                                 <a href="<?= $prod->getLinefastCartUrl() ?>" class="btn-linefast-direct" target="_blank">
                                     <i class="fa-solid fa-cart-shopping"></i> Comprar

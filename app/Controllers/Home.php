@@ -42,18 +42,12 @@ class Home extends BaseController
             'destaque'  => 1,
         ], 8);
 
-        // Produtos integrados do Linefast
+        // Produtos integrados do Linefast (excluindo parceiros de testes)
         $produtosLinefast = $this->produtoModel->getOfertas([
             'cidade_id'        => $cidadeId,
             'somente_linefast' => true,
+            'ordem'            => 'mais_recentes',
         ], 4);
-
-        if (empty($produtosLinefast)) {
-            $produtosLinefast = $this->produtoModel->getOfertas([
-                'cidade_id'        => $cidadeId,
-                'somente_desconto' => true,
-            ], 4);
-        }
 
         // Mais ofertas recentes
         $ultimasOfertas = $this->produtoModel->getOfertas([

@@ -12,8 +12,9 @@
     --bs-accent: #f59e0b;
     --bs-accent-light: #fef3c7;
     --bs-success: #10b981;
-    --bs-linefast: #2563eb;
-    --bs-linefast-dark: #1d4ed8;
+    --bs-linefast: #162848;
+    --bs-linefast-dark: #0f1c33;
+    --bs-linefast-accent: #cfa23e;
     --bs-bg-body: #f8fafc;
     --bs-bg-card: #ffffff;
     --bs-border-color: #e2e8f0;
@@ -412,7 +413,7 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     color: #ffffff;
 }
 
-.btn-linefast-direct {
+.btn-linefast-direct, .btn-linefast {
     background: var(--bs-linefast);
     color: #ffffff;
     border-radius: var(--bs-radius-sm);
@@ -424,13 +425,20 @@ h1, h2, h3, h4, h5, h6, .brand-font {
     align-items: center;
     gap: 6px;
     transition: all 0.2s ease;
-    border: none;
+    border: 1px solid rgba(207, 162, 62, 0.25);
 }
 
-.btn-linefast-direct:hover {
+.btn-linefast-direct:hover, .btn-linefast:hover {
     background: var(--bs-linefast-dark);
     color: #ffffff;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    box-shadow: 0 4px 14px rgba(22, 40, 72, 0.45);
+    border-color: var(--bs-linefast-accent);
+}
+
+.btn-linefast-lg {
+    padding: 12px 24px;
+    font-size: 1.05rem;
+    border-radius: var(--bs-radius-full);
 }
 
 /* FOOTER */

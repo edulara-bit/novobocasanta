@@ -332,6 +332,7 @@ class Dashboard extends BaseController
             'car_oferta'      => (int)$this->request->getPost('car_oferta') ?: 0,
             'car_regras'      => $this->request->getPost('car_regras'),
             'car_percentagem' => (float)$this->request->getPost('car_percentagem') ?: 0,
+            'car_minimo'      => (float)$this->request->getPost('car_minimo') ?: 0,
             'car_data'        => date('Y-m-d'),
         ]);
 
@@ -368,6 +369,7 @@ class Dashboard extends BaseController
             'car_oferta'      => (int)$this->request->getPost('car_oferta') ?: 0,
             'car_regras'      => $this->request->getPost('car_regras'),
             'car_percentagem' => (float)$this->request->getPost('car_percentagem'),
+            'car_minimo'      => (float)$this->request->getPost('car_minimo'),
         ])->update();
 
         return redirect()->to(base_url('parceiro/fidelidade'))->with('success', 'Cartão Fidelidade atualizado com sucesso!');

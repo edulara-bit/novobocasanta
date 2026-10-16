@@ -53,7 +53,8 @@
                             <select name="ban_tipo_fundo" id="ban_tipo_fundo" class="form-control" onchange="toggleTipoFundo(this.value)">
                                 <option value="degrade" <?= (($banner['ban_tipo_fundo'] ?? '') === 'degrade' || empty($banner)) ? 'selected' : '' ?>>Degradê (Gradiente)</option>
                                 <option value="cor" <?= (($banner['ban_tipo_fundo'] ?? '') === 'cor') ? 'selected' : '' ?>>Cor Única</option>
-                                <option value="imagem" <?= (($banner['ban_tipo_fundo'] ?? '') === 'imagem') ? 'selected' : '' ?>>Imagem de Fundo</option>
+                                <option value="imagem" <?= (($banner['ban_tipo_fundo'] ?? '') === 'imagem') ? 'selected' : '' ?>>Imagem de Fundo + Textos</option>
+                                <option value="imagem_unica" <?= (($banner['ban_tipo_fundo'] ?? '') === 'imagem_unica') ? 'selected' : '' ?>>Banner Gráfico Completo (Imagem Única com Link)</option>
                             </select>
                         </div>
 
@@ -78,7 +79,7 @@
                         </div>
 
                         <div class="col-md-8 form-group d-none" id="group_fundo_imagem">
-                            <label for="ban_fundo_imagem">Upload da Imagem de Fundo</label>
+                            <label for="ban_fundo_imagem" id="label_fundo_imagem">Upload da Imagem de Fundo</label>
                             <input type="file" name="ban_fundo_imagem" id="ban_fundo_imagem" class="form-control-file">
                             <?php if (!empty($banner['ban_fundo_imagem'])): ?>
                                 <?php $fundoSrc = str_starts_with($banner['ban_fundo_imagem'], 'http') ? $banner['ban_fundo_imagem'] : base_url($banner['ban_fundo_imagem']); ?>
@@ -90,7 +91,7 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6 form-group">
+                        <div class="col-md-6 form-group" id="group_imagem_direita">
                             <label for="ban_imagem_direita">Imagem de Destaque à Direita (PNG/JPG)</label>
                             <input type="file" name="ban_imagem_direita" id="ban_imagem_direita" class="form-control-file">
                             <?php if (!empty($banner['ban_imagem_direita'])): ?>
@@ -152,7 +153,17 @@
 function toggleTipoFundo(tipo) {
     document.getElementById('group_fundo_degrade').classList.toggle('d-none', tipo !== 'degrade');
     document.getElementById('group_fundo_cor').classList.toggle('d-none', tipo !== 'cor');
-    document.getElementById('group_fundo_imagem').classList.toggle('d-none', tipo !== 'imagem');
+    document.getElementById('group_fundo_imagem').classList.toggle('d-none', tipo !== 'imagem' && tipo !== 'imagem_unica');
+
+    const isSingle = (tipo === 'imagem_unica');
+    const labelImg = document.getElementById('label_fundo_imagem');
+    if (labelImg) {
+        labelImg.innerText = isSingle ? 'Upload da Imagem do Banner Gráfico (Full Banner)' : 'Upload da Imagem de Fundo';
+    }
+    const groupRight = document.getElementById('group_imagem_direita');
+    if (groupRight) {
+        groupRight.classList.toggle('d-none', isSingle);
+    }
     updateLivePreview();
 }
 

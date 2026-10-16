@@ -40,6 +40,25 @@
                     </div>
                 </div>
 
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Cashback (%) / Retorno ao Cliente</label>
+                        <div class="input-group">
+                            <input type="number" step="0.1" name="car_percentagem" class="form-control" min="0" max="100" value="<?= esc($cartao['car_percentagem'] ?? old('car_percentagem') ?? 0) ?>" placeholder="Ex: 5">
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <small class="text-muted">Percentual de cashback acumulado pelo cliente em compras (opcional).</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Valor Mínimo da Compra (R$)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">R$</span>
+                            <input type="number" step="0.01" name="car_minimo" class="form-control" min="0" value="<?= esc($cartao['car_minimo'] ?? old('car_minimo') ?? 0) ?>" placeholder="Ex: 20.00">
+                        </div>
+                        <small class="text-muted">Valor mínimo para pontuar ou gerar cashback (opcional).</small>
+                    </div>
+                </div>
+
                 <div class="mb-4">
                     <label class="form-label fw-semibold">Regras & Recompensa do Cartão</label>
                     <textarea name="car_regras" rows="4" class="form-control" placeholder="Descreva o que o cliente ganha ao completar a cartela (Ex: A cada 10 compras ganhe 1 almoço grátis)"><?= esc($cartao['car_regras'] ?? old('car_regras') ?? '') ?></textarea>

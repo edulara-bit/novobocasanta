@@ -174,23 +174,27 @@
                     <?php endif; ?>
                 </div>
 
-                <div class="d-grid gap-2 mb-4">
-                    <?php if ($oferta->isLinefast()): ?>
-                        <a href="<?= $oferta->getLinefastCartUrl() ?>" class="btn btn-primary btn-lg fw-bold rounded-pill py-3 shadow" target="_blank">
-                            <i class="fa-solid fa-cart-shopping me-2"></i> Comprar no Linefast
-                        </a>
-                        <small class="text-center text-muted"><i class="fa-solid fa-lock text-success me-1"></i> Redirecionamento seguro para o carrinho Linefast</small>
-                    <?php elseif (!$oferta->hasPreco()): ?>
-                        <!-- CONSULTAR PREÇO NO WHATSAPP (ITEM 2) -->
-                        <a href="<?= $oferta->getWhatsappConsultaLink($oferta->par_whatsapp ?? $oferta->par_telefone ?? '') ?>" class="btn btn-success btn-lg fw-bold rounded-pill py-3 shadow" target="_blank">
-                            <i class="fa-brands fa-whatsapp me-2 fs-5"></i> Consultar Preço no WhatsApp
-                        </a>
-                        <small class="text-center text-muted">Fale diretamente com o anunciante pelo WhatsApp</small>
-                    <?php else: ?>
-                        <a href="<?= $oferta->getWhatsappConsultaLink($oferta->par_whatsapp ?? $oferta->par_telefone ?? '') ?>" class="btn btn-success btn-lg fw-bold rounded-pill py-3 shadow" target="_blank">
-                            <i class="fa-brands fa-whatsapp me-2 fs-5"></i> Garantir Desconto no WhatsApp
-                        </a>
+                <div class="d-grid gap-3 mb-4">
+                    <?php 
+                        $temLinefast = $oferta->isLinefast() || ($parceiro && $parceiro->isLinefastAtivo());
+                        $linefastLink = $oferta->isLinefast() ? $oferta->getLinefastCartUrl() : (!empty($oferta->linefast_buy_url) ? $oferta->linefast_buy_url : 'https://linefast.com.br');
+                    ?>
+
+                    <?php if ($temLinefast): ?>
+                        <div>
+                            <a href="<?= esc($linefastLink) ?>" class="btn btn-linefast btn-linefast-lg fw-bold rounded-pill w-100 py-3 shadow text-white" target="_blank" title="Comprar online no Linefast com pagamento e entrega segura">
+                                <i class="fa-solid fa-cart-shopping me-2 text-warning"></i> Comprar Online no Linefast
+                            </a>
+                            <small class="text-center text-muted d-block mt-1"><i class="fa-solid fa-lock text-success me-1"></i> Pagamento seguro via Linefast</small>
+                        </div>
                     <?php endif; ?>
+
+                    <div>
+                        <a href="<?= $oferta->getWhatsappConsultaLink($parceiro ? $parceiro->getWhatsappNumero() : ($oferta->par_whatsapp ?? '')) ?>" class="btn btn-success btn-lg fw-bold rounded-pill w-100 py-3 shadow" target="_blank">
+                            <i class="fa-brands fa-whatsapp me-2 fs-5"></i> <?= !$oferta->hasPreco() ? 'Consultar Preço no WhatsApp' : 'Garantir Desconto no WhatsApp' ?>
+                        </a>
+                        <small class="text-center text-muted d-block mt-1">Fale diretamente com o anunciante pelo WhatsApp</small>
+                    </div>
                 </div>
 
                 <?php if (!empty($cartaoFidelidade)): ?>

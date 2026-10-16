@@ -29,19 +29,27 @@
                     <i class="fa-solid fa-location-dot text-danger me-1"></i> <?= esc($parceiro->getEnderecoCompleto($cidadeAtual['cid_nome'] ?? 'Piracicaba')) ?>
                 </p>
 
-                <div class="d-flex flex-wrap gap-2">
+                <div class="d-flex flex-wrap align-items-center gap-2">
                     <?php if ($parceiro->getWhatsappLink()): ?>
-                        <a href="<?= $parceiro->getWhatsappLink() ?>" class="btn btn-success btn-sm rounded-pill fw-bold px-3" target="_blank">
+                        <a href="<?= $parceiro->getWhatsappLink() ?>" class="btn btn-success btn-sm rounded-pill fw-bold px-3 shadow-sm" target="_blank" title="Falar no WhatsApp">
                             <i class="fa-brands fa-whatsapp me-1 fs-6"></i> WhatsApp
                         </a>
                     <?php endif; ?>
+
+                    <?php foreach ($parceiro->getTelefones() as $tel): ?>
+                        <a href="tel:<?= $tel['clean'] ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3" title="Ligar para <?= esc($tel['display']) ?>">
+                            <i class="fa-solid fa-phone me-1 text-primary"></i> <?= esc($tel['display']) ?>
+                        </a>
+                    <?php endforeach; ?>
+
                     <?php if (!empty($parceiro->par_email)): ?>
-                        <a href="mailto:<?= esc($parceiro->par_email) ?>" class="btn btn-outline-secondary btn-sm rounded-pill">
+                        <a href="mailto:<?= esc($parceiro->par_email) ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
                             <i class="fa-solid fa-envelope me-1"></i> <?= esc($parceiro->par_email) ?>
                         </a>
                     <?php endif; ?>
+
                     <?php if (!empty($parceiro->par_site)): ?>
-                        <a href="<?= esc($parceiro->par_site) ?>" class="btn btn-outline-secondary btn-sm rounded-pill" target="_blank">
+                        <a href="<?= esc($parceiro->par_site) ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3" target="_blank">
                             <i class="fa-solid fa-globe me-1"></i> Website Oficial
                         </a>
                     <?php endif; ?>

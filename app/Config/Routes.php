@@ -17,6 +17,11 @@ $routes->get('anuncie', 'Conteudo::anuncie');
 $routes->get('anuncie-no-boca-santa-ofertas', 'Conteudo::anuncie');
 $routes->post('anuncie/enviar', 'Conteudo::enviarProposta');
 
+// CLUBE FIDELIDADE & CASHBACK PÚBLICO (CONSULTA CPF)
+$routes->get('fidelidade', 'Fidelidade::index');
+$routes->post('fidelidade/consultar', 'Fidelidade::consultar');
+$routes->get('cashback', 'Fidelidade::index');
+
 // PAINEL DO PARCEIRO (ÁREA RESTRITA)
 $routes->get('parceiro', 'Parceiro\Auth::login');
 $routes->get('parceiro/login', 'Parceiro\Auth::login');
@@ -148,6 +153,7 @@ $routes->group('admin', static function ($routes) {
     // Linefast
     $routes->get('linefast', 'Admin\Linefast::index');
     $routes->get('linefast/sync/(:num)', 'Admin\Linefast::sync/$1');
+    $routes->get('linefast/toggle-test/(:num)', 'Admin\Linefast::toggleTest/$1');
 
     // LGPD
     $routes->get('lgpd', 'Admin\Lgpd::index');

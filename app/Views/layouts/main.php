@@ -55,7 +55,8 @@
                 <a href="#modalSelectCity" data-bs-toggle="modal" class="badge bg-secondary text-white text-decoration-none">Alterar Cidade</a>
             </div>
             <div class="d-flex align-items-center gap-3">
-                <a href="<?= base_url('anuncie') ?>"><i class="fa-solid fa-bullhorn me-1 text-warning"></i> Anuncie Conosco</a>
+                <a href="<?= base_url('fidelidade') ?>"><i class="fa-solid fa-coins me-1 text-warning"></i> Clube Fidelidade & Cashback</a>
+                <a href="<?= base_url('anuncie') ?>"><i class="fa-solid fa-bullhorn me-1"></i> Anuncie Conosco</a>
                 <a href="<?= base_url('parceiro/login') ?>"><i class="fa-solid fa-store me-1"></i> Painel do Parceiro</a>
                 <a href="<?= base_url('admin/login') ?>"><i class="fa-solid fa-lock me-1"></i> Admin</a>
             </div>
@@ -199,7 +200,8 @@
                 <div class="col-6 col-lg-3">
                     <h5>Parceiros & Linefast</h5>
                     <ul>
-                        <li><a href="<?= base_url('anuncie') ?>" class="text-warning fw-bold"><i class="fa-solid fa-bullhorn me-1"></i> Anuncie Conosco</a></li>
+                        <li><a href="<?= base_url('fidelidade') ?>" class="text-warning fw-bold"><i class="fa-solid fa-coins me-1"></i> Clube Fidelidade & Cashback</a></li>
+                        <li><a href="<?= base_url('anuncie') ?>"><i class="fa-solid fa-bullhorn me-1"></i> Anuncie Conosco</a></li>
                         <li><a href="<?= base_url('parceiro/login') ?>"><i class="fa-solid fa-store me-1"></i> Painel do Parceiro</a></li>
                         <li><a href="https://linefast.com.br" target="_blank">Sobre o Linefast <i class="fa-solid fa-arrow-up-right-from-square small"></i></a></li>
                         <li><a href="<?= base_url('termos') ?>">Termos de Adesão</a></li>

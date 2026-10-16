@@ -131,3 +131,9 @@ CREATE TABLE IF NOT EXISTS `tb_lgpd_paginas` (
 -- Correção de Chave Primária e Auto Increment (Prevenção de Duplicação de Produtos e Parceiros)
 ALTER TABLE `tb_produtos` MODIFY COLUMN `pro_id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY;
 ALTER TABLE `tb_parceiros` MODIFY COLUMN `par_id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY;
+
+-- Flag de Parceiro de Testes / Homologação Linefast (exclui do storefront Boca Santa)
+ALTER TABLE `tb_parceiros` ADD COLUMN IF NOT EXISTS `linefast_is_test` TINYINT(1) NOT NULL DEFAULT 0 AFTER `linefast_ativo`;
+
+-- Correção de colunas com valor padrão na tabela tb_banners
+ALTER TABLE `tb_banners` MODIFY COLUMN `ban_url` VARCHAR(200) DEFAULT '', MODIFY COLUMN `ban_cliente` INT(11) DEFAULT 0, MODIFY COLUMN `ban_link` VARCHAR(300) DEFAULT '';

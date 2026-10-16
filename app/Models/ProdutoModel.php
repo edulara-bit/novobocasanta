@@ -74,6 +74,14 @@ class ProdutoModel extends Model
                     ->orWhere('tb_produtos.linefast_product_id IS NOT NULL')
                     ->groupEnd();
             }
+
+            // Exclui parceiros marcados como teste e exceções expressas (Packer, Loja do Nilo)
+            if ($this->db->fieldExists('linefast_is_test', 'tb_parceiros')) {
+                $builder->where('(tb_parceiros.linefast_is_test = 0 OR tb_parceiros.linefast_is_test IS NULL)');
+            }
+            $builder->where('tb_produtos.pro_parceiro !=', 970);
+            $builder->notLike('tb_parceiros.par_nome', 'packer');
+            $builder->notLike('tb_parceiros.par_nome', 'nilo');
         }
 
         if (!empty($params['busca'])) {

@@ -27,6 +27,7 @@
                                 <th>Cidade</th>
                                 <th>Linefast Partner ID</th>
                                 <th>Linefast Ativo</th>
+                                <th>Ambiente</th>
                                 <th>Última Sincronização</th>
                                 <th>Ações</th>
                             </tr>
@@ -49,11 +50,21 @@
                                             <?php endif; ?>
                                         </td>
                                         <td>
+                                            <?php if ($p->isLinefastTest()): ?>
+                                                <span class="badge badge-warning px-2 py-1"><i class="fas fa-flask"></i> Teste / Homologação</span>
+                                            <?php else: ?>
+                                                <span class="badge badge-success px-2 py-1"><i class="fas fa-store"></i> Produção</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
                                             <?= !empty($p->linefast_sync_at) ? $p->linefast_sync_at->format('d/m/Y H:i') : '<span class="text-muted">Nunca</span>' ?>
                                         </td>
                                         <td>
                                             <a href="<?= base_url('admin/linefast/sync/' . $p->par_id) ?>" class="btn btn-primary btn-xs" title="Sincronizar Catálogo Agora">
                                                 <i class="fas fa-sync-alt mr-1"></i> Sincronizar
+                                            </a>
+                                            <a href="<?= base_url('admin/linefast/toggle-test/' . $p->par_id) ?>" class="btn <?= $p->isLinefastTest() ? 'btn-outline-success' : 'btn-outline-warning' ?> btn-xs" title="<?= $p->isLinefastTest() ? 'Mudar para Produção' : 'Mudar para Teste' ?>">
+                                                <i class="fas fa-flask mr-1"></i> <?= $p->isLinefastTest() ? 'Tornar Produção' : 'Marcar Teste' ?>
                                             </a>
                                             <a href="<?= base_url('admin/parceiros/editar/' . $p->par_id) ?>" class="btn btn-default btn-xs" title="Editar Vínculo">
                                                 <i class="fas fa-cog"></i>
