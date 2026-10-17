@@ -77,20 +77,29 @@ CALL AddCol('tb_administradores', 'adm_criado_em', 'DATETIME DEFAULT CURRENT_TIM
 DROP PROCEDURE IF EXISTS `AddCol`;
 
 -- 8. ATIVAÇÃO DO BANNER EXCLUSIVO LINEFAST (Conforme solicitação do Lowel)
-UPDATE `tb_banners` SET `ban_status` = 'inativo' WHERE `ban_id` IN (1, 2, 3);
+-- Desativa TODOS os banners antigos existentes na tabela para que não disputem espaço
+UPDATE `tb_banners` SET `ban_status` = 'inativo';
 
+-- Remove versão anterior do banner oficial se houver, para recriar limpo
+DELETE FROM `tb_banners` WHERE `ban_fundo_imagem` LIKE '%banner_linefast_oficial%';
+
+-- Insere o Banner Oficial do Linefast como ÚNICO ATIVO
 INSERT INTO `tb_banners` (
     `ban_titulo`, `ban_badge`, `ban_descricao`, `ban_botao_texto`, `ban_botao_link`,
     `ban_tipo_fundo`, `ban_fundo_cor`, `ban_fundo_degrade`, `ban_fundo_imagem`,
     `ban_ordem`, `ban_status`
-)
-SELECT 
-    'Linefast - O Jeito Antigo de Vender Novinho em Folha', 'LINEFAST', '', 'Conheça o Linefast', 'https://linefast.com.br',
-    'imagem_unica', '#0f1c33', '', 'upimg/banners/banner_linefast_oficial.png',
-    1, 'ativo'
-FROM DUAL
-WHERE NOT EXISTS (
-    SELECT 1 FROM `tb_banners` WHERE `ban_fundo_imagem` LIKE '%banner_linefast_oficial%'
+) VALUES (
+    'Linefast - O Jeito Antigo de Vender Novinho em Folha',
+    'LINEFAST',
+    '',
+    'Conheça o Linefast',
+    'https://linefast.com.br',
+    'imagem_unica',
+    '#0f1c33',
+    '',
+    'upimg/banners/banner_linefast_oficial.png',
+    1,
+    'ativo'
 );
 
 -- 9. CRIAÇÃO DE NOVAS TABELAS (Se não existirem)

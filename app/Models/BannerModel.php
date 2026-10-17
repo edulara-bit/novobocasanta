@@ -26,7 +26,7 @@ class BannerModel extends Model
     {
         $builder = $this;
         if ($this->db->fieldExists('ban_status', 'tb_banners')) {
-            $builder = $builder->where('ban_status !=', 'inativo');
+            $builder = $builder->where('ban_status', 'ativo');
         }
         if ($this->db->fieldExists('ban_ordem', 'tb_banners')) {
             $builder = $builder->orderBy('ban_ordem', 'ASC');
