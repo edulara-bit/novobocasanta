@@ -1,75 +1,82 @@
 -- ========================================================
--- ATUALIZAÇÕES DE SCHEMA - NOVO BOCA SANTA (CodeIgniter 4)
+-- ATUALIZAÇÕES AUTOMÁTICAS E SEGURAS DE SCHEMA (NOVO BOCA SANTA)
 -- ========================================================
--- DICA: Você também pode aplicar todas as alterações de forma
--- 100% automática e segura via terminal com o comando:
---
---     php spark bocasanta:update-schema
---
--- Caso prefira executar via phpMyAdmin / MySQL, utilize os comandos abaixo:
+-- Este script pode ser executado QUANTAS VEZES QUISER no phpMyAdmin!
+-- Ele verifica o banco e NÃO INTERROMPE se os campos já existirem.
 -- ========================================================
 
--- 1. CORREÇÃO DE AUTO INCREMENT (Evita duplicação de IDs)
+-- 1. CORREÇÃO DE AUTO INCREMENT
 ALTER TABLE `tb_produtos` MODIFY COLUMN `pro_id` INT(11) NOT NULL AUTO_INCREMENT;
 ALTER TABLE `tb_parceiros` MODIFY COLUMN `par_id` INT(11) NOT NULL AUTO_INCREMENT;
 
--- 2. NOVAS COLUNAS EM tb_produtos
--- (Se alguma coluna já existir no seu banco, ignore o aviso de duplicidade)
-ALTER TABLE `tb_produtos` ADD `pro_cartao` INT(11) DEFAULT 0;
-ALTER TABLE `tb_produtos` ADD `pro_melhor_preco` INT(11) DEFAULT 0;
-ALTER TABLE `tb_produtos` ADD `origem` VARCHAR(50) DEFAULT 'local';
-ALTER TABLE `tb_produtos` ADD `linefast_product_id` VARCHAR(100) DEFAULT NULL;
-ALTER TABLE `tb_produtos` ADD `linefast_sku` VARCHAR(100) DEFAULT NULL;
-ALTER TABLE `tb_produtos` ADD `linefast_stock` INT(11) DEFAULT 0;
-ALTER TABLE `tb_produtos` ADD `linefast_buy_url` VARCHAR(500) DEFAULT NULL;
-ALTER TABLE `tb_produtos` ADD `linefast_sync_at` DATETIME DEFAULT NULL;
+-- 2. CRIAÇÃO DE PROCEDIMENTO TEMPORÁRIO (Adiciona coluna somente se NÃO existir)
+DROP PROCEDURE IF EXISTS `AddCol`;
+DELIMITER $$
+CREATE PROCEDURE `AddCol`(
+    IN tblName VARCHAR(64),
+    IN colName VARCHAR(64),
+    IN colDef TEXT
+)
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = tblName
+          AND COLUMN_NAME = colName
+    ) THEN
+        SET @ddl = CONCAT('ALTER TABLE `', tblName, '` ADD `', colName, '` ', colDef);
+        PREPARE stmt FROM @ddl;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END IF;
+END$$
+DELIMITER ;
 
--- 3. NOVAS COLUNAS EM tb_cartoes
-ALTER TABLE `tb_cartoes` ADD `car_oferta` INT(11) DEFAULT 0;
-ALTER TABLE `tb_cartoes` ADD `car_percentagem` DECIMAL(10,2) DEFAULT 0.00;
-ALTER TABLE `tb_cartoes` ADD `car_minimo` DECIMAL(10,2) DEFAULT 0.00;
+-- 3. PRODUTOS (tb_produtos)
+CALL AddCol('tb_produtos', 'pro_cartao', 'INT(11) DEFAULT 0');
+CALL AddCol('tb_produtos', 'pro_melhor_preco', 'INT(11) DEFAULT 0');
+CALL AddCol('tb_produtos', 'origem', 'VARCHAR(50) DEFAULT \'local\'');
+CALL AddCol('tb_produtos', 'linefast_product_id', 'VARCHAR(100) DEFAULT NULL');
+CALL AddCol('tb_produtos', 'linefast_sku', 'VARCHAR(100) DEFAULT NULL');
+CALL AddCol('tb_produtos', 'linefast_stock', 'INT(11) DEFAULT 0');
+CALL AddCol('tb_produtos', 'linefast_buy_url', 'VARCHAR(500) DEFAULT NULL');
+CALL AddCol('tb_produtos', 'linefast_sync_at', 'DATETIME DEFAULT NULL');
 
--- 4. NOVAS COLUNAS EM tb_parceiros
-ALTER TABLE `tb_parceiros` ADD `linefast_partner_id` VARCHAR(100) DEFAULT NULL;
-ALTER TABLE `tb_parceiros` ADD `linefast_ativo` TINYINT(1) DEFAULT 0;
-ALTER TABLE `tb_parceiros` ADD `linefast_is_test` TINYINT(1) NOT NULL DEFAULT 0;
+-- 4. CARTÕES DE FIDELIDADE & CASHBACK (tb_cartoes)
+CALL AddCol('tb_cartoes', 'car_oferta', 'INT(11) DEFAULT 0');
+CALL AddCol('tb_cartoes', 'car_percentagem', 'DECIMAL(10,2) DEFAULT 0.00');
+CALL AddCol('tb_cartoes', 'car_minimo', 'DECIMAL(10,2) DEFAULT 0.00');
 
--- 5. NOVAS COLUNAS E AJUSTE DE VALORES PADRÃO EM tb_banners
+-- 5. PARCEIROS & LINEFAST (tb_parceiros)
+CALL AddCol('tb_parceiros', 'linefast_partner_id', 'VARCHAR(100) DEFAULT NULL');
+CALL AddCol('tb_parceiros', 'linefast_ativo', 'TINYINT(1) DEFAULT 0');
+CALL AddCol('tb_parceiros', 'linefast_is_test', 'TINYINT(1) NOT NULL DEFAULT 0');
+
+-- 6. BANNERS (tb_banners)
 ALTER TABLE `tb_banners` MODIFY COLUMN `ban_url` VARCHAR(200) DEFAULT '';
 ALTER TABLE `tb_banners` MODIFY COLUMN `ban_cliente` INT(11) DEFAULT 0;
 ALTER TABLE `tb_banners` MODIFY COLUMN `ban_link` VARCHAR(300) DEFAULT '';
-ALTER TABLE `tb_banners` ADD `ban_titulo` VARCHAR(255) DEFAULT NULL;
-ALTER TABLE `tb_banners` ADD `ban_badge` VARCHAR(100) DEFAULT '⭐ DESTAQUE';
-ALTER TABLE `tb_banners` ADD `ban_descricao` TEXT DEFAULT NULL;
-ALTER TABLE `tb_banners` ADD `ban_botao_texto` VARCHAR(100) DEFAULT 'Conhecer Ofertas';
-ALTER TABLE `tb_banners` ADD `ban_botao_link` VARCHAR(255) DEFAULT 'anuncie';
-ALTER TABLE `tb_banners` ADD `ban_tipo_fundo` VARCHAR(50) DEFAULT 'degrade';
-ALTER TABLE `tb_banners` ADD `ban_fundo_cor` VARCHAR(50) DEFAULT '#0d1b2a';
-ALTER TABLE `tb_banners` ADD `ban_fundo_degrade` VARCHAR(255) DEFAULT NULL;
-ALTER TABLE `tb_banners` ADD `ban_fundo_imagem` VARCHAR(255) DEFAULT NULL;
-ALTER TABLE `tb_banners` ADD `ban_imagem_direita` VARCHAR(255) DEFAULT NULL;
-ALTER TABLE `tb_banners` ADD `ban_ordem` INT(11) DEFAULT 0;
-ALTER TABLE `tb_banners` ADD `ban_status` VARCHAR(20) DEFAULT 'ativo';
+CALL AddCol('tb_banners', 'ban_titulo', 'VARCHAR(255) DEFAULT NULL');
+CALL AddCol('tb_banners', 'ban_badge', 'VARCHAR(100) DEFAULT \'⭐ DESTAQUE\'');
+CALL AddCol('tb_banners', 'ban_descricao', 'TEXT DEFAULT NULL');
+CALL AddCol('tb_banners', 'ban_botao_texto', 'VARCHAR(100) DEFAULT \'Conhecer Ofertas\'');
+CALL AddCol('tb_banners', 'ban_botao_link', 'VARCHAR(255) DEFAULT \'anuncie\'');
+CALL AddCol('tb_banners', 'ban_tipo_fundo', 'VARCHAR(50) DEFAULT \'degrade\'');
+CALL AddCol('tb_banners', 'ban_fundo_cor', 'VARCHAR(50) DEFAULT \'#0d1b2a\'');
+CALL AddCol('tb_banners', 'ban_fundo_degrade', 'VARCHAR(255) DEFAULT NULL');
+CALL AddCol('tb_banners', 'ban_fundo_imagem', 'VARCHAR(255) DEFAULT NULL');
+CALL AddCol('tb_banners', 'ban_imagem_direita', 'VARCHAR(255) DEFAULT NULL');
+CALL AddCol('tb_banners', 'ban_ordem', 'INT(11) DEFAULT 0');
+CALL AddCol('tb_banners', 'ban_status', 'VARCHAR(20) DEFAULT \'ativo\'');
 
--- 6. TABELA DE ADMINISTRADORES DO NOVO BOCA SANTA
-CREATE TABLE IF NOT EXISTS `tb_administradores` (
-  `adm_id` INT(11) NOT NULL AUTO_INCREMENT,
-  `adm_nome` VARCHAR(150) NOT NULL,
-  `adm_login` VARCHAR(100) NOT NULL,
-  `adm_email` VARCHAR(150) NOT NULL,
-  `adm_senha` VARCHAR(255) NOT NULL,
-  `adm_nivel` VARCHAR(50) DEFAULT 'admin',
-  `adm_status` TINYINT(1) DEFAULT 1,
-  `adm_criado_em` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`adm_id`),
-  UNIQUE KEY `uk_adm_login` (`adm_login`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- 7. ADMINISTRADORES (tb_administradores)
+CALL AddCol('tb_administradores', 'adm_nivel', 'VARCHAR(50) DEFAULT \'admin\'');
+CALL AddCol('tb_administradores', 'adm_criado_em', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
 
--- Usuário admin padrão (eduardo / blueball)
-INSERT IGNORE INTO `tb_administradores` (`adm_id`, `adm_nome`, `adm_login`, `adm_email`, `adm_senha`, `adm_nivel`, `adm_status`)
-VALUES (1, 'Eduardo Lara', 'eduardo', 'contato@edulara.com.br', '$2y$12$Nq1P2P5c67LhZJ5vYqWnneP6L4yQh1G8sXvUuJ/9H8uK5k1c6m3mG', 'admin', 1);
+-- REMOVE O PROCEDIMENTO TEMPORÁRIO
+DROP PROCEDURE IF EXISTS `AddCol`;
 
--- 7. TABELA DE REDIRECIONAMENTOS SEO
+-- 8. CRIAÇÃO DE NOVAS TABELAS (Se não existirem)
 CREATE TABLE IF NOT EXISTS `tb_redirecionamentos` (
   `red_id` INT(11) NOT NULL AUTO_INCREMENT,
   `red_origem` VARCHAR(255) NOT NULL,
@@ -82,7 +89,6 @@ CREATE TABLE IF NOT EXISTS `tb_redirecionamentos` (
   KEY `idx_red_origem` (`red_origem`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 8. TABELAS DE LGPD E PRIVACIDADE
 CREATE TABLE IF NOT EXISTS `tb_lgpd_consents` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `visitor_id` VARCHAR(100) NOT NULL,
