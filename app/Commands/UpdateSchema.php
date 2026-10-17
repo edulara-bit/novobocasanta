@@ -138,6 +138,26 @@ class UpdateSchema extends BaseCommand
                     CLI::write("  - Coluna {$col} já existe", 'dark_gray');
                 }
             }
+
+            // Inserir banner oficial Linefast se não existir
+            $bannerLinefast = $db->table('tb_banners')->like('ban_fundo_imagem', 'banner_linefast_oficial')->get()->getRowArray();
+            if (!$bannerLinefast) {
+                $db->table('tb_banners')->whereIn('ban_id', [1, 2, 3])->update(['ban_status' => 'inativo']);
+
+                $db->table('tb_banners')->insert([
+                    'ban_titulo'        => 'Linefast - O Jeito Antigo de Vender Novinho em Folha',
+                    'ban_badge'         => 'LINEFAST',
+                    'ban_descricao'     => '',
+                    'ban_botao_texto'   => 'Conhecer o Linefast',
+                    'ban_botao_link'    => 'https://linefast.com.br',
+                    'ban_tipo_fundo'    => 'imagem_unica',
+                    'ban_fundo_cor'     => '#0f1c33',
+                    'ban_fundo_imagem'  => 'upimg/banners/banner_linefast_oficial.png',
+                    'ban_ordem'         => 1,
+                    'ban_status'        => 'ativo',
+                ]);
+                CLI::write("  ✓ Banner exclusivo do Linefast instalado e ativado!", 'green');
+            }
         }
 
         // 5. CRIAÇÃO DE NOVAS TABELAS DO NOVO BOCA SANTA

@@ -47,8 +47,8 @@
                             ?>
                             <?php if ($tipoFundo === 'imagem_unica'): ?>
                                 <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>">
-                                    <a href="<?= esc($btnLink) ?>" target="<?= str_starts_with($btnLink, 'http') ? '_blank' : '_self' ?>" class="d-block w-100 overflow-hidden text-decoration-none bg-dark" style="min-height: 250px;">
-                                        <img src="<?= esc($fundoImg) ?>" alt="<?= esc($bannerTitulo) ?>" class="d-block w-100" style="max-height: 380px; width: 100%; object-fit: cover;">
+                                    <a href="<?= esc($btnLink) ?>" target="<?= str_starts_with($btnLink, 'http') ? '_blank' : '_self' ?>" class="d-block w-100 overflow-hidden text-decoration-none" style="min-height: 250px; background-color: #0f1c33;">
+                                        <img src="<?= esc($fundoImg) ?>" alt="<?= esc($bannerTitulo) ?>" class="d-block w-100" style="max-height: 380px; width: 100%; object-fit: contain;">
                                     </a>
                                 </div>
                             <?php else: ?>
@@ -89,41 +89,11 @@
                         <?php endforeach; ?>
                     </div>
                 <?php else: ?>
-                    <div class="carousel-indicators">
-                        <button type="button" data-bs-target="#carouselHeroBanners" data-bs-slide-to="0" class="active"></button>
-                        <button type="button" data-bs-target="#carouselHeroBanners" data-bs-slide-to="1"></button>
-                        <button type="button" data-bs-target="#carouselHeroBanners" data-bs-slide-to="2"></button>
-                    </div>
                     <div class="carousel-inner">
                         <div class="carousel-item active">
-                            <div class="p-4 p-md-5 d-flex flex-column justify-content-center" style="min-height: 320px; background: linear-gradient(90deg, #991b1b 0%, #dc2626 50%, #ea580c 100%);">
-                                <span class="badge bg-warning text-dark fw-bold px-3 py-2 rounded-pill align-self-start mb-3">🔥 SUPER OFERTAS EM <?= esc(mb_strtoupper($cidadeAtual['cid_nome'] ?? 'PIRACICABA')) ?></span>
-                                <h1 class="display-5 fw-extrabold text-white mb-3">Economize até 70% no comércio local</h1>
-                                <p class="lead text-white-50 mb-4 col-lg-8">Descubra restaurantes, serviços automotivos, informática, saúde, beleza e produtos com os melhores preços da cidade.</p>
-                                <div>
-                                    <a href="#ofertasDestaque" class="btn btn-light btn-lg fw-bold rounded-pill px-4 text-danger shadow-sm">Ver Ofertas</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="carousel-item">
-                            <div class="p-4 p-md-5 d-flex flex-column justify-content-center" style="min-height: 320px; background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 50%, #38bdf8 100%);">
-                                <span class="badge bg-light text-primary fw-bold px-3 py-2 rounded-pill align-self-start mb-3"><i class="fa-solid fa-cart-shopping me-1"></i> INTEGRAÇÃO LINEFAST</span>
-                                <h2 class="display-5 fw-extrabold text-white mb-3">Compre direto dos parceiros no Linefast</h2>
-                                <p class="lead text-white-50 mb-4 col-lg-8">Produtos em estoque com compra em 1 clique e envio rápido diretamente pelo carrinho do parceiro.</p>
-                                <div>
-                                    <a href="#secaoLinefast" class="btn btn-warning btn-lg fw-bold rounded-pill px-4 text-dark shadow-sm">Explorar Produtos Linefast</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="carousel-item">
-                            <div class="p-4 p-md-5 d-flex flex-column justify-content-center" style="min-height: 320px; background: linear-gradient(90deg, #065f46 0%, #059669 50%, #10b981 100%);">
-                                <span class="badge bg-warning text-dark fw-bold px-3 py-2 rounded-pill align-self-start mb-3">⭐ CLUBE DE PARCEIROS</span>
-                                <h2 class="display-5 fw-extrabold text-white mb-3">Conheça as melhores empresas da sua região</h2>
-                                <p class="lead text-white-50 mb-4 col-lg-8">Comércios, lojas e prestadores de serviços de confiança com contato direto pelo WhatsApp.</p>
-                                <div>
-                                    <a href="<?= base_url(($cidadeAtual['cid_url'] ?? 'piracicaba') . '/parceiros') ?>" class="btn btn-light btn-lg fw-bold rounded-pill px-4 text-success shadow-sm">Conhecer Parceiros</a>
-                                </div>
-                            </div>
+                            <a href="https://linefast.com.br" target="_blank" class="d-block w-100 overflow-hidden text-decoration-none" style="background-color: #0f1c33;" title="Linefast - O Jeito Antigo de Vender Novinho em Folha">
+                                <img src="<?= base_url('upimg/banners/banner_linefast_oficial.png') ?>" alt="Linefast - O Jeito Antigo de Vender Novinho em Folha" class="d-block w-100" style="max-height: 380px; width: 100%; object-fit: contain;">
+                            </a>
                         </div>
                     </div>
                 <?php endif; ?>
