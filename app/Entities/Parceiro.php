@@ -223,6 +223,25 @@ class Parceiro extends Entity
     }
 
     /**
+     * Retorna a URL da loja oficial do parceiro no Linefast
+     */
+    public function getLinefastStoreUrl(string $cidadeSlug = 'piracicaba'): string
+    {
+        if (!$this->isLinefastAtivo()) {
+            return '';
+        }
+
+        $cidade = !empty($this->attributes['cid_url']) ? $this->attributes['cid_url'] : $cidadeSlug;
+        $slug = !empty($this->attributes['linefast_store_id']) ? $this->attributes['linefast_store_id'] : ($this->attributes['par_apelido'] ?? '');
+
+        if (!empty($slug)) {
+            return "https://linefast.com.br/{$cidade}/{$slug}";
+        }
+
+        return "https://linefast.com.br";
+    }
+
+    /**
      * Retorna a URL amigável da página do parceiro
      */
     public function getUrl(string $cidadeSlug = ''): string

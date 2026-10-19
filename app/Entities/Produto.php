@@ -108,23 +108,48 @@ class Produto extends Entity
      */
     public function isLinefast(): bool
     {
-        return !empty($this->attributes['linefast_product_id']) || ($this->attributes['origem'] ?? '') === 'linefast';
+        if (!empty($this->attributes['linefast_product_id'])) {
+            return true;
+        }
+        if (($this->attributes['origem'] ?? '') === 'linefast') {
+            return true;
+        }
+        if (!empty($this->attributes['linefast_buy_url'])) {
+            return true;
+        }
+        if (!empty($this->attributes['pro_comprar']) && (str_contains($this->attributes['pro_comprar'], 'linefast') || str_contains($this->attributes['pro_comprar'], 'cidadepremium'))) {
+            return true;
+        }
+        return false;
     }
 
     /**
-     * Gera o link direto de checkout / adicionar ao carrinho do Linefast
+     * Gera o link direto de checkout / página do produto no Linefast
      */
     public function getLinefastCartUrl(int $quantity = 1): string
     {
+        $url = '';
+
         if (!empty($this->attributes['linefast_buy_url'])) {
-            return $this->attributes['linefast_buy_url'];
+            $url = trim($this->attributes['linefast_buy_url']);
+        } elseif (!empty($this->attributes['pro_comprar']) && (str_contains($this->attributes['pro_comprar'], 'linefast') || str_contains($this->attributes['pro_comprar'], 'cidadepremium'))) {
+            $url = trim($this->attributes['pro_comprar']);
         }
 
-        $config = config('Linefast');
-        $baseUrl = $config->cartUrl ?? 'https://linefast.com.br/cart/add';
-        $lfId = $this->attributes['linefast_product_id'] ?? $this->attributes['pro_id'];
+        if (!empty($url)) {
+            // Normaliza URLs de desenvolvimento local para o domínio oficial em produção
+            $url = str_replace(['http://localhost/cidadepremium', 'https://localhost/cidadepremium'], 'https://linefast.com.br', $url);
+            return $url;
+        }
 
-        return "{$baseUrl}?product_id={$lfId}&qty={$quantity}&ref=bocasanta";
+        if (!empty($this->attributes['linefast_product_id'])) {
+            $config = config('Linefast');
+            $baseUrl = $config->cartUrl ?? 'https://linefast.com.br/cart/add';
+            $lfId = $this->attributes['linefast_product_id'];
+            return "{$baseUrl}?product_id={$lfId}&qty={$quantity}&ref=bocasanta";
+        }
+
+        return '';
     }
 
     /**
@@ -151,6 +176,9 @@ class Produto extends Entity
         $parceiroId = $this->attributes['fot_parceiro'] ?? $this->attributes['pro_parceiro'] ?? '';
 
         if (!empty($foto)) {
+            // Normaliza imagens vindas da integração local do Linefast
+            $foto = str_replace(['http://localhost/cidadepremium', 'https://localhost/cidadepremium'], 'https://linefast.com.br', $foto);
+
             if (str_starts_with($foto, 'http://') || str_starts_with($foto, 'https://')) {
                 return $foto;
             }

@@ -176,8 +176,11 @@
 
                 <div class="d-grid gap-3 mb-4">
                     <?php 
-                        $temLinefast = $oferta->isLinefast() || ($parceiro && $parceiro->isLinefastAtivo());
-                        $linefastLink = $oferta->isLinefast() ? $oferta->getLinefastCartUrl() : (!empty($oferta->linefast_buy_url) ? $oferta->linefast_buy_url : 'https://linefast.com.br');
+                        $linefastLink = $oferta->getLinefastCartUrl();
+                        if (empty($linefastLink) && $parceiro && $parceiro->isLinefastAtivo()) {
+                            $linefastLink = $parceiro->getLinefastStoreUrl($cidadeSlug ?? 'piracicaba');
+                        }
+                        $temLinefast = !empty($linefastLink);
                     ?>
 
                     <?php if ($temLinefast): ?>

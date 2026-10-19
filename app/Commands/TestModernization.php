@@ -41,6 +41,19 @@ class TestModernization extends BaseCommand
             CLI::write("  - [ID {$p->par_id}] {$p->getNome()} | Slug: {$p->getSlug()} | Cidade: {$p->cid_nome} | Logo: " . $p->getLogoUrl());
         }
 
+        // 3. Teste de Produto Integrado Linefast (ex: 21664 - Amigurumi)
+        $prod21664 = $prodModel->find(21664);
+        if ($prod21664) {
+            $parc = $parcModel->find($prod21664->pro_parceiro);
+            $cartUrl = $prod21664->getLinefastCartUrl();
+            CLI::write("\n✓ Teste de Produto Linefast (ID 21664):", 'green');
+            CLI::write("  - Título: {$prod21664->pro_titulo}");
+            CLI::write("  - Preço: {$prod21664->getPrecoVendaFormatado()}");
+            CLI::write("  - isLinefast(): " . ($prod21664->isLinefast() ? 'SIM' : 'NÃO'));
+            CLI::write("  - URL do Botão Linefast: {$cartUrl}");
+            CLI::write("  - Loja Parceiro no Linefast: " . ($parc ? $parc->getLinefastStoreUrl() : 'N/A'));
+        }
+
         CLI::write("\n============================================", 'green');
         CLI::write(' TODOS OS TESTES FORAM EXECUTADOS COM SUCESSO!', 'green');
         CLI::write("============================================\n", 'green');

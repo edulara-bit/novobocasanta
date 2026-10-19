@@ -166,11 +166,30 @@ class LinefastService
             return;
         }
 
+        // 1. Procura por produto já vinculado pelo linefast_product_id
         $existing = $this->produtoModel->where('linefast_product_id', $lfId)->first();
+
+        // 2. Se não encontrou, busca produto existente do parceiro cujo pro_comprar aponte para este produto no Linefast (-ID)
+        if (!$existing) {
+            $existing = $this->produtoModel
+                ->where('pro_parceiro', $parceiro->par_id)
+                ->groupStart()
+                    ->like('pro_comprar', '-' . $lfId, 'before')
+                    ->orLike('pro_comprar', '-' . $lfId . '/', 'both')
+                ->groupEnd()
+                ->first();
+        }
+
         $title = (string)($prodData['name'] ?? $prodData['title'] ?? 'Produto Linefast');
         $slug = function_exists('url_title') 
             ? url_title($title, '-', true) . '-linefast-' . $lfId 
             : strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title))) . '-linefast-' . $lfId;
+
+        $rawBuyUrl = !empty($prodData['url']) ? $prodData['url'] : $this->generateCartUrl($lfId);
+        $buyUrl = str_replace(['http://localhost/cidadepremium', 'https://localhost/cidadepremium'], 'https://linefast.com.br', $rawBuyUrl);
+
+        $rawFoto = $prodData['image_url'] ?? $prodData['image'] ?? '';
+        $foto = str_replace(['http://localhost/cidadepremium', 'https://localhost/cidadepremium'], 'https://linefast.com.br', $rawFoto);
 
         $saveData = [
             'pro_titulo'          => $title,
@@ -180,17 +199,25 @@ class LinefastService
             'pro_precodesconto'   => (float)($prodData['sale_price'] ?? $prodData['discount_price'] ?? 0),
             'pro_descricao'       => $prodData['description'] ?? '',
             'pro_slug'            => $slug,
-            'pro_foto'            => $prodData['image_url'] ?? $prodData['image'] ?? '',
+            'pro_foto'            => $foto,
             'origem'              => 'linefast',
             'linefast_product_id' => $lfId,
             'linefast_sku'        => $prodData['sku'] ?? null,
             'linefast_stock'      => (int)($prodData['stock'] ?? 10),
-            'linefast_buy_url'    => !empty($prodData['url']) ? $prodData['url'] : $this->generateCartUrl($lfId),
+            'linefast_buy_url'    => $buyUrl,
             'linefast_sync_at'    => date('Y-m-d H:i:s'),
             'pro_data'            => date('Y-m-d'),
         ];
 
         if ($existing && !empty($existing->pro_id) && (int)$existing->pro_id > 0) {
+            // Se o produto já existia no Boca Santa nativo, preserva sua URL e fotos originais
+            if (($existing->origem ?? '') === 'bocasanta') {
+                unset($saveData['pro_slug']);
+                unset($saveData['origem']);
+                if (!empty($existing->pro_foto)) {
+                    unset($saveData['pro_foto']);
+                }
+            }
             $this->produtoModel->update((int)$existing->pro_id, $saveData);
         } else {
             $this->produtoModel->insert($saveData);
