@@ -21,6 +21,7 @@ $routes->post('anuncie/enviar', 'Conteudo::enviarProposta');
 $routes->get('fidelidade', 'Fidelidade::index');
 $routes->post('fidelidade/consultar', 'Fidelidade::consultar');
 $routes->get('cashback', 'Fidelidade::index');
+$routes->get('parceiros', 'Parceiros::index/piracicaba');
 
 // PAINEL DO PARCEIRO (ÁREA RESTRITA)
 $routes->get('parceiro', 'Parceiro\Auth::login');

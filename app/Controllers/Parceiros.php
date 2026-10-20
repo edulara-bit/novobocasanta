@@ -31,13 +31,20 @@ class Parceiros extends BaseController
     public function index(string $cidadeSlug = 'piracicaba')
     {
         $cidade = $this->cidadeModel->getBySlug($cidadeSlug) ?? $this->cidadeModel->first();
-        $parceiros = $this->parceiroModel->getParceiros(['cidade_id' => (int)$cidade['cid_id']], 30);
+        
+        $busca = trim((string)($this->request->getGet('q') ?? $this->request->getGet('busca') ?? ''));
+        $params = ['cidade_id' => (int)$cidade['cid_id']];
+        if (!empty($busca)) {
+            $params['busca'] = $busca;
+        }
+
+        $parceiros = $this->parceiroModel->getParceiros($params, $busca ? 100 : 60);
         $todasCidades = $this->cidadeModel->getCidades();
         $principaisCidades = $this->cidadeModel->getPrincipaisCidades(4);
         $categoriasPrincipais = $this->categoriaModel->getCategoriasPrincipais();
 
         $seo = $this->seoService->generateMeta([
-            'title' => "Empresas e Parceiros em {$cidade['cid_nome']} - SP",
+            'title' => (!empty($busca) ? "Busca: '{$busca}' em " : "Empresas e ") . "Parceiros em {$cidade['cid_nome']} - SP",
             'description' => "Guia de estabelecimentos, lojas e prestadores de serviços parceiros do Boca Santa Ofertas em {$cidade['cid_nome']}.",
         ]);
 
@@ -47,6 +54,7 @@ class Parceiros extends BaseController
             'todasCidades'      => $todasCidades,
             'principaisCidades' => $principaisCidades,
             'categoriasBar'     => array_slice($categoriasPrincipais, 0, 8),
+            'busca'             => $busca,
             'seo'               => $seo,
         ]);
     }

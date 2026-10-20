@@ -13,6 +13,30 @@
         </a>
     </div>
 
+    <!-- Formulário de Busca de Parceiros -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-light">
+        <form action="<?= base_url(($cidadeAtual['cid_url'] ?? 'piracicaba') . '/parceiros') ?>" method="get" class="row g-2 align-items-center">
+            <div class="col-md-9">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 rounded-start-pill text-muted ps-3">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" name="q" class="form-control border-start-0 rounded-end-pill py-2" placeholder="Buscar parceiro por nome, empresa ou ramo de atividade..." value="<?= esc($busca ?? '') ?>">
+                </div>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-danger rounded-pill fw-bold w-100 py-2">
+                    <i class="fa-solid fa-search me-1"></i> Buscar
+                </button>
+                <?php if (!empty($busca)): ?>
+                    <a href="<?= base_url(($cidadeAtual['cid_url'] ?? 'piracicaba') . '/parceiros') ?>" class="btn btn-outline-secondary rounded-pill py-2 px-3" title="Limpar busca">
+                        <i class="fa-solid fa-times"></i>
+                    </a>
+                <?php endif; ?>
+            </div>
+        </form>
+    </div>
+
     <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4 mb-5">
         <?php if (!empty($parceiros)): ?>
             <?php foreach ($parceiros as $p): ?>
@@ -49,6 +73,15 @@
                     </div>
                 </div>
             <?php endforeach; ?>
+        <?php else: ?>
+            <div class="col-12 text-center py-5">
+                <i class="fa-solid fa-store-slash text-muted fa-3x mb-3"></i>
+                <h4 class="fw-bold text-dark">Nenhum parceiro encontrado</h4>
+                <p class="text-muted">Não encontramos nenhum parceiro com o termo "<strong><?= esc($busca ?? '') ?></strong>".</p>
+                <a href="<?= base_url(($cidadeAtual['cid_url'] ?? 'piracicaba') . '/parceiros') ?>" class="btn btn-outline-danger rounded-pill px-4 mt-2">
+                    Ver Todos os Parceiros
+                </a>
+            </div>
         <?php endif; ?>
     </div>
 

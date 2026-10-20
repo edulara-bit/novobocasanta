@@ -33,8 +33,13 @@ class ParceiroModel extends Model
     public function getParceiros(array $params = [], int $limit = 20, int $offset = 0): array
     {
         $builder = $this->select('tb_parceiros.*, tb_cidades.cid_nome, tb_cidades.cid_url')
-            ->join('tb_cidades', 'tb_parceiros.par_cidade = tb_cidades.cid_id', 'left')
-            ->where('tb_parceiros.par_ativo !=', '0');
+            ->join('tb_cidades', 'tb_parceiros.par_cidade = tb_cidades.cid_id', 'left');
+
+        // Se não for admin, filtra somente parceiros com status ativo
+        if (empty($params['admin'])) {
+            $builder->where('tb_parceiros.par_ativo !=', '0')
+                    ->where('tb_parceiros.par_ativo !=', 'inativo');
+        }
 
         if (!empty($params['cidade_id'])) {
             $builder->where('tb_parceiros.par_cidade', (int)$params['cidade_id']);
@@ -57,7 +62,7 @@ class ParceiroModel extends Model
                 ->groupEnd();
         }
 
-        if ($this->db->fieldExists('par_ordem', 'tb_parceiros')) {
+        if (!empty($params['order_by_ordem']) && $this->db->fieldExists('par_ordem', 'tb_parceiros')) {
             $builder->orderBy('tb_parceiros.par_ordem', 'ASC');
         }
         $builder->orderBy('tb_parceiros.par_nome', 'ASC');

@@ -36,7 +36,7 @@ class Parceiros extends BaseController
     {
         if ($redirect = $this->checkAuth()) return $redirect;
 
-        $parceiros = $this->parceiroModel->getParceiros([], 500);
+        $parceiros = $this->parceiroModel->getParceiros(['admin' => true], 0);
 
         return view('admin/parceiros/index', [
             'title'     => 'Gerenciamento de Parceiros Comerciais',
