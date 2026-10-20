@@ -477,8 +477,20 @@ class Dashboard extends BaseController
                 'cli_parceiro' => $parceiro->par_id,
                 'cli_data'     => date('Y-m-d'),
             ]);
-        } else if (!empty($nome) && empty($cliente['cli_nome'])) {
-            $this->clienteModel->where('cli_id', $cliente['cli_id'])->set(['cli_nome' => $nome])->update();
+        } else {
+            $updateData = [];
+            if (!empty($nome) && $nome !== ($cliente['cli_nome'] ?? '')) {
+                $updateData['cli_nome'] = $nome;
+            }
+            if (!empty($email) && $email !== ($cliente['cli_email'] ?? '')) {
+                $updateData['cli_email'] = $email;
+            }
+            if (!empty($celular) && $celular !== ($cliente['cli_celular'] ?? '')) {
+                $updateData['cli_celular'] = $celular;
+            }
+            if (!empty($updateData)) {
+                $this->clienteModel->where('cli_id', $cliente['cli_id'])->set($updateData)->update();
+            }
         }
 
         $valorStr = (string)$this->request->getPost('lan_valor');
@@ -506,8 +518,14 @@ class Dashboard extends BaseController
         $parceiro = $this->getParceiroLogado();
         if (!$parceiro) return redirect()->to(base_url('parceiro/login'));
 
+        // Proteção contra exclusão indevida por lojistas
+        if (!session()->get('impersonated_by_adm')) {
+            return redirect()->to(base_url('parceiro/fidelidade/lancamentos'))
+                ->with('error', 'Por segurança e integridade do programa de fidelidade, lançamentos de pontos são definitivos e não podem ser estornados pelo lojista. Entre em contato com a administração do portal caso necessite de suporte.');
+        }
+
         $this->lancamentoModel->where('lan_id', $id)->where('lan_parceiro', $parceiro->par_id)->delete();
-        return redirect()->to(base_url('parceiro/fidelidade/lancamentos'))->with('success', 'Lançamento removido com sucesso!');
+        return redirect()->to(base_url('parceiro/fidelidade/lancamentos'))->with('success', 'Lançamento estornado pela administração!');
     }
 
     public function validarResgate()

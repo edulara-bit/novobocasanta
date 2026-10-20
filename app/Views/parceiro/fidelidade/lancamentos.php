@@ -190,7 +190,7 @@
                             <th>Cartão / Oferta</th>
                             <th>Valor</th>
                             <th>NF/Cupom</th>
-                            <th class="text-end">Ação</th>
+                            <th class="text-end">Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -225,10 +225,15 @@
                                     <td>
                                         <?= !empty($lan['lan_nf']) ? esc($lan['lan_nf']) : '<span class="text-muted">-</span>' ?>
                                     </td>
-                                    <td class="text-end">
-                                        <a href="<?= base_url('parceiro/fidelidade/excluir-lancamento/' . $lan['lan_id']) ?>" class="btn btn-outline-danger btn-xs rounded-circle p-1" onclick="return confirm('Deseja estornar este lançamento de pontos?')" title="Estornar lançamento">
-                                            <i class="fa-solid fa-trash-can"></i>
-                                        </a>
+                                    <td class="text-end text-nowrap">
+                                        <span class="badge bg-success-subtle text-success border px-2 py-1 rounded-pill" title="Lançamento confirmado e creditado ao cliente">
+                                            <i class="fa-solid fa-circle-check me-1"></i> Confirmado
+                                        </span>
+                                        <?php if (session()->get('impersonated_by_adm')): ?>
+                                            <a href="<?= base_url('parceiro/fidelidade/excluir-lancamento/' . $lan['lan_id']) ?>" class="btn btn-outline-danger btn-xs rounded-circle p-1 ms-1" onclick="return confirm('ATENÇÃO ADMIN: Deseja estornar administrativamente este lançamento?')" title="Estorno Administrativo (Apenas Admin)">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </a>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -242,6 +247,76 @@
                         <?php endif; ?>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE CONFIRMAÇÃO DE LANÇAMENTO DEFINITIVO -->
+<div class="modal fade" id="modalConfirmarLancamento" tabindex="-1" aria-labelledby="modalConfirmarLancamentoLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                        <i class="fa-solid fa-stamp fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold text-dark mb-0" id="modalConfirmarLancamentoLabel">Confirmar Lançamento de Pontos</h5>
+                        <small class="text-muted">Revise atentamente os dados antes de creditar</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body py-3">
+                
+                <!-- RESUMO DO LANÇAMENTO -->
+                <div class="bg-light p-3 rounded-4 mb-3 border">
+                    <div class="row g-2 small">
+                        <div class="col-7">
+                            <span class="text-muted d-block small">Cliente:</span>
+                            <strong class="text-dark fs-6" id="modalResumoNome">-</strong>
+                        </div>
+                        <div class="col-5 text-end">
+                            <span class="text-muted d-block small">CPF:</span>
+                            <span class="font-monospace fw-bold text-dark" id="modalResumoCpf">-</span>
+                        </div>
+                        <div class="col-12 border-top pt-2 mt-2">
+                            <span class="text-muted d-block small">Cartão Fidelidade / Campanha:</span>
+                            <span class="badge bg-danger-subtle text-danger border fw-bold px-2 py-1" id="modalResumoCartao">-</span>
+                        </div>
+                        <div class="col-6 border-top pt-2 mt-2">
+                            <span class="text-muted d-block small">Valor da Compra:</span>
+                            <strong class="text-success fs-5" id="modalResumoValor">R$ 0,00</strong>
+                        </div>
+                        <div class="col-6 border-top pt-2 mt-2 text-end">
+                            <span class="text-muted d-block small">Crédito Fidelidade:</span>
+                            <span class="badge bg-warning text-dark fw-bold px-2 py-1 rounded-pill">
+                                <i class="fa-solid fa-star me-1"></i> +1 Carimbo / Ponto
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AVISO DE NÃO ESTORNO -->
+                <div class="alert alert-warning border border-warning-subtle d-flex align-items-start rounded-4 mb-0 p-3">
+                    <i class="fa-solid fa-shield-halved text-warning fs-3 me-3 mt-1 flex-shrink-0"></i>
+                    <div>
+                        <strong class="d-block text-dark mb-1">Atenção: Este lançamento é definitivo!</strong>
+                        <p class="small text-muted mb-0">
+                            Após a confirmação, estes pontos/carimbos serão creditados <strong>diretamente no extrato do cliente</strong> e <strong>NÃO poderão ser cancelados ou estornados</strong> pelo estabelecimento.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer border-0 pt-0 d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Revisar / Corrigir
+                </button>
+                <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" id="btnConfirmarEnvioFinal">
+                    <i class="fa-solid fa-circle-check me-1"></i> Sim, Confirmar e Pontuar
+                </button>
             </div>
         </div>
     </div>
@@ -326,6 +401,84 @@ document.addEventListener('DOMContentLoaded', function() {
             if (preco && parseFloat(preco) > 0) {
                 inputValor.value = parseFloat(preco).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             }
+        });
+    }
+
+    // INTERCEPTAR ENVIO PARA EXIBIR JANELA DE CONFIRMAÇÃO DE NÃO ESTORNO
+    const formLancamento = document.getElementById('formLancamento');
+    const modalConfirmarEl = document.getElementById('modalConfirmarLancamento');
+    const btnConfirmarEnvioFinal = document.getElementById('btnConfirmarEnvioFinal');
+    let modalConfirmar = null;
+    if (modalConfirmarEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        modalConfirmar = new bootstrap.Modal(modalConfirmarEl);
+    }
+
+    if (formLancamento) {
+        formLancamento.addEventListener('submit', function(e) {
+            if (formLancamento.dataset.confirmed === 'true') {
+                return true;
+            }
+
+            e.preventDefault();
+
+            // Validação HTML5 nativa
+            if (!formLancamento.checkValidity()) {
+                formLancamento.reportValidity();
+                return;
+            }
+
+            // Validar CPF
+            const cpfVal = (inputCpf.value || '').replace(/\D/g, '');
+            if (cpfVal.length !== 11) {
+                alert('Informe um CPF válido com 11 dígitos.');
+                inputCpf.focus();
+                return;
+            }
+
+            // Validar Nome
+            if (!inputNome.value.trim()) {
+                alert('Informe o nome completo do cliente.');
+                inputNome.focus();
+                return;
+            }
+
+            // Validar Valor
+            const valorVal = (inputValor.value || '').trim();
+            if (!valorVal || valorVal === '0,00' || valorVal === '0') {
+                alert('Informe o valor da compra.');
+                inputValor.focus();
+                return;
+            }
+
+            // Preenche os dados no Modal de Confirmação
+            document.getElementById('modalResumoNome').textContent = inputNome.value.trim();
+            document.getElementById('modalResumoCpf').textContent = formatarCpf(cpfVal);
+            
+            const selectCartao = document.getElementById('lan_cartao');
+            const cartaoTexto = selectCartao && selectCartao.options[selectCartao.selectedIndex] 
+                ? selectCartao.options[selectCartao.selectedIndex].text 
+                : 'Cartão Fidelidade';
+            document.getElementById('modalResumoCartao').textContent = cartaoTexto;
+
+            document.getElementById('modalResumoValor').textContent = 'R$ ' + valorVal;
+
+            if (modalConfirmar) {
+                modalConfirmar.show();
+            } else {
+                if (confirm('ATENÇÃO: Este lançamento de pontos é definitivo e NÃO poderá ser estornado ou cancelado pelo estabelecimento.\n\nCliente: ' + inputNome.value.trim() + ' (' + formatarCpf(cpfVal) + ')\nValor: R$ ' + valorVal + '\n\nDeseja confirmar o crédito de pontos?')) {
+                    formLancamento.dataset.confirmed = 'true';
+                    formLancamento.submit();
+                }
+            }
+        });
+    }
+
+    if (btnConfirmarEnvioFinal && formLancamento) {
+        btnConfirmarEnvioFinal.addEventListener('click', function() {
+            btnConfirmarEnvioFinal.disabled = true;
+            btnConfirmarEnvioFinal.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Confirmando...';
+            formLancamento.dataset.confirmed = 'true';
+            formLancamento.submit();
         });
     }
 });
