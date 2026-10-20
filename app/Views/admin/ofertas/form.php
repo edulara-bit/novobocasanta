@@ -33,21 +33,42 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-4 form-group">
-                            <label for="pro_categoria">Categoria</label>
-                            <select name="pro_categoria" id="pro_categoria" class="form-control">
-                                <option value="0">Selecione uma categoria...</option>
+                        <div class="col-md-6 form-group">
+                            <label for="pro_categoria_pai">Categoria Principal <span class="text-danger">*</span></label>
+                            <select name="pro_categoria_pai" id="pro_categoria_pai" class="form-control" required>
+                                <option value="">Selecione uma categoria principal...</option>
                                 <?php foreach ($categorias as $cat): ?>
-                                    <option value="<?= $cat->cat_id ?>" <?= (!empty($oferta) && (int)$oferta->pro_categoria === (int)$cat->cat_id) ? 'selected' : '' ?>>
+                                    <option value="<?= $cat->cat_id ?>" <?= (isset($catPaiId) && (int)$catPaiId === (int)$cat->cat_id) ? 'selected' : '' ?>>
                                         <?= esc($cat->cat_titulo) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
 
+                        <div class="col-md-6 form-group">
+                            <label for="pro_categoria">Subcategoria <span class="text-muted font-weight-normal">(define a URL amigável da oferta)</span></label>
+                            <select name="pro_categoria" id="pro_categoria" class="form-control">
+                                <?php if (!empty($subcategorias)): ?>
+                                    <option value="">Selecione uma subcategoria...</option>
+                                    <?php foreach ($subcategorias as $sub): ?>
+                                        <option value="<?= $sub->cat_id ?>" <?= (isset($subCatId) && (int)$subCatId === (int)$sub->cat_id) ? 'selected' : '' ?>>
+                                            <?= esc($sub->cat_titulo) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <option value="">Selecione primeiro a categoria principal...</option>
+                                <?php endif; ?>
+                            </select>
+                            <small class="text-muted d-block mt-1">
+                                <i class="fas fa-info-circle text-danger mr-1"></i> A subcategoria compõe a URL pública (ex: <code>.../piracicaba/farmacia-de-manipulacao/...</code>).
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="row">
                         <div class="col-md-4 form-group">
-                            <label for="pro_cidade">Cidade da Oferta</label>
-                            <select name="pro_cidade" id="pro_cidade" class="form-control">
+                            <label for="pro_cidade">Cidade da Oferta <span class="text-danger">*</span></label>
+                            <select name="pro_cidade" id="pro_cidade" class="form-control" required>
                                 <?php foreach ($cidades as $c): ?>
                                     <option value="<?= $c['cid_id'] ?>" <?= (!empty($oferta) && (int)$oferta->pro_cidade === (int)$c['cid_id']) ? 'selected' : '' ?>>
                                         <?= esc($c['cid_nome']) ?>
@@ -56,13 +77,13 @@
                             </select>
                         </div>
 
-                        <div class="col-md-2 form-group">
+                        <div class="col-md-4 form-group">
                             <label for="pro_preco">Preço "De" (R$)</label>
                             <input type="text" name="pro_preco" id="pro_preco" class="form-control" placeholder="0,00" value="<?= !empty($oferta) ? number_format((float)$oferta->pro_preco, 2, ',', '.') : '' ?>">
                             <small class="text-muted">Deixe 0,00 se não houver.</small>
                         </div>
 
-                        <div class="col-md-2 form-group">
+                        <div class="col-md-4 form-group">
                             <label for="pro_precodesconto">Preço "Por" (R$)</label>
                             <input type="text" name="pro_precodesconto" id="pro_precodesconto" class="form-control" placeholder="0,00" value="<?= !empty($oferta) ? number_format((float)$oferta->pro_precodesconto, 2, ',', '.') : '' ?>">
                             <small class="text-muted">0,00 = Consulte WhatsApp.</small>
@@ -124,4 +145,66 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const catPaiSelect = document.getElementById('pro_categoria_pai');
+    const subCatSelect = document.getElementById('pro_categoria');
+    const initialSubId = '<?= esc($subCatId ?? 0) ?>';
+
+    function carregarSubcategorias(parentId, selectedSubId = null) {
+        if (!parentId || parentId === '0') {
+            subCatSelect.innerHTML = '<option value="">Selecione primeiro a categoria principal...</option>';
+            return;
+        }
+
+        subCatSelect.innerHTML = '<option value="">Carregando subcategorias...</option>';
+        subCatSelect.disabled = true;
+
+        fetch('<?= base_url('api/categorias/subcategorias') ?>/' + encodeURIComponent(parentId))
+            .then(res => res.json())
+            .then(data => {
+                subCatSelect.innerHTML = '';
+                if (Array.isArray(data) && data.length > 0) {
+                    const defaultOpt = document.createElement('option');
+                    defaultOpt.value = '';
+                    defaultOpt.textContent = 'Selecione uma subcategoria...';
+                    subCatSelect.appendChild(defaultOpt);
+
+                    data.forEach(item => {
+                        const opt = document.createElement('option');
+                        opt.value = item.cat_id;
+                        opt.textContent = item.cat_titulo;
+                        if (selectedSubId && String(item.cat_id) === String(selectedSubId)) {
+                            opt.selected = true;
+                        }
+                        subCatSelect.appendChild(opt);
+                    });
+                } else {
+                    const opt = document.createElement('option');
+                    opt.value = parentId; // Fallback para a própria categoria pai
+                    opt.textContent = '(Esta categoria não possui subcategorias cadastradas)';
+                    opt.selected = true;
+                    subCatSelect.appendChild(opt);
+                }
+                subCatSelect.disabled = false;
+            })
+            .catch(err => {
+                console.error('Erro ao buscar subcategorias:', err);
+                subCatSelect.innerHTML = '<option value="">Erro ao carregar subcategorias</option>';
+                subCatSelect.disabled = false;
+            });
+    }
+
+    if (catPaiSelect) {
+        catPaiSelect.addEventListener('change', function () {
+            carregarSubcategorias(this.value, null);
+        });
+
+        if (catPaiSelect.value && subCatSelect.options.length <= 1) {
+            carregarSubcategorias(catPaiSelect.value, initialSubId);
+        }
+    }
+});
+</script>
 <?= $this->endSection() ?>

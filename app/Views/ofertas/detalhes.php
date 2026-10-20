@@ -7,6 +7,9 @@
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb small">
             <li class="breadcrumb-item"><a href="<?= base_url($cidadeAtual['cid_url'] ?? 'piracicaba') ?>" class="text-decoration-none text-muted">Início</a></li>
+            <?php if (!empty($categoriaPai)): ?>
+                <li class="breadcrumb-item"><a href="<?= base_url(($cidadeAtual['cid_url'] ?? 'piracicaba') . '/categoria/' . ($categoriaPai->cat_url ?? 'geral')) ?>" class="text-decoration-none text-muted"><?= esc($categoriaPai->cat_titulo) ?></a></li>
+            <?php endif; ?>
             <li class="breadcrumb-item"><a href="<?= base_url(($cidadeAtual['cid_url'] ?? 'piracicaba') . '/categoria/' . ($oferta->cat_url ?? 'geral')) ?>" class="text-decoration-none text-muted"><?= esc($oferta->cat_titulo ?? 'Categoria') ?></a></li>
             <li class="breadcrumb-item active text-truncate" style="max-width: 300px;" aria-current="page"><?= esc($oferta->pro_titulo) ?></li>
         </ol>

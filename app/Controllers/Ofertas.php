@@ -71,9 +71,16 @@ class Ofertas extends BaseController
             'schema_json' => $schemaJson,
         ]);
 
+        // Categoria Pai (se a oferta estiver vinculada a uma subcategoria)
+        $categoriaPai = null;
+        if (!empty($oferta->pro_categoria_pai) && (int)$oferta->pro_categoria_pai !== (int)$oferta->pro_categoria) {
+            $categoriaPai = $this->categoriaModel->find((int)$oferta->pro_categoria_pai);
+        }
+
         return view('ofertas/detalhes', [
             'oferta'            => $oferta,
             'parceiro'          => $parceiro,
+            'categoriaPai'      => $categoriaPai,
             'cartaoFidelidade'  => $cartaoFidelidade,
             'relacionadas'      => $relacionadas,
             'cidadeAtual'       => $cidade,

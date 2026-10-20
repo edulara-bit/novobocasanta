@@ -16,22 +16,43 @@
 
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Categoria</label>
-                        <select name="pro_categoria" class="form-select">
-                            <option value="0">Selecione uma categoria...</option>
+                        <label class="form-label fw-semibold">Categoria Principal <span class="text-danger">*</span></label>
+                        <select name="pro_categoria_pai" id="pro_categoria_pai" class="form-select" required>
+                            <option value="">Selecione uma categoria principal...</option>
                             <?php foreach ($categorias as $cat): ?>
-                                <option value="<?= $cat->cat_id ?>" <?= (!empty($oferta) && (int)$oferta->pro_categoria === (int)$cat->cat_id) ? 'selected' : '' ?>>
+                                <option value="<?= $cat->cat_id ?>" <?= (isset($catPaiId) && (int)$catPaiId === (int)$cat->cat_id) ? 'selected' : '' ?>>
                                     <?= esc($cat->cat_titulo) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Subcategoria <span class="text-muted fw-normal">(define a URL da oferta)</span></label>
+                        <select name="pro_categoria" id="pro_categoria" class="form-select">
+                            <?php if (!empty($subcategorias)): ?>
+                                <option value="">Selecione uma subcategoria...</option>
+                                <?php foreach ($subcategorias as $sub): ?>
+                                    <option value="<?= $sub->cat_id ?>" <?= (isset($subCatId) && (int)$subCatId === (int)$sub->cat_id) ? 'selected' : '' ?>>
+                                        <?= esc($sub->cat_titulo) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <option value="">Selecione primeiro a categoria principal...</option>
+                            <?php endif; ?>
+                        </select>
+                        <small class="text-muted d-block mt-1">
+                            <i class="fa-solid fa-circle-info text-danger me-1"></i> A subcategoria compõe a URL oficial no site (ex: <code>.../piracicaba/farmacia-de-manipulacao/...</code>).
+                        </small>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
                         <label class="form-label fw-semibold">Preço "De" (R$)</label>
                         <input type="text" name="pro_preco" class="form-control" placeholder="0,00" value="<?= !empty($oferta) ? number_format((float)$oferta->pro_preco, 2, ',', '.') : '' ?>">
                         <small class="text-muted">Deixe 0,00 para não exibir.</small>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-6">
                         <label class="form-label fw-semibold">Preço "Por" (R$)</label>
                         <input type="text" name="pro_precodesconto" class="form-control" placeholder="0,00" value="<?= !empty($oferta) ? number_format((float)$oferta->pro_precodesconto, 2, ',', '.') : '' ?>">
                         <small class="text-muted">0,00 = Consulte WhatsApp.</small>
@@ -100,4 +121,67 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const catPaiSelect = document.getElementById('pro_categoria_pai');
+    const subCatSelect = document.getElementById('pro_categoria');
+    const initialSubId = '<?= esc($subCatId ?? 0) ?>';
+
+    function carregarSubcategorias(parentId, selectedSubId = null) {
+        if (!parentId || parentId === '0') {
+            subCatSelect.innerHTML = '<option value="">Selecione primeiro a categoria principal...</option>';
+            return;
+        }
+
+        subCatSelect.innerHTML = '<option value="">Carregando subcategorias...</option>';
+        subCatSelect.disabled = true;
+
+        fetch('<?= base_url('api/categorias/subcategorias') ?>/' + encodeURIComponent(parentId))
+            .then(res => res.json())
+            .then(data => {
+                subCatSelect.innerHTML = '';
+                if (Array.isArray(data) && data.length > 0) {
+                    const defaultOpt = document.createElement('option');
+                    defaultOpt.value = '';
+                    defaultOpt.textContent = 'Selecione uma subcategoria...';
+                    subCatSelect.appendChild(defaultOpt);
+
+                    data.forEach(item => {
+                        const opt = document.createElement('option');
+                        opt.value = item.cat_id;
+                        opt.textContent = item.cat_titulo;
+                        if (selectedSubId && String(item.cat_id) === String(selectedSubId)) {
+                            opt.selected = true;
+                        }
+                        subCatSelect.appendChild(opt);
+                    });
+                } else {
+                    const opt = document.createElement('option');
+                    opt.value = parentId; // Fallback para a própria categoria pai
+                    opt.textContent = '(Esta categoria não possui subcategorias cadastradas)';
+                    opt.selected = true;
+                    subCatSelect.appendChild(opt);
+                }
+                subCatSelect.disabled = false;
+            })
+            .catch(err => {
+                console.error('Erro ao buscar subcategorias:', err);
+                subCatSelect.innerHTML = '<option value="">Erro ao carregar subcategorias</option>';
+                subCatSelect.disabled = false;
+            });
+    }
+
+    if (catPaiSelect) {
+        catPaiSelect.addEventListener('change', function () {
+            carregarSubcategorias(this.value, null);
+        });
+
+        // Se já houver categoria principal selecionada e as subcategorias não vierem do servidor
+        if (catPaiSelect.value && subCatSelect.options.length <= 1) {
+            carregarSubcategorias(catPaiSelect.value, initialSubId);
+        }
+    }
+});
+</script>
 <?= $this->endSection() ?>

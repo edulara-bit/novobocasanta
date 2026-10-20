@@ -66,9 +66,10 @@ $routes->get('lgpd/solicitar-dados', 'Lgpd::solicitarDados');
 $routes->post('lgpd/processar-solicitacao', 'Lgpd::processarSolicitacao');
 $routes->post('lgpd/consent', 'Lgpd::salvarConsentimento');
 
-// API & LINEFAST WEBHOOKS
+// API & LINEFAST WEBHOOKS & CATEGORIAS
 $routes->group('api', static function ($routes) {
     $routes->post('linefast/webhook', 'Api\LinefastWebhook::index');
+    $routes->get('categorias/subcategorias/(:num)', 'Api\Categorias::subcategorias/$1');
 });
 
 // COMPATIBILIDADE LEGADA CI3 (301 Permanent Redirect para preservar SEO histórico)

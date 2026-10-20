@@ -151,11 +151,14 @@ class Dashboard extends BaseController
         if (!$parceiro) return redirect()->to(base_url('parceiro/login'));
 
         return view('parceiro/ofertas/form', [
-            'title'      => 'Cadastrar Nova Oferta',
-            'parceiro'   => $parceiro,
-            'oferta'     => null,
-            'categorias' => $this->categoriaModel->getCategoriasPrincipais(),
-            'cartoes'    => $this->cartaoModel->where('car_cliente', $parceiro->par_id)->findAll(),
+            'title'         => 'Cadastrar Nova Oferta',
+            'parceiro'      => $parceiro,
+            'oferta'        => null,
+            'categorias'    => $this->categoriaModel->getCategoriasPrincipais(),
+            'subcategorias' => [],
+            'catPaiId'      => 0,
+            'subCatId'      => 0,
+            'cartoes'       => $this->cartaoModel->where('car_cliente', $parceiro->par_id)->findAll(),
         ]);
     }
 
@@ -169,10 +172,29 @@ class Dashboard extends BaseController
             return redirect()->back()->withInput()->with('error', 'Informe o título da oferta.');
         }
 
+        $catPaiId = (int)$this->request->getPost('pro_categoria_pai');
+        $subCatId = (int)$this->request->getPost('pro_categoria');
+
+        if ($subCatId > 0) {
+            $proCategoria = $subCatId;
+            $proCategoriaPai = $catPaiId > 0 ? $catPaiId : (int)($this->categoriaModel->find($subCatId)->cat_categoria_pai ?? 0);
+        } else {
+            $proCategoria = $catPaiId;
+            $proCategoriaPai = $catPaiId;
+        }
+
+        $slug = url_title(mb_strtolower($titulo), '-', true);
+        $catObj = $this->categoriaModel->find($proCategoria);
+        $catUrl = $catObj ? $catObj->cat_url : 'ofertas';
+        $cidObj = $this->cidadeModel->find((int)$parceiro->par_cidade);
+        $cidUrl = $cidObj ? $cidObj['cid_url'] : 'piracicaba';
+        $proSlug2 = "{$cidUrl}/{$catUrl}/{$slug}";
+
         $data = [
             'pro_titulo'          => $titulo,
             'pro_parceiro'        => $parceiro->par_id,
-            'pro_categoria'       => (int)$this->request->getPost('pro_categoria'),
+            'pro_categoria'       => $proCategoria,
+            'pro_categoria_pai'   => $proCategoriaPai,
             'pro_cidade'          => (int)$parceiro->par_cidade,
             'pro_preco'           => (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('pro_preco')),
             'pro_precodesconto'   => (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('pro_precodesconto')),
@@ -182,7 +204,8 @@ class Dashboard extends BaseController
             'pro_cartao'          => (int)$this->request->getPost('pro_cartao'),
             'pro_descricao'       => $this->request->getPost('pro_descricao'),
             'pro_caracteristicas' => $this->request->getPost('pro_caracteristicas'),
-            'pro_slug'            => url_title(mb_strtolower($titulo), '-', true),
+            'pro_slug'            => $slug,
+            'pro_slug2'           => $proSlug2,
             'pro_data'            => date('Y-m-d H:i:s'),
         ];
 
@@ -220,12 +243,31 @@ class Dashboard extends BaseController
             return redirect()->to(base_url('parceiro/ofertas'))->with('error', 'Oferta não encontrada.');
         }
 
+        $catPaiId = (int)($oferta->pro_categoria_pai ?? 0);
+        $subCatId = (int)($oferta->pro_categoria ?? 0);
+
+        // Se pro_categoria_pai for 0, resolve via tb_categorias
+        if ($catPaiId === 0 && $subCatId > 0) {
+            $catObj = $this->categoriaModel->find($subCatId);
+            if ($catObj && (int)$catObj->cat_categoria_pai > 0) {
+                $catPaiId = (int)$catObj->cat_categoria_pai;
+            } elseif ($catObj) {
+                $catPaiId = (int)$catObj->cat_id;
+                $subCatId = 0;
+            }
+        }
+
+        $subcategorias = $catPaiId > 0 ? $this->categoriaModel->getSubcategorias($catPaiId) : [];
+
         return view('parceiro/ofertas/form', [
-            'title'      => "Editar Oferta: {$oferta->pro_titulo}",
-            'parceiro'   => $parceiro,
-            'oferta'     => $oferta,
-            'categorias' => $this->categoriaModel->getCategoriasPrincipais(),
-            'cartoes'    => $this->cartaoModel->where('car_cliente', $parceiro->par_id)->findAll(),
+            'title'         => "Editar Oferta: {$oferta->pro_titulo}",
+            'parceiro'      => $parceiro,
+            'oferta'        => $oferta,
+            'categorias'    => $this->categoriaModel->getCategoriasPrincipais(),
+            'subcategorias' => $subcategorias,
+            'catPaiId'      => $catPaiId,
+            'subCatId'      => $subCatId,
+            'cartoes'       => $this->cartaoModel->where('car_cliente', $parceiro->par_id)->findAll(),
         ]);
     }
 
@@ -236,9 +278,28 @@ class Dashboard extends BaseController
 
         $titulo = trim((string)$this->request->getPost('pro_titulo'));
 
+        $catPaiId = (int)$this->request->getPost('pro_categoria_pai');
+        $subCatId = (int)$this->request->getPost('pro_categoria');
+
+        if ($subCatId > 0) {
+            $proCategoria = $subCatId;
+            $proCategoriaPai = $catPaiId > 0 ? $catPaiId : (int)($this->categoriaModel->find($subCatId)->cat_categoria_pai ?? 0);
+        } else {
+            $proCategoria = $catPaiId;
+            $proCategoriaPai = $catPaiId;
+        }
+
+        $slug = url_title(mb_strtolower($titulo), '-', true);
+        $catObj = $this->categoriaModel->find($proCategoria);
+        $catUrl = $catObj ? $catObj->cat_url : 'ofertas';
+        $cidObj = $this->cidadeModel->find((int)$parceiro->par_cidade);
+        $cidUrl = $cidObj ? $cidObj['cid_url'] : 'piracicaba';
+        $proSlug2 = "{$cidUrl}/{$catUrl}/{$slug}";
+
         $data = [
             'pro_titulo'          => $titulo,
-            'pro_categoria'       => (int)$this->request->getPost('pro_categoria'),
+            'pro_categoria'       => $proCategoria,
+            'pro_categoria_pai'   => $proCategoriaPai,
             'pro_preco'           => (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('pro_preco')),
             'pro_precodesconto'   => (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('pro_precodesconto')),
             'pro_apartirde'       => $this->request->getPost('pro_apartirde') ? 1 : 0,
@@ -247,7 +308,8 @@ class Dashboard extends BaseController
             'pro_cartao'          => (int)$this->request->getPost('pro_cartao'),
             'pro_descricao'       => $this->request->getPost('pro_descricao'),
             'pro_caracteristicas' => $this->request->getPost('pro_caracteristicas'),
-            'pro_slug'            => url_title(mb_strtolower($titulo), '-', true),
+            'pro_slug'            => $slug,
+            'pro_slug2'           => $proSlug2,
         ];
 
         $this->produtoModel->where('pro_id', $id)->where('pro_parceiro', $parceiro->par_id)->set($data)->update();

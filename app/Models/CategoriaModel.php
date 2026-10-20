@@ -37,6 +37,10 @@ class CategoriaModel extends Model
      */
     public function getSubcategorias(int $parentId): array
     {
+        if ($parentId <= 0) {
+            return [];
+        }
+
         return $this->where('cat_categoria_pai', $parentId)
             ->where('cat_titulo IS NOT NULL')
             ->where('cat_titulo !=', '')
@@ -44,5 +48,21 @@ class CategoriaModel extends Model
             ->where('cat_url !=', '')
             ->orderBy('cat_titulo', 'ASC')
             ->findAll();
+    }
+
+    /**
+     * Retorna a categoria pai de uma subcategoria
+     */
+    public function getCategoriaPai(int $subcategoryId): ?Categoria
+    {
+        if ($subcategoryId <= 0) {
+            return null;
+        }
+
+        $sub = $this->find($subcategoryId);
+        if ($sub && (int)$sub->cat_categoria_pai > 0) {
+            return $this->find((int)$sub->cat_categoria_pai);
+        }
+        return null;
     }
 }

@@ -59,11 +59,14 @@ class Ofertas extends BaseController
         if ($redirect = $this->checkAuth()) return $redirect;
 
         return view('admin/ofertas/form', [
-            'title'      => 'Cadastrar Nova Oferta',
-            'oferta'     => null,
-            'parceiros'  => $this->parceiroModel->orderBy('par_nome', 'ASC')->findAll(),
-            'categorias' => $this->categoriaModel->getCategoriasPrincipais(),
-            'cidades'    => $this->cidadeModel->getCidades(),
+            'title'         => 'Cadastrar Nova Oferta',
+            'oferta'        => null,
+            'parceiros'     => $this->parceiroModel->orderBy('par_nome', 'ASC')->findAll(),
+            'categorias'    => $this->categoriaModel->getCategoriasPrincipais(),
+            'subcategorias' => [],
+            'catPaiId'      => 0,
+            'subCatId'      => 0,
+            'cidades'       => $this->cidadeModel->getCidades(),
         ]);
     }
 
@@ -78,11 +81,31 @@ class Ofertas extends BaseController
             return redirect()->back()->withInput()->with('error', 'Informe o título da oferta e selecione o parceiro.');
         }
 
+        $catPaiId = (int)$this->request->getPost('pro_categoria_pai');
+        $subCatId = (int)$this->request->getPost('pro_categoria');
+
+        if ($subCatId > 0) {
+            $proCategoria = $subCatId;
+            $proCategoriaPai = $catPaiId > 0 ? $catPaiId : (int)($this->categoriaModel->find($subCatId)->cat_categoria_pai ?? 0);
+        } else {
+            $proCategoria = $catPaiId;
+            $proCategoriaPai = $catPaiId;
+        }
+
+        $cidadeId = (int)$this->request->getPost('pro_cidade');
+        $slug = url_title(mb_strtolower($titulo), '-', true);
+        $catObj = $this->categoriaModel->find($proCategoria);
+        $catUrl = $catObj ? $catObj->cat_url : 'ofertas';
+        $cidObj = $this->cidadeModel->find($cidadeId);
+        $cidUrl = $cidObj ? $cidObj['cid_url'] : 'piracicaba';
+        $proSlug2 = "{$cidUrl}/{$catUrl}/{$slug}";
+
         $data = [
             'pro_titulo'          => $titulo,
             'pro_parceiro'        => $parceiroId,
-            'pro_categoria'       => (int)$this->request->getPost('pro_categoria'),
-            'pro_cidade'          => (int)$this->request->getPost('pro_cidade'),
+            'pro_categoria'       => $proCategoria,
+            'pro_categoria_pai'   => $proCategoriaPai,
+            'pro_cidade'          => $cidadeId,
             'pro_preco'           => (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('pro_preco')),
             'pro_precodesconto'   => (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('pro_precodesconto')),
             'pro_apartirde'       => $this->request->getPost('pro_apartirde') ? 1 : 0,
@@ -90,7 +113,8 @@ class Ofertas extends BaseController
             'pro_melhor_preco'    => $this->request->getPost('pro_melhor_preco') ? 1 : 0,
             'pro_descricao'       => $this->request->getPost('pro_descricao'),
             'pro_caracteristicas' => $this->request->getPost('pro_caracteristicas'),
-            'pro_slug'            => url_title(mb_strtolower($titulo), '-', true),
+            'pro_slug'            => $slug,
+            'pro_slug2'           => $proSlug2,
             'pro_data'            => date('Y-m-d H:i:s'),
         ];
 
@@ -129,12 +153,30 @@ class Ofertas extends BaseController
             return redirect()->to(base_url('admin/ofertas'))->with('error', 'Oferta não encontrada.');
         }
 
+        $catPaiId = (int)($oferta->pro_categoria_pai ?? 0);
+        $subCatId = (int)($oferta->pro_categoria ?? 0);
+
+        if ($catPaiId === 0 && $subCatId > 0) {
+            $catObj = $this->categoriaModel->find($subCatId);
+            if ($catObj && (int)$catObj->cat_categoria_pai > 0) {
+                $catPaiId = (int)$catObj->cat_categoria_pai;
+            } elseif ($catObj) {
+                $catPaiId = (int)$catObj->cat_id;
+                $subCatId = 0;
+            }
+        }
+
+        $subcategorias = $catPaiId > 0 ? $this->categoriaModel->getSubcategorias($catPaiId) : [];
+
         return view('admin/ofertas/form', [
-            'title'      => "Editar Oferta #{$id}",
-            'oferta'     => $oferta,
-            'parceiros'  => $this->parceiroModel->orderBy('par_nome', 'ASC')->findAll(),
-            'categorias' => $this->categoriaModel->getCategoriasPrincipais(),
-            'cidades'    => $this->cidadeModel->getCidades(),
+            'title'         => "Editar Oferta #{$id}",
+            'oferta'        => $oferta,
+            'parceiros'     => $this->parceiroModel->orderBy('par_nome', 'ASC')->findAll(),
+            'categorias'    => $this->categoriaModel->getCategoriasPrincipais(),
+            'subcategorias' => $subcategorias,
+            'catPaiId'      => $catPaiId,
+            'subCatId'      => $subCatId,
+            'cidades'       => $this->cidadeModel->getCidades(),
         ]);
     }
 
@@ -145,11 +187,31 @@ class Ofertas extends BaseController
         $titulo = trim((string)$this->request->getPost('pro_titulo'));
         $parceiroId = (int)$this->request->getPost('pro_parceiro');
 
+        $catPaiId = (int)$this->request->getPost('pro_categoria_pai');
+        $subCatId = (int)$this->request->getPost('pro_categoria');
+
+        if ($subCatId > 0) {
+            $proCategoria = $subCatId;
+            $proCategoriaPai = $catPaiId > 0 ? $catPaiId : (int)($this->categoriaModel->find($subCatId)->cat_categoria_pai ?? 0);
+        } else {
+            $proCategoria = $catPaiId;
+            $proCategoriaPai = $catPaiId;
+        }
+
+        $cidadeId = (int)$this->request->getPost('pro_cidade');
+        $slug = url_title(mb_strtolower($titulo), '-', true);
+        $catObj = $this->categoriaModel->find($proCategoria);
+        $catUrl = $catObj ? $catObj->cat_url : 'ofertas';
+        $cidObj = $this->cidadeModel->find($cidadeId);
+        $cidUrl = $cidObj ? $cidObj['cid_url'] : 'piracicaba';
+        $proSlug2 = "{$cidUrl}/{$catUrl}/{$slug}";
+
         $data = [
             'pro_titulo'          => $titulo,
             'pro_parceiro'        => $parceiroId,
-            'pro_categoria'       => (int)$this->request->getPost('pro_categoria'),
-            'pro_cidade'          => (int)$this->request->getPost('pro_cidade'),
+            'pro_categoria'       => $proCategoria,
+            'pro_categoria_pai'   => $proCategoriaPai,
+            'pro_cidade'          => $cidadeId,
             'pro_preco'           => (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('pro_preco')),
             'pro_precodesconto'   => (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('pro_precodesconto')),
             'pro_apartirde'       => $this->request->getPost('pro_apartirde') ? 1 : 0,
@@ -157,7 +219,8 @@ class Ofertas extends BaseController
             'pro_melhor_preco'    => $this->request->getPost('pro_melhor_preco') ? 1 : 0,
             'pro_descricao'       => $this->request->getPost('pro_descricao'),
             'pro_caracteristicas' => $this->request->getPost('pro_caracteristicas'),
-            'pro_slug'            => url_title(mb_strtolower($titulo), '-', true),
+            'pro_slug'            => $slug,
+            'pro_slug2'           => $proSlug2,
         ];
 
         $this->produtoModel->update($id, $data);
