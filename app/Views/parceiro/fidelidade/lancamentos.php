@@ -137,7 +137,7 @@
                                     <input type="text" name="lan_descricao" id="lan_descricao" class="form-control" placeholder="Ex: 1 Almoço executivo + 1 Bebida">
                                 </div>
 
-                                <button type="submit" class="btn btn-danger btn-lg w-100 rounded-pill fw-bold shadow-sm">
+                                <button type="button" id="btnIniciarLancamento" class="btn btn-danger btn-lg w-100 rounded-pill fw-bold shadow-sm">
                                     <i class="fa-solid fa-stamp me-2"></i> Confirmar & Creditar Pontos
                                 </button>
                             </form>
@@ -226,14 +226,9 @@
                                         <?= !empty($lan['lan_nf']) ? esc($lan['lan_nf']) : '<span class="text-muted">-</span>' ?>
                                     </td>
                                     <td class="text-end text-nowrap">
-                                        <span class="badge bg-success-subtle text-success border px-2 py-1 rounded-pill" title="Lançamento confirmado e creditado ao cliente">
+                                        <span class="badge bg-success-subtle text-success border px-2 py-1 rounded-pill" title="Lançamento confirmado e definitivo">
                                             <i class="fa-solid fa-circle-check me-1"></i> Confirmado
                                         </span>
-                                        <?php if (session()->get('impersonated_by_adm')): ?>
-                                            <a href="<?= base_url('parceiro/fidelidade/excluir-lancamento/' . $lan['lan_id']) ?>" class="btn btn-outline-danger btn-xs rounded-circle p-1 ms-1" onclick="return confirm('ATENÇÃO ADMIN: Deseja estornar administrativamente este lançamento?')" title="Estorno Administrativo (Apenas Admin)">
-                                                <i class="fa-solid fa-trash-can"></i>
-                                            </a>
-                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -406,11 +401,69 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // INTERCEPTAR ENVIO PARA EXIBIR JANELA DE CONFIRMAÇÃO DE NÃO ESTORNO
     const formLancamento = document.getElementById('formLancamento');
+    const btnIniciar = document.getElementById('btnIniciarLancamento');
     const modalConfirmarEl = document.getElementById('modalConfirmarLancamento');
     const btnConfirmarEnvioFinal = document.getElementById('btnConfirmarEnvioFinal');
-    let modalConfirmar = null;
-    if (modalConfirmarEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-        modalConfirmar = new bootstrap.Modal(modalConfirmarEl);
+
+    function abrirModalConfirmacao() {
+        if (!formLancamento) return;
+
+        // Validar CPF
+        const cpfVal = (inputCpf.value || '').replace(/\D/g, '');
+        if (cpfVal.length !== 11) {
+            alert('Por favor, informe um CPF válido com 11 dígitos.');
+            inputCpf.focus();
+            return;
+        }
+
+        // Validar Nome
+        if (!inputNome.value.trim()) {
+            alert('Por favor, informe o nome completo do cliente.');
+            inputNome.focus();
+            return;
+        }
+
+        // Validar Valor
+        const valorVal = (inputValor.value || '').trim();
+        if (!valorVal || valorVal === '0,00' || valorVal === '0') {
+            alert('Por favor, informe o valor da compra.');
+            inputValor.focus();
+            return;
+        }
+
+        // Preenche os dados no Modal de Confirmação
+        const resumoNomeEl = document.getElementById('modalResumoNome');
+        const resumoCpfEl = document.getElementById('modalResumoCpf');
+        const resumoCartaoEl = document.getElementById('modalResumoCartao');
+        const resumoValorEl = document.getElementById('modalResumoValor');
+
+        if (resumoNomeEl) resumoNomeEl.textContent = inputNome.value.trim();
+        if (resumoCpfEl) resumoCpfEl.textContent = formatarCpf(cpfVal);
+        
+        const selectCartao = document.getElementById('lan_cartao');
+        const cartaoTexto = selectCartao && selectCartao.options[selectCartao.selectedIndex] 
+            ? selectCartao.options[selectCartao.selectedIndex].text 
+            : 'Cartão Fidelidade';
+        if (resumoCartaoEl) resumoCartaoEl.textContent = cartaoTexto;
+
+        if (resumoValorEl) resumoValorEl.textContent = 'R$ ' + valorVal;
+
+        if (modalConfirmarEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const modalInstance = bootstrap.Modal.getOrCreateInstance(modalConfirmarEl);
+            modalInstance.show();
+        } else {
+            if (confirm('ATENÇÃO: Este lançamento de pontos é definitivo e NÃO poderá ser estornado ou cancelado pelo estabelecimento.\n\nCliente: ' + inputNome.value.trim() + ' (' + formatarCpf(cpfVal) + ')\nValor: R$ ' + valorVal + '\n\nDeseja confirmar o crédito de pontos?')) {
+                formLancamento.dataset.confirmed = 'true';
+                formLancamento.submit();
+            }
+        }
+    }
+
+    if (btnIniciar) {
+        btnIniciar.addEventListener('click', function(e) {
+            e.preventDefault();
+            abrirModalConfirmacao();
+        });
     }
 
     if (formLancamento) {
@@ -418,58 +471,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (formLancamento.dataset.confirmed === 'true') {
                 return true;
             }
-
             e.preventDefault();
-
-            // Validação HTML5 nativa
-            if (!formLancamento.checkValidity()) {
-                formLancamento.reportValidity();
-                return;
-            }
-
-            // Validar CPF
-            const cpfVal = (inputCpf.value || '').replace(/\D/g, '');
-            if (cpfVal.length !== 11) {
-                alert('Informe um CPF válido com 11 dígitos.');
-                inputCpf.focus();
-                return;
-            }
-
-            // Validar Nome
-            if (!inputNome.value.trim()) {
-                alert('Informe o nome completo do cliente.');
-                inputNome.focus();
-                return;
-            }
-
-            // Validar Valor
-            const valorVal = (inputValor.value || '').trim();
-            if (!valorVal || valorVal === '0,00' || valorVal === '0') {
-                alert('Informe o valor da compra.');
-                inputValor.focus();
-                return;
-            }
-
-            // Preenche os dados no Modal de Confirmação
-            document.getElementById('modalResumoNome').textContent = inputNome.value.trim();
-            document.getElementById('modalResumoCpf').textContent = formatarCpf(cpfVal);
-            
-            const selectCartao = document.getElementById('lan_cartao');
-            const cartaoTexto = selectCartao && selectCartao.options[selectCartao.selectedIndex] 
-                ? selectCartao.options[selectCartao.selectedIndex].text 
-                : 'Cartão Fidelidade';
-            document.getElementById('modalResumoCartao').textContent = cartaoTexto;
-
-            document.getElementById('modalResumoValor').textContent = 'R$ ' + valorVal;
-
-            if (modalConfirmar) {
-                modalConfirmar.show();
-            } else {
-                if (confirm('ATENÇÃO: Este lançamento de pontos é definitivo e NÃO poderá ser estornado ou cancelado pelo estabelecimento.\n\nCliente: ' + inputNome.value.trim() + ' (' + formatarCpf(cpfVal) + ')\nValor: R$ ' + valorVal + '\n\nDeseja confirmar o crédito de pontos?')) {
-                    formLancamento.dataset.confirmed = 'true';
-                    formLancamento.submit();
-                }
-            }
+            abrirModalConfirmacao();
         });
     }
 

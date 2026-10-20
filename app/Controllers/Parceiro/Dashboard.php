@@ -515,17 +515,8 @@ class Dashboard extends BaseController
 
     public function excluirLancamento(int $id)
     {
-        $parceiro = $this->getParceiroLogado();
-        if (!$parceiro) return redirect()->to(base_url('parceiro/login'));
-
-        // Proteção contra exclusão indevida por lojistas
-        if (!session()->get('impersonated_by_adm')) {
-            return redirect()->to(base_url('parceiro/fidelidade/lancamentos'))
-                ->with('error', 'Por segurança e integridade do programa de fidelidade, lançamentos de pontos são definitivos e não podem ser estornados pelo lojista. Entre em contato com a administração do portal caso necessite de suporte.');
-        }
-
-        $this->lancamentoModel->where('lan_id', $id)->where('lan_parceiro', $parceiro->par_id)->delete();
-        return redirect()->to(base_url('parceiro/fidelidade/lancamentos'))->with('success', 'Lançamento estornado pela administração!');
+        return redirect()->to(base_url('parceiro/fidelidade/lancamentos'))
+            ->with('error', 'Por segurança e conformidade com o regulamento do programa de fidelidade, lançamentos de pontos são 100% definitivos e não podem ser estornados.');
     }
 
     public function validarResgate()
