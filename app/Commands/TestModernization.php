@@ -54,6 +54,22 @@ class TestModernization extends BaseCommand
             CLI::write("  - Loja Parceiro no Linefast: " . ($parc ? $parc->getLinefastStoreUrl() : 'N/A'));
         }
 
+        // 4. Teste de Consulta Fidelidade
+        $queryFidelidade = $db->table('tb_lancamentos as l')
+            ->select('l.*, p.par_id, p.par_nome, p.par_imagem, c.car_nome, c.car_percentagem, c.car_pontos')
+            ->join('tb_parceiros as p', 'p.par_id = l.lan_parceiro', 'left')
+            ->join('tb_cartoes as c', 'c.car_id = l.lan_cartao', 'left')
+            ->where('l.lan_cpf', '17166540842')
+            ->orderBy('l.lan_data', 'DESC')
+            ->get();
+        $lancamentos = $queryFidelidade->getResultArray();
+        CLI::write("\n✓ Teste Fidelidade (CPF 17166540842): " . count($lancamentos) . " lançamentos encontrados.", 'green');
+        $cliModel = new \App\Models\ClienteModel();
+        $cliClean = $cliModel->where('cli_cpf', '17166540842')->first();
+        $cliFormatted = $cliModel->where('cli_cpf', '171.665.408-42')->first();
+        CLI::write("  - Cliente por CPF limpo: " . ($cliClean ? $cliClean['cli_nome'] : 'não encontrado'));
+        CLI::write("  - Cliente por CPF formatado: " . ($cliFormatted ? $cliFormatted['cli_nome'] : 'não encontrado'));
+
         CLI::write("\n============================================", 'green');
         CLI::write(' TODOS OS TESTES FORAM EXECUTADOS COM SUCESSO!', 'green');
         CLI::write("============================================\n", 'green');

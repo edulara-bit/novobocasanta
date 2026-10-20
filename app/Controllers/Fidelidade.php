@@ -48,14 +48,25 @@ class Fidelidade extends BaseController
 
         if (!empty($cpfLimpo)) {
             $buscou = true;
-            $cliente = $this->clienteModel->where('cli_cpf', $cpfLimpo)->first();
+            $cpfFormatado = strlen($cpfLimpo) === 11 
+                ? preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $cpfLimpo) 
+                : $rawCpf;
+
+            $cliente = $this->clienteModel->groupStart()
+                ->where('cli_cpf', $cpfLimpo)
+                ->orWhere('cli_cpf', $cpfFormatado)
+                ->groupEnd()
+                ->first();
 
             $db = Database::connect();
             $query = $db->table('tb_lancamentos as l')
-                ->select('l.*, p.par_id, p.par_nome, p.par_foto, c.car_nome, c.car_percentagem, c.car_pontos')
+                ->select('l.*, p.par_id, p.par_nome, p.par_imagem, p.par_imagem as par_foto, c.car_nome, c.car_percentagem, c.car_pontos')
                 ->join('tb_parceiros as p', 'p.par_id = l.lan_parceiro', 'left')
                 ->join('tb_cartoes as c', 'c.car_id = l.lan_cartao', 'left')
-                ->where('l.lan_cpf', $cpfLimpo)
+                ->groupStart()
+                    ->where('l.lan_cpf', $cpfLimpo)
+                    ->orWhere('l.lan_cpf', $cpfFormatado)
+                ->groupEnd()
                 ->orderBy('l.lan_data', 'DESC')
                 ->get();
 
