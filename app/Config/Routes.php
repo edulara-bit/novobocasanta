@@ -58,6 +58,16 @@ $routes->group('parceiro', static function ($routes) {
     $routes->get('fidelidade/excluir-lancamento/(:num)', 'Parceiro\Dashboard::excluirLancamento/$1');
     $routes->post('fidelidade/validar-resgate', 'Parceiro\Dashboard::validarResgate');
     $routes->get('fidelidade/buscar-cliente', 'Parceiro\Dashboard::buscarClienteAjax');
+
+    // LineCash PDV (Cashback, Recebimento, Recargas, Resgates PIX)
+    $routes->get('linecash', 'Parceiro\Linecash::index');
+    $routes->get('linecash/consultar-cpf/(:segment)', 'Parceiro\Linecash::consultarCpf/$1');
+    $routes->post('linecash/cashback', 'Parceiro\Linecash::lancarCashback');
+    $routes->post('linecash/receber', 'Parceiro\Linecash::receberLinecash');
+    $routes->post('linecash/recarga', 'Parceiro\Linecash::solicitarRecarga');
+    $routes->post('linecash/resgate', 'Parceiro\Linecash::solicitarResgate');
+    $routes->post('linecash/config', 'Parceiro\Linecash::salvarConfig');
+    $routes->get('linecash/assinar-mp', 'Parceiro\Linecash::assinarMercadoPago');
 });
 
 // LGPD & POLÍTICAS
@@ -70,6 +80,7 @@ $routes->post('lgpd/consent', 'Lgpd::salvarConsentimento');
 // API & LINEFAST WEBHOOKS & CATEGORIAS
 $routes->group('api', static function ($routes) {
     $routes->post('linefast/webhook', 'Api\LinefastWebhook::index');
+    $routes->post('linecash/webhook-mp', 'Api\LinecashMpWebhook::index');
     $routes->get('categorias/subcategorias/(:num)', 'Api\Categorias::subcategorias/$1');
 });
 
@@ -157,6 +168,18 @@ $routes->group('admin', static function ($routes) {
     $routes->get('linefast/sync/(:num)', 'Admin\Linefast::sync/$1');
     $routes->get('linefast/toggle-test/(:num)', 'Admin\Linefast::toggleTest/$1');
 
+    // LineCash
+    $routes->get('linecash', 'Admin\Linecash::index');
+    $routes->get('linecash/depositos', 'Admin\Linecash::depositos');
+    $routes->post('linecash/depositos/manual', 'Admin\Linecash::criarDepositoManual');
+    $routes->get('linecash/depositos/aprovar/(:num)', 'Admin\Linecash::aprovarDeposito/$1');
+    $routes->post('linecash/depositos/rejeitar/(:num)', 'Admin\Linecash::rejeitarDeposito/$1');
+    $routes->get('linecash/resgates', 'Admin\Linecash::resgates');
+    $routes->post('linecash/resgates/pagar/(:num)', 'Admin\Linecash::confirmarPagamentoResgate/$1');
+    $routes->post('linecash/resgates/cancelar/(:num)', 'Admin\Linecash::cancelarResgate/$1');
+    $routes->get('linecash/extrato', 'Admin\Linecash::extrato');
+    $routes->get('linecash/contas', 'Admin\Linecash::contas');
+
     // LGPD
     $routes->get('lgpd', 'Admin\Lgpd::index');
     $routes->post('lgpd/salvar-pagina', 'Admin\Lgpd::salvarPagina');
@@ -164,6 +187,12 @@ $routes->group('admin', static function ($routes) {
     $routes->get('lgpd/anonimizar/(:num)', 'Admin\Lgpd::anonimizar/$1');
     $routes->get('lgpd/concluir/(:num)', 'Admin\Lgpd::concluir/$1');
 });
+
+// PORTAL PÚBLICO LINECASH (CLIENTES & PARCEIROS)
+$routes->get('linecash', 'Linecash::index');
+$routes->post('linecash/consultar', 'Linecash::consultar');
+$routes->get('linecash/sair', 'Linecash::sair');
+$routes->get('linecash/lojas', 'Linecash::lojas');
 
 // ROTAS DINÂMICAS DO PORTAL POR CIDADE
 $routes->get('(:segment)/busca', 'Ofertas::busca/$1');

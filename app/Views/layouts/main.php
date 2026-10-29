@@ -55,7 +55,8 @@
                 <a href="#modalSelectCity" data-bs-toggle="modal" class="badge bg-secondary text-white text-decoration-none">Alterar Cidade</a>
             </div>
             <div class="d-flex align-items-center gap-3">
-                <a href="<?= base_url('fidelidade') ?>"><i class="fa-solid fa-coins me-1 text-warning"></i> Clube Fidelidade & Cashback</a>
+                <a href="<?= base_url('linecash') ?>" class="text-warning fw-bold"><i class="fa-solid fa-coins me-1"></i> LineCash</a>
+                <a href="<?= base_url('fidelidade') ?>"><i class="fa-solid fa-stamp me-1"></i> Cartão Fidelidade</a>
                 <a href="<?= base_url('anuncie') ?>"><i class="fa-solid fa-bullhorn me-1"></i> Anuncie Conosco</a>
                 <a href="<?= base_url('parceiro/login') ?>"><i class="fa-solid fa-store me-1"></i> Painel do Parceiro</a>
                 <a href="<?= base_url('admin/login') ?>"><i class="fa-solid fa-lock me-1"></i> Admin</a>

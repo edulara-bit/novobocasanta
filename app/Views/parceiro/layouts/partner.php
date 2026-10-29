@@ -76,6 +76,11 @@
                             <i class="fa-solid fa-stamp me-1"></i> Lançar Pontos
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="<?= base_url('parceiro/linecash') ?>" class="nav-link fw-bold text-success <?= str_contains(uri_string(), 'parceiro/linecash') ? 'active' : '' ?>" style="background: rgba(34, 197, 94, 0.1); border-radius: 20px; padding: 6px 14px;">
+                            <i class="fa-solid fa-coins me-1"></i> LineCash PDV
+                        </a>
+                    </li>
                 </ul>
 
                 <div class="d-flex align-items-center gap-2">

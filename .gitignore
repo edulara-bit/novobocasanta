@@ -128,5 +128,6 @@ _modules/*
 # Arquivos Pesados Locais & Dumps
 Originais/
 *.sql
+!app/Database/Migrations/*.sql
 *.zip
 *.tar.gz

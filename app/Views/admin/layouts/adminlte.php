@@ -90,6 +90,47 @@
                             <p>Integração Linefast</p>
                         </a>
                     </li>
+                    <li class="nav-item <?= str_contains(uri_string(), 'admin/linecash') ? 'menu-open' : '' ?>">
+                        <a href="<?= base_url('admin/linecash') ?>" class="nav-link <?= str_contains(uri_string(), 'admin/linecash') ? 'active' : '' ?>">
+                            <i class="nav-icon fas fa-coins text-warning"></i>
+                            <p>
+                                LineCash (Fidelidade)
+                                <i class="right fas fa-angle-left"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a href="<?= base_url('admin/linecash') ?>" class="nav-link <?= uri_string() === 'admin/linecash' ? 'active' : '' ?>">
+                                    <i class="far fa-circle nav-icon text-info"></i>
+                                    <p>Visão Geral</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="<?= base_url('admin/linecash/depositos') ?>" class="nav-link <?= str_contains(uri_string(), 'admin/linecash/depositos') ? 'active' : '' ?>">
+                                    <i class="far fa-circle nav-icon text-success"></i>
+                                    <p>Recargas / Depósitos</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="<?= base_url('admin/linecash/resgates') ?>" class="nav-link <?= str_contains(uri_string(), 'admin/linecash/resgates') ? 'active' : '' ?>">
+                                    <i class="far fa-circle nav-icon text-danger"></i>
+                                    <p>Resgates PIX</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="<?= base_url('admin/linecash/extrato') ?>" class="nav-link <?= str_contains(uri_string(), 'admin/linecash/extrato') ? 'active' : '' ?>">
+                                    <i class="far fa-circle nav-icon text-warning"></i>
+                                    <p>Livro-Razão (Extrato)</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="<?= base_url('admin/linecash/contas') ?>" class="nav-link <?= str_contains(uri_string(), 'admin/linecash/contas') ? 'active' : '' ?>">
+                                    <i class="far fa-circle nav-icon text-primary"></i>
+                                    <p>Contas & Carteiras</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
                     <li class="nav-item">
                         <a href="<?= base_url('admin/lgpd') ?>" class="nav-link <?= str_contains(uri_string(), 'admin/lgpd') ? 'active' : '' ?>">
                             <i class="nav-icon fas fa-user-shield text-info"></i>
