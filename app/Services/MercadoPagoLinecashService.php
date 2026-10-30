@@ -44,9 +44,10 @@ class MercadoPagoLinecashService
     /**
      * Cria ou obtém o link de assinatura de R$ 20,00/mês para o lojista
      */
-    public function gerarLinkAssinatura(int $lojistaContaId, string $lojistaEmail, string $lojaNome): array
+    public function gerarLinkAssinatura(int|string $lojistaContaId, string $lojistaEmail, string $lojaNome): array
     {
-        $assinatura = $this->assinaturaModel->where('lca_lojista_id', $lojistaContaId)->first();
+        $contaId = (int)$lojistaContaId;
+        $assinatura = $this->assinaturaModel->where('lca_lojista_id', $contaId)->first();
 
         // Se já está ativa
         if ($assinatura && $assinatura['lca_status'] === 'ativa') {

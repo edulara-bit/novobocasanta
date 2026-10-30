@@ -30,16 +30,17 @@ class LcTransacaoModel extends Model
     /**
      * Retorna extrato detalhado de uma conta (créditos e débitos)
      */
-    public function getExtratoByConta(int $contaId, int $limit = 50): array
+    public function getExtratoByConta(int|string $contaId, int $limit = 50): array
     {
+        $id = (int)$contaId;
         return $this->select('tb_lc_transacoes.*, 
                              co.lcc_nome as origem_nome, co.lcc_tipo as origem_tipo, 
                              cd.lcc_nome as destino_nome, cd.lcc_tipo as destino_tipo')
                     ->join('tb_lc_contas co', 'co.lcc_id = tb_lc_transacoes.lct_origem_id', 'left')
                     ->join('tb_lc_contas cd', 'cd.lcc_id = tb_lc_transacoes.lct_destino_id', 'left')
                     ->groupStart()
-                        ->where('lct_origem_id', $contaId)
-                        ->orWhere('lct_destino_id', $contaId)
+                        ->where('lct_origem_id', $id)
+                        ->orWhere('lct_destino_id', $id)
                     ->groupEnd()
                     ->orderBy('lct_id', 'DESC')
                     ->findAll($limit);

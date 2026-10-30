@@ -49,25 +49,26 @@ class LinecashService
     /**
      * Obtém ou cria a conta LineCash de um Parceiro/Lojista
      */
-    public function getOrCreateContaLojista(int $parceiroId): array
+    public function getOrCreateContaLojista(int|string $parceiroId): array
     {
-        $conta = $this->contaModel->findByParceiroId($parceiroId);
+        $id = (int)$parceiroId;
+        $conta = $this->contaModel->findByParceiroId($id);
         if ($conta) {
             return $conta;
         }
 
-        $parceiro = $this->parceiroModel->find($parceiroId);
+        $parceiro = $this->parceiroModel->find($id);
         if (!$parceiro) {
-            throw new Exception("Parceiro ID {$parceiroId} não encontrado no sistema.");
+            throw new Exception("Parceiro ID {$id} não encontrado no sistema.");
         }
 
-        $doc = !empty($parceiro->par_cnpj) ? $this->cleanDoc($parceiro->par_cnpj) : 'PAR' . $parceiroId;
-        $nome = (string)($parceiro->getNome() ?: 'Lojista #' . $parceiroId);
+        $doc = !empty($parceiro->par_cnpj) ? $this->cleanDoc($parceiro->par_cnpj) : 'PAR' . $id;
+        $nome = (string)($parceiro->getNome() ?: 'Lojista #' . $id);
         $whatsapp = (string)($parceiro->par_whatsapp ?: $parceiro->par_telefone ?: '');
 
         $contaId = $this->contaModel->insert([
             'lcc_tipo'             => 'lojista',
-            'lcc_referencia_id'    => $parceiroId,
+            'lcc_referencia_id'    => $id,
             'lcc_cpf_cnpj'         => $doc,
             'lcc_nome'             => $nome,
             'lcc_whatsapp'         => $whatsapp,
@@ -80,7 +81,7 @@ class LinecashService
 
         // Cria configuração padrão se não existir
         $this->configModel->ignore(true)->insert([
-            'lcf_lojista_id'        => $contaId,
+            'lcf_lojista_id'        => (int)$contaId,
             'lcf_percentual_padrao' => 1.00,
         ]);
 
@@ -135,8 +136,9 @@ class LinecashService
      * Valor mínimo R$ 100,00
      * 90% em LC creditado após aprovação | 10% comissão Boca Santa
      */
-    public function solicitarDeposito(int $lojistaContaId, float $valorReais, ?string $comprovanteUrl = null, ?string $obs = null): array
+    public function solicitarDeposito(int|string $lojistaContaId, float $valorReais, ?string $comprovanteUrl = null, ?string $obs = null): array
     {
+        $contaId = (int)$lojistaContaId;
         if ($valorReais < 100.00) {
             return ['success' => false, 'message' => 'O valor mínimo de depósito é de R$ 100,00.'];
         }
@@ -145,7 +147,7 @@ class LinecashService
         $valorLc = round($valorReais - $taxaBs, 2);
 
         $depositoId = $this->depositoModel->insert([
-            'lcd_lojista_id'         => $lojistaContaId,
+            'lcd_lojista_id'         => $contaId,
             'lcd_valor_reais'        => $valorReais,
             'lcd_valor_lc_creditado' => $valorLc,
             'lcd_taxa_bs_reais'      => $taxaBs,
@@ -158,7 +160,7 @@ class LinecashService
         return [
             'success'     => true,
             'message'     => 'Solicitação de recarga enviada com sucesso para aprovação.',
-            'deposito_id' => $depositoId,
+            'deposito_id' => (int)$depositoId,
             'valor_lc'    => $valorLc,
             'taxa_bs'     => $taxaBs,
         ];
@@ -167,11 +169,13 @@ class LinecashService
     /**
      * Aprovação de depósito pelo Administrador
      */
-    public function aprovarDeposito(int $depositoId, int $adminId): array
+    public function aprovarDeposito(int|string $depositoId, int|string $adminId): array
     {
+        $depId = (int)$depositoId;
+        $admId = (int)$adminId;
         $this->db->transStart();
 
-        $deposito = $this->depositoModel->find($depositoId);
+        $deposito = $this->depositoModel->find($depId);
         if (!$deposito) {
             $this->db->transRollback();
             return ['success' => false, 'message' => 'Depósito não encontrado.'];
@@ -231,17 +235,19 @@ class LinecashService
     /**
      * Rejeição de depósito pelo Administrador
      */
-    public function rejeitarDeposito(int $depositoId, int $adminId, string $motivo): array
+    public function rejeitarDeposito(int|string $depositoId, int|string $adminId, string $motivo): array
     {
-        $deposito = $this->depositoModel->find($depositoId);
+        $depId = (int)$depositoId;
+        $admId = (int)$adminId;
+        $deposito = $this->depositoModel->find($depId);
         if (!$deposito || $deposito['lcd_status'] !== 'pendente') {
             return ['success' => false, 'message' => 'Depósito não encontrado ou já processado.'];
         }
 
-        $this->depositoModel->update($depositoId, [
+        $this->depositoModel->update($depId, [
             'lcd_status'       => 'rejeitado',
             'lcd_observacao'   => $motivo,
-            'lcd_aprovado_por' => $adminId,
+            'lcd_aprovado_por' => $admId,
             'lcd_aprovado_em'  => date('Y-m-d H:i:s'),
         ]);
 
@@ -253,7 +259,7 @@ class LinecashService
      * Regra: Mínimo 1% configurável
      */
     public function lancarCashbackPdv(
-        int $lojistaContaId,
+        int|string $lojistaContaId,
         string $clienteCpf,
         float $valorCompra,
         float $percentualCashback,
@@ -261,6 +267,7 @@ class LinecashService
         ?string $clienteNome = null,
         ?string $clienteWhatsapp = null
     ): array {
+        $contaId = (int)$lojistaContaId;
         if ($valorCompra <= 0) {
             return ['success' => false, 'message' => 'Valor da compra inválido.'];
         }
@@ -276,7 +283,7 @@ class LinecashService
 
         $this->db->transStart();
 
-        $contaLojista = $this->contaModel->find($lojistaContaId);
+        $contaLojista = $this->contaModel->find($contaId);
         if (!$contaLojista) {
             $this->db->transRollback();
             return ['success' => false, 'message' => 'Conta do lojista não encontrada.'];
@@ -358,8 +365,9 @@ class LinecashService
      * Pagamento com LineCash (Cliente paga a compra -> Lojista)
      * Regra de Negócio: Mínimo 100 LC (R$ 100,00)
      */
-    public function pagarComLinecash(int $lojistaContaId, string $clienteCpf, float $valorLc): array
+    public function pagarComLinecash(int|string $lojistaContaId, string $clienteCpf, float $valorLc): array
     {
+        $contaId = (int)$lojistaContaId;
         if ($valorLc < 100.00) {
             return [
                 'success' => false,
@@ -382,7 +390,7 @@ class LinecashService
             ];
         }
 
-        $contaLojista = $this->contaModel->find($lojistaContaId);
+        $contaLojista = $this->contaModel->find($contaId);
         if (!$contaLojista) {
             return ['success' => false, 'message' => 'Conta do lojista não encontrada.'];
         }
@@ -434,13 +442,14 @@ class LinecashService
      * Solicitação de Resgate PIX pelo Lojista (LC -> Real)
      * Regra: Mínimo 100 LC, 2% de deságio retido para o Boca Santa
      */
-    public function solicitarResgatePix(int $lojistaContaId, float $valorLc, string $chavePix, ?string $tipoChave = null): array
+    public function solicitarResgatePix(int|string $lojistaContaId, float $valorLc, string $chavePix, ?string $tipoChave = null): array
     {
+        $contaId = (int)$lojistaContaId;
         if ($valorLc < 100.00) {
             return ['success' => false, 'message' => 'O resgate mínimo é de 100 LC.'];
         }
 
-        $conta = $this->contaModel->find($lojistaContaId);
+        $conta = $this->contaModel->find($contaId);
         if (!$conta) {
             return ['success' => false, 'message' => 'Conta do lojista não encontrada.'];
         }
@@ -492,11 +501,13 @@ class LinecashService
     /**
      * Confirmação do pagamento do resgate PIX pelo Administrador
      */
-    public function confirmarPagamentoResgate(int $resgateId, int $adminId, ?string $comprovantePix = null, ?string $obs = null): array
+    public function confirmarPagamentoResgate(int|string $resgateId, int|string $adminId, ?string $comprovantePix = null, ?string $obs = null): array
     {
+        $rId = (int)$resgateId;
+        $admId = (int)$adminId;
         $this->db->transStart();
 
-        $resgate = $this->resgateModel->find($resgateId);
+        $resgate = $this->resgateModel->find($rId);
         if (!$resgate || $resgate['lcr_status'] !== 'pendente') {
             $this->db->transRollback();
             return ['success' => false, 'message' => 'Pedido de resgate não encontrado ou já finalizado.'];
@@ -534,11 +545,11 @@ class LinecashService
         ]);
 
         // Atualiza status do resgate
-        $this->resgateModel->update($resgateId, [
+        $this->resgateModel->update($rId, [
             'lcr_status'          => 'pago',
             'lcr_comprovante_pix' => $comprovantePix,
             'lcr_observacao'      => $obs,
-            'lcr_pago_por'        => $adminId,
+            'lcr_pago_por'        => $admId,
             'lcr_pago_em'         => date('Y-m-d H:i:s'),
         ]);
 
@@ -554,11 +565,13 @@ class LinecashService
     /**
      * Cancelamento de resgate PIX pelo Administrador (devolve saldo bloqueado)
      */
-    public function cancelarResgatePix(int $resgateId, int $adminId, string $motivo): array
+    public function cancelarResgatePix(int|string $resgateId, int|string $adminId, string $motivo): array
     {
+        $rId = (int)$resgateId;
+        $admId = (int)$adminId;
         $this->db->transStart();
 
-        $resgate = $this->resgateModel->find($resgateId);
+        $resgate = $this->resgateModel->find($rId);
         if (!$resgate || $resgate['lcr_status'] !== 'pendente') {
             $this->db->transRollback();
             return ['success' => false, 'message' => 'Pedido de resgate não encontrado ou já finalizado.'];
@@ -572,10 +585,10 @@ class LinecashService
             ]);
         }
 
-        $this->resgateModel->update($resgateId, [
+        $this->resgateModel->update($rId, [
             'lcr_status'     => 'cancelado',
             'lcr_observacao' => $motivo,
-            'lcr_pago_por'   => $adminId,
+            'lcr_pago_por'   => $admId,
             'lcr_pago_em'    => date('Y-m-d H:i:s'),
         ]);
 

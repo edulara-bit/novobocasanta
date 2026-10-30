@@ -40,10 +40,11 @@ class LcContaModel extends Model
     /**
      * Busca conta vinculada a um parceiro
      */
-    public function findByParceiroId(int $parId): ?array
+    public function findByParceiroId(int|string $parId): ?array
     {
+        $id = (int)$parId;
         return $this->where('lcc_tipo', 'lojista')
-                    ->where('lcc_referencia_id', $parId)
+                    ->where('lcc_referencia_id', $id)
                     ->first();
     }
 }

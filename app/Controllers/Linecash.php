@@ -40,7 +40,7 @@ class Linecash extends BaseController
         if (!empty($clienteCpf)) {
             $conta = $this->contaModel->findByDoc($clienteCpf);
             if ($conta) {
-                $extrato = $this->transacaoModel->getExtratoByConta($conta['lcc_id'], 20);
+                $extrato = $this->transacaoModel->getExtratoByConta((int)$conta['lcc_id'], 20);
             }
         }
 

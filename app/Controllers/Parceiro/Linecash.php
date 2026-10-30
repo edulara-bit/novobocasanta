@@ -63,20 +63,21 @@ class Linecash extends BaseController
         }
 
         $conta = $this->linecashService->getOrCreateContaLojista($parceiro->par_id);
-        $config = $this->configModel->find($conta['lcc_id']);
+        $contaId = (int)$conta['lcc_id'];
+        $config = $this->configModel->find($contaId);
         if (!$config) {
             $this->configModel->ignore(true)->insert([
-                'lcf_lojista_id'        => $conta['lcc_id'],
+                'lcf_lojista_id'        => $contaId,
                 'lcf_percentual_padrao' => 1.00,
             ]);
-            $config = $this->configModel->find($conta['lcc_id']);
+            $config = $this->configModel->find($contaId);
         }
 
-        $assinatura = $this->assinaturaModel->where('lca_lojista_id', $conta['lcc_id'])->first();
+        $assinatura = $this->assinaturaModel->where('lca_lojista_id', $contaId)->first();
 
-        $ultimasTransacoes = $this->transacaoModel->getExtratoByConta($conta['lcc_id'], 20);
-        $depositos = $this->depositoModel->where('lcd_lojista_id', $conta['lcc_id'])->orderBy('lcd_id', 'DESC')->findAll(10);
-        $resgates = $this->resgateModel->where('lcr_lojista_id', $conta['lcc_id'])->orderBy('lcr_id', 'DESC')->findAll(10);
+        $ultimasTransacoes = $this->transacaoModel->getExtratoByConta($contaId, 20);
+        $depositos = $this->depositoModel->where('lcd_lojista_id', $contaId)->orderBy('lcd_id', 'DESC')->findAll(10);
+        $resgates = $this->resgateModel->where('lcr_lojista_id', $contaId)->orderBy('lcr_id', 'DESC')->findAll(10);
 
         return view('parceiro/linecash/index', [
             'title'             => 'LineCash PDV - Caixa e Fidelidade',
@@ -130,6 +131,7 @@ class Linecash extends BaseController
         }
 
         $conta = $this->linecashService->getOrCreateContaLojista($parceiro->par_id);
+        $contaId = (int)$conta['lcc_id'];
 
         $cpf = (string)$this->request->getPost('cpf');
         $valorCompra = (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('valor_compra'));
@@ -148,7 +150,7 @@ class Linecash extends BaseController
         }
 
         $res = $this->linecashService->lancarCashbackPdv(
-            $conta['lcc_id'],
+            $contaId,
             $cpf,
             $valorCompra,
             $percentual,
@@ -159,7 +161,7 @@ class Linecash extends BaseController
 
         if ($res['success']) {
             // Busca dados da vitrine LineFast do lojista
-            $config = $this->configModel->find($conta['lcc_id']);
+            $config = $this->configModel->find($contaId);
             $clienteWhats = $res['cliente']['lcc_whatsapp'] ?? $whatsapp;
             $clienteNome = $res['cliente']['lcc_nome'] ?? $nome;
 
@@ -197,11 +199,12 @@ class Linecash extends BaseController
         }
 
         $conta = $this->linecashService->getOrCreateContaLojista($parceiro->par_id);
+        $contaId = (int)$conta['lcc_id'];
 
         $cpf = (string)$this->request->getPost('cpf_pagamento');
         $valorLc = (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('valor_lc'));
 
-        $res = $this->linecashService->pagarComLinecash($conta['lcc_id'], $cpf, $valorLc);
+        $res = $this->linecashService->pagarComLinecash($contaId, $cpf, $valorLc);
 
         if ($res['success']) {
             $cleanCpf = $this->linecashService->cleanDoc($cpf);
@@ -238,12 +241,13 @@ class Linecash extends BaseController
         }
 
         $conta = $this->linecashService->getOrCreateContaLojista($parceiro->par_id);
+        $contaId = (int)$conta['lcc_id'];
 
         $valorReais = (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('valor_recarga'));
         $comprovanteUrl = trim((string)$this->request->getPost('comprovante_url'));
         $obs = trim((string)$this->request->getPost('observacao'));
 
-        $res = $this->linecashService->solicitarDeposito($conta['lcc_id'], $valorReais, $comprovanteUrl ?: null, $obs ?: null);
+        $res = $this->linecashService->solicitarDeposito($contaId, $valorReais, $comprovanteUrl ?: null, $obs ?: null);
 
         if ($res['success']) {
             return redirect()->to(base_url('parceiro/linecash'))->with('success', $res['message']);
@@ -263,12 +267,13 @@ class Linecash extends BaseController
         }
 
         $conta = $this->linecashService->getOrCreateContaLojista($parceiro->par_id);
+        $contaId = (int)$conta['lcc_id'];
 
         $valorLc = (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('valor_resgate'));
         $chavePix = trim((string)$this->request->getPost('chave_pix'));
         $tipoChave = trim((string)$this->request->getPost('tipo_chave'));
 
-        $res = $this->linecashService->solicitarResgatePix($conta['lcc_id'], $valorLc, $chavePix, $tipoChave ?: null);
+        $res = $this->linecashService->solicitarResgatePix($contaId, $valorLc, $chavePix, $tipoChave ?: null);
 
         if ($res['success']) {
             return redirect()->to(base_url('parceiro/linecash'))->with('success', $res['message']);
@@ -288,10 +293,11 @@ class Linecash extends BaseController
         }
 
         $conta = $this->linecashService->getOrCreateContaLojista($parceiro->par_id);
+        $contaId = (int)$conta['lcc_id'];
         $email = (string)($parceiro->par_email ?: 'lojista' . $parceiro->par_id . '@bocasanta.com.br');
         $nome = (string)($parceiro->getNome() ?: 'Lojista #' . $parceiro->par_id);
 
-        $res = $this->mpService->gerarLinkAssinatura($conta['lcc_id'], $email, $nome);
+        $res = $this->mpService->gerarLinkAssinatura($contaId, $email, $nome);
 
         if ($res['success'] && !empty($res['checkout_url'])) {
             return redirect()->to($res['checkout_url']);
@@ -311,6 +317,7 @@ class Linecash extends BaseController
         }
 
         $conta = $this->linecashService->getOrCreateContaLojista($parceiro->par_id);
+        $contaId = (int)$conta['lcc_id'];
 
         $percentual = (float)str_replace(',', '.', (string)$this->request->getPost('percentual_padrao'));
         $tituloDestaque = trim((string)$this->request->getPost('produto_destaque_titulo'));
@@ -318,7 +325,7 @@ class Linecash extends BaseController
         $msgCustom = trim((string)$this->request->getPost('mensagem_customizada'));
 
         $this->configModel->save([
-            'lcf_lojista_id'             => $conta['lcc_id'],
+            'lcf_lojista_id'             => $contaId,
             'lcf_percentual_padrao'      => max(1.0, $percentual),
             'lcf_produto_destaque_titulo'=> $tituloDestaque ?: null,
             'lcf_produto_destaque_url'   => $urlDestaque ?: null,
