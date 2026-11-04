@@ -65,6 +65,44 @@
         </div>
     <?php endif; ?>
 
+    <!-- CARD: LINK DE CADASTRO PARA O LOJISTA ENVIAR AO CLIENTE -->
+    <?php 
+    $slugLoja = !empty($parceiro->par_slug) ? $parceiro->par_slug : $parceiro->par_id;
+    $linkCadastroCli = base_url('linecash/cadastro?loja=' . $slugLoja);
+    $nomeLoja = $parceiro->getNome() ?: 'Nossa Loja';
+    $textoWhatsCli = rawurlencode("Olá! Cadastre-se gratuitamente no LineCash para ganhar cashback e descontos nas suas compras aqui na {$nomeLoja}: {$linkCadastroCli}");
+    ?>
+    <div class="col-12">
+        <div class="card border-0 rounded-4 shadow-sm bg-white overflow-hidden p-3 p-md-4">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center justify-content-center bg-warning bg-opacity-20 text-dark rounded-circle" style="width: 52px; height: 52px; min-width: 52px;">
+                        <i class="fa-solid fa-share-nodes fs-4 text-warning-emphasis"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <h6 class="fw-bold text-dark mb-0">Link de Cadastro para seus Clientes</h6>
+                            <span class="badge bg-success-subtle text-success border px-2 py-0 rounded-pill small fw-bold">Sugestão</span>
+                        </div>
+                        <p class="text-muted small mb-0">
+                            Envie este link no WhatsApp para seu cliente se cadastrar no LineCash. Ao comprar no seu caixa, ele já acumula cashback direto pelo CPF!
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center">
+                    <input type="text" class="form-control form-control-sm text-muted bg-light font-monospace" style="min-width: 260px;" value="<?= $linkCadastroCli ?>" readonly id="inputLinkLojista">
+                    <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-3 text-nowrap fw-bold" onclick="copiarLinkCadastro('<?= $linkCadastroCli ?>')" id="btnCopiarLinkLojista">
+                        <i class="fa-solid fa-copy me-1"></i> Copiar Link
+                    </button>
+                    <a href="https://api.whatsapp.com/send?text=<?= $textoWhatsCli ?>" target="_blank" class="btn btn-sm btn-success rounded-pill px-3 text-nowrap fw-bold shadow-sm">
+                        <i class="fa-brands fa-whatsapp me-1 fs-6"></i> Enviar WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ABAS PRINCIPAIS DO PDV -->
     <div class="col-12">
         <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
@@ -146,7 +184,7 @@
                                                 <label class="form-label fw-bold">Valor Total da Compra (R$) <span class="text-danger">*</span></label>
                                                 <div class="input-group input-group-lg">
                                                     <span class="input-group-text bg-white fw-bold">R$</span>
-                                                    <input type="text" name="valor_compra" id="valorCompra" class="form-control fw-bold text-dark" placeholder="100,00" required>
+                                                    <input type="text" name="valor_compra" id="valorCompra" class="form-control fw-bold text-dark mascara-moeda" placeholder="0,00" required inputmode="numeric" autocomplete="off">
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
@@ -644,18 +682,40 @@ document.addEventListener('DOMContentLoaded', function() {
     const nomeClienteInput = document.getElementById('nomeCliente');
     const whatsappClienteInput = document.getElementById('whatsappCliente');
 
+    // Máscara monetária tipo maquininha (centavos contínuos)
+    function aplicarMascaraMoeda(el) {
+        let v = el.value.replace(/\D/g, '');
+        if (!v) {
+            el.value = '';
+            return;
+        }
+        let num = (parseInt(v, 10) / 100).toFixed(2);
+        let parts = num.split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        el.value = parts.join(',');
+    }
+
+    document.querySelectorAll('.mascara-moeda').forEach(input => {
+        input.addEventListener('input', function() {
+            aplicarMascaraMoeda(this);
+            if (this.id === 'valorCompra') {
+                recalcularCashback();
+            }
+        });
+    });
+
     // Máscara e cálculo em tempo real do cashback
     function recalcularCashback() {
+        if (!valorCompraInput || !calcValorLc) return;
         const rawValor = (valorCompraInput.value || '0').replace(/\./g, '').replace(',', '.');
-        const rawPerc = (percentualInput.value || '1').replace(',', '.');
+        const rawPerc = (percentualInput ? percentualInput.value || '1' : '1').replace(',', '.');
         const valor = parseFloat(rawValor) || 0;
         const perc = parseFloat(rawPerc) || 1;
         const lc = (valor * (perc / 100)).toFixed(2);
         calcValorLc.textContent = lc.replace('.', ',') + ' LC';
     }
 
-    if (valorCompraInput && percentualInput) {
-        valorCompraInput.addEventListener('input', recalcularCashback);
+    if (percentualInput) {
         percentualInput.addEventListener('input', recalcularCashback);
     }
 
@@ -677,7 +737,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (nomeClienteInput && data.nome) nomeClienteInput.value = data.nome;
                     if (whatsappClienteInput && data.whatsapp) whatsappClienteInput.value = data.whatsapp;
                 } else {
-                    statusCpfCliente.innerHTML = `<span class="text-info"><i class="fa-solid fa-user-plus"></i> Novo cliente! Informe o nome e WhatsApp para cadastrar.</span>`;
+                    const linkConvite = '<?= $linkCadastroCli ?>';
+                    const whatsConvite = 'https://api.whatsapp.com/send?text=' + encodeURIComponent('Olá! Cadastre-se no LineCash para acumular seu cashback nas suas compras aqui na <?= addslashes($nomeLoja) ?>: ' + linkConvite);
+                    statusCpfCliente.innerHTML = `<span class="text-info"><i class="fa-solid fa-user-plus"></i> Novo cliente! Informe o nome e WhatsApp abaixo, ou <a href="${whatsConvite}" target="_blank" class="fw-bold text-success text-decoration-underline"><i class="fa-brands fa-whatsapp"></i> envie o link de cadastro para ele</a>.</span>`;
                 }
             })
             .catch(() => {
@@ -687,6 +749,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (btnBuscarCpf) btnBuscarCpf.addEventListener('click', buscarCpf);
     if (cpfCashbackInput) {
+        // Máscara de CPF
+        cpfCashbackInput.addEventListener('input', function(e) {
+            let v = e.target.value.replace(/\D/g, '');
+            if (v.length > 11) v = v.substring(0, 11);
+            if (v.length > 9) {
+                e.target.value = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+            } else if (v.length > 6) {
+                e.target.value = v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+            } else if (v.length > 3) {
+                e.target.value = v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+            } else {
+                e.target.value = v;
+            }
+        });
         cpfCashbackInput.addEventListener('blur', buscarCpf);
     }
 
@@ -723,6 +799,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const simulaResgate = document.getElementById('simulaResgate');
     if (valorResgateInput && simulaResgate) {
         valorResgateInput.addEventListener('input', function() {
+            aplicarMascaraMoeda(this);
             const raw = (this.value || '0').replace(/\./g, '').replace(',', '.');
             const lc = parseFloat(raw) || 0;
             const desagio = (lc * 0.02).toFixed(2);
@@ -730,6 +807,28 @@ document.addEventListener('DOMContentLoaded', function() {
             simulaResgate.textContent = `Deságio 2%: R$ ${desagio.replace('.', ',')} | Líquido a receber: R$ ${liq.replace('.', ',')}`;
         });
     }
+
+    // Função de copiar link de cadastro do lojista
+    window.copiarLinkCadastro = function(link) {
+        if (!navigator.clipboard) {
+            prompt('Copie o link abaixo:', link);
+            return;
+        }
+        navigator.clipboard.writeText(link).then(() => {
+            const btn = document.getElementById('btnCopiarLinkLojista');
+            if (btn) {
+                const origHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i> Link Copiado!';
+                btn.classList.add('border-success');
+                setTimeout(() => {
+                    btn.innerHTML = origHtml;
+                    btn.classList.remove('border-success');
+                }, 2500);
+            }
+        }).catch(() => {
+            prompt('Copie o link abaixo:', link);
+        });
+    };
 });
 </script>
 <?= $this->endSection() ?>

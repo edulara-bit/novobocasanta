@@ -17,10 +17,10 @@ $routes->get('anuncie', 'Conteudo::anuncie');
 $routes->get('anuncie-no-boca-santa-ofertas', 'Conteudo::anuncie');
 $routes->post('anuncie/enviar', 'Conteudo::enviarProposta');
 
-// CLUBE FIDELIDADE & CASHBACK PÚBLICO (CONSULTA CPF)
-$routes->get('fidelidade', 'Fidelidade::index');
-$routes->post('fidelidade/consultar', 'Fidelidade::consultar');
-$routes->get('cashback', 'Fidelidade::index');
+// CLUBE FIDELIDADE & CASHBACK PÚBLICO (REDIRECIONADO/SUBSTITUÍDO PELO LINECASH)
+$routes->get('fidelidade', 'Linecash::index');
+$routes->post('fidelidade/consultar', 'Linecash::consultar');
+$routes->get('cashback', 'Linecash::index');
 $routes->get('parceiros', 'Parceiros::index/piracicaba');
 
 // PAINEL DO PARCEIRO (ÁREA RESTRITA)
@@ -193,6 +193,8 @@ $routes->get('linecash', 'Linecash::index');
 $routes->post('linecash/consultar', 'Linecash::consultar');
 $routes->get('linecash/sair', 'Linecash::sair');
 $routes->get('linecash/lojas', 'Linecash::lojas');
+$routes->get('linecash/cadastro', 'Linecash::cadastro');
+$routes->post('linecash/cadastrar', 'Linecash::cadastrarCliente');
 
 // ROTAS DINÂMICAS DO PORTAL POR CIDADE
 $routes->get('(:segment)/busca', 'Ofertas::busca/$1');

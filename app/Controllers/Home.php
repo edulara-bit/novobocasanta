@@ -36,10 +36,11 @@ class Home extends BaseController
 
         $cidadeId = (int)$cidade['cid_id'];
 
-        // Ofertas em Destaque
+        // Ofertas em Destaque (Ordem Randômica)
         $ofertasDestaque = $this->produtoModel->getOfertas([
             'cidade_id' => $cidadeId,
             'destaque'  => 1,
+            'ordem'     => 'random',
         ], 8);
 
         // Produtos integrados do Linefast (excluindo parceiros de testes)

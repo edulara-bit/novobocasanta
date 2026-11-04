@@ -58,9 +58,16 @@
                                 <small class="text-muted">Seus créditos ficam guardados com segurança no seu CPF.</small>
                             </div>
 
-                            <button type="submit" class="btn btn-warning btn-lg w-100 rounded-pill fw-bold py-3 shadow-sm text-dark">
+                            <button type="submit" class="btn btn-warning btn-lg w-100 rounded-pill fw-bold py-3 shadow-sm text-dark mb-3">
                                 <i class="fa-solid fa-magnifying-glass me-2"></i> Ver Meus LineCash
                             </button>
+
+                            <div class="text-center pt-2 border-top">
+                                <span class="text-muted small">Ainda não tem conta LineCash?</span><br>
+                                <a href="<?= base_url('linecash/cadastro') ?>" class="btn btn-sm btn-outline-dark rounded-pill fw-bold px-3 py-1 mt-2">
+                                    <i class="fa-solid fa-user-plus me-1 text-warning"></i> Criar Cadastro Gratuito
+                                </a>
+                            </div>
                         </form>
                     <?php else: ?>
                         <!-- SALDO ENCONTRADO DO CONSUMIDOR -->

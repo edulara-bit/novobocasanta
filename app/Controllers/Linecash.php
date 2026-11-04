@@ -112,4 +112,99 @@ class Linecash extends BaseController
             'lojas' => $lojas,
         ]);
     }
+
+    /**
+     * Tela pública de cadastro do cliente no LineCash (com link de indicação do lojista)
+     */
+    public function cadastro()
+    {
+        $lojaParam = trim((string)($this->request->getGet('loja') ?? $this->request->getGet('lojista') ?? ''));
+        $parceiroIndicador = null;
+
+        if (!empty($lojaParam)) {
+            if (is_numeric($lojaParam)) {
+                $parceiroIndicador = $this->parceiroModel->find((int)$lojaParam);
+            } else {
+                $parceiroIndicador = $this->parceiroModel
+                    ->groupStart()
+                        ->where('par_slug', $lojaParam)
+                        ->orWhere('par_apelido', $lojaParam)
+                    ->groupEnd()
+                    ->where('par_ativo', 'ativo')
+                    ->first();
+            }
+        }
+
+        return view('linecash/cadastro', [
+            'title'             => 'Cadastre-se no LineCash | Cashback no Comércio Local',
+            'parceiroIndicador' => $parceiroIndicador,
+        ]);
+    }
+
+    /**
+     * Processa o cadastro de um novo cliente no LineCash
+     */
+    public function cadastrarCliente()
+    {
+        $nome = trim((string)$this->request->getPost('nome'));
+        $cpf = (string)$this->request->getPost('cpf');
+        $whatsapp = trim((string)$this->request->getPost('whatsapp'));
+        $email = trim((string)$this->request->getPost('email'));
+        $parceiroId = (int)$this->request->getPost('parceiro_id');
+
+        $cleanCpf = $this->linecashService->cleanDoc($cpf);
+        $cleanWhats = preg_replace('/\D/', '', $whatsapp);
+
+        if (mb_strlen($nome) < 3) {
+            return redirect()->back()->withInput()->with('error', 'Por favor, informe seu nome completo.');
+        }
+
+        if (strlen($cleanCpf) !== 11) {
+            return redirect()->back()->withInput()->with('error', 'Por favor, informe um CPF válido com 11 dígitos.');
+        }
+
+        if (strlen($cleanWhats) < 10) {
+            return redirect()->back()->withInput()->with('error', 'Por favor, informe um WhatsApp válido com DDD.');
+        }
+
+        try {
+            // Cria ou recupera conta no LineCash
+            $conta = $this->linecashService->getOrCreateContaCliente($cleanCpf, $nome, $whatsapp);
+
+            // Garante registro em tb_clientes
+            $clienteModel = new \App\Models\ClienteModel();
+            $cliente = $clienteModel->where('cli_cpf', $cleanCpf)->first();
+
+            if (!$cliente) {
+                $clienteModel->insert([
+                    'cli_cpf'      => $cleanCpf,
+                    'cli_nome'     => $nome,
+                    'cli_celular'  => $whatsapp,
+                    'cli_email'    => $email ?: null,
+                    'cli_parceiro' => $parceiroId > 0 ? $parceiroId : null,
+                    'cli_data'     => date('Y-m-d H:i:s'),
+                ]);
+            } else {
+                $upd = [];
+                if (empty($cliente['cli_nome'])) $upd['cli_nome'] = $nome;
+                if (empty($cliente['cli_celular'])) $upd['cli_celular'] = $whatsapp;
+                if (empty($cliente['cli_email']) && !empty($email)) $upd['cli_email'] = $email;
+                if (empty($cliente['cli_parceiro']) && $parceiroId > 0) $upd['cli_parceiro'] = $parceiroId;
+                if (!empty($upd)) {
+                    $clienteModel->update($cliente['cli_id'], $upd);
+                }
+            }
+
+            // Inicia sessão automática do consumidor
+            session()->set('linecash_cliente_cpf', $cleanCpf);
+            session()->set('linecash_cliente_id', $conta['lcc_id']);
+            session()->set('linecash_cliente_nome', $nome);
+
+            $msg = "Parabéns, {$nome}! Seu cadastro no LineCash foi realizado com sucesso. Sua carteira digital já está ativa para acumular e resgatar cashback!";
+            return redirect()->to(base_url('linecash'))->with('success', $msg);
+
+        } catch (\Throwable $e) {
+            return redirect()->back()->withInput()->with('error', 'Erro ao processar cadastro: ' . $e->getMessage());
+        }
+    }
 }

@@ -108,6 +108,11 @@ class ProdutoModel extends Model
             case 'mais_vistos':
                 $builder->orderBy('tb_produtos.pro_visitas', 'DESC');
                 break;
+            case 'random':
+            case 'randomico':
+            case 'rand':
+                $builder->orderBy('RAND()');
+                break;
             default:
                 $builder->orderBy('tb_produtos.pro_destaque DESC, tb_produtos.pro_ordem ASC, tb_produtos.pro_id DESC');
                 break;

@@ -134,7 +134,7 @@ class Linecash extends BaseController
         $contaId = (int)$conta['lcc_id'];
 
         $cpf = (string)$this->request->getPost('cpf');
-        $valorCompra = (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('valor_compra'));
+        $valorCompra = $this->parseValorMonetario((string)$this->request->getPost('valor_compra'));
         $percentual = (float)str_replace(',', '.', (string)$this->request->getPost('percentual'));
         $nome = trim((string)$this->request->getPost('nome'));
         $whatsapp = trim((string)$this->request->getPost('whatsapp'));
@@ -333,5 +333,29 @@ class Linecash extends BaseController
         ]);
 
         return redirect()->to(base_url('parceiro/linecash'))->with('success', 'Configurações de PDV e Vitrine LineFast salvas com sucesso!');
+    }
+
+    /**
+     * Converte entrada monetária em float de forma segura
+     */
+    private function parseValorMonetario(string $valor): float
+    {
+        $valor = trim($valor);
+        if ($valor === '') {
+            return 0.0;
+        }
+        $valor = preg_replace('/[^\d.,]/', '', $valor);
+        if (str_contains($valor, ',')) {
+            // Formato brasileiro: 1.250,50 ou 300,00
+            $valor = str_replace('.', '', $valor);
+            $valor = str_replace(',', '.', $valor);
+        } elseif (preg_match('/^\d+\.\d{1,2}$/', $valor)) {
+            // Formato com ponto decimal: 300.00
+            // Mantém como float
+        } elseif (str_contains($valor, '.')) {
+            // Caso ponto de milhar sem vírgula: 1.500
+            $valor = str_replace('.', '', $valor);
+        }
+        return (float)$valor;
     }
 }
