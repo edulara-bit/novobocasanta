@@ -100,6 +100,9 @@
                     </a>
                 </div>
             </div>
+            <div class="mt-2 pt-2 border-top text-muted" style="font-size: 11.5px;">
+                <i class="fa-solid fa-circle-info text-primary me-1"></i> <strong>Como funciona:</strong> Este link acima é exclusivo da sua loja para convidar clientes a criarem a carteira LineCash. Para enviar um link de oferta/produto junto com o comprovante de cashback, utilize o campo na Zona de Calor abaixo ou configure na aba <strong>5. Vitrine LineFast</strong>.
+            </div>
         </div>
     </div>
 
@@ -168,7 +171,7 @@
                                             <div id="statusCpfCliente" class="small mt-1"></div>
                                         </div>
 
-                                        <div class="row g-2 mb-3" id="camposNovoCliente">
+                                        <div class="row g-2 mb-2" id="camposNovoCliente">
                                             <div class="col-md-6">
                                                 <label class="form-label small fw-bold">Nome do Cliente:</label>
                                                 <input type="text" name="nome" id="nomeCliente" class="form-control" placeholder="Nome completo">
@@ -176,6 +179,52 @@
                                             <div class="col-md-6">
                                                 <label class="form-label small fw-bold">WhatsApp do Cliente:</label>
                                                 <input type="text" name="whatsapp" id="whatsappCliente" class="form-control" placeholder="(19) 99999-9999">
+                                            </div>
+                                        </div>
+
+                                        <!-- Opção de Cadastrar Endereço Completo no Caixa -->
+                                        <div class="mb-3">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill w-100 py-1" data-bs-toggle="collapse" data-bs-target="#collapseEnderecoCliente" aria-expanded="false" id="btnToggleEndereco">
+                                                <i class="fa-solid fa-map-location-dot me-1 text-danger"></i> + Incluir Endereço, Bairro e CEP (Cadastrar na hora)
+                                            </button>
+                                            <div class="collapse mt-2" id="collapseEnderecoCliente">
+                                                <div class="p-3 bg-white rounded-3 border">
+                                                    <div class="row g-2 mb-2">
+                                                        <div class="col-md-5">
+                                                            <label class="form-label small fw-bold mb-1">CEP:</label>
+                                                            <input type="text" name="cep" id="cepCliente" class="form-control form-control-sm" placeholder="00000-000" maxlength="9">
+                                                            <div id="statusCepPdv" class="small mt-1 text-muted" style="font-size: 11px;"></div>
+                                                        </div>
+                                                        <div class="col-md-7">
+                                                            <label class="form-label small fw-bold mb-1">Bairro:</label>
+                                                            <input type="text" name="bairro" id="bairroCliente" class="form-control form-control-sm" placeholder="Bairro">
+                                                        </div>
+                                                    </div>
+                                                    <div class="row g-2 mb-2">
+                                                        <div class="col-md-8">
+                                                            <label class="form-label small fw-bold mb-1">Endereço / Rua:</label>
+                                                            <input type="text" name="endereco" id="enderecoCliente" class="form-control form-control-sm" placeholder="Rua / Avenida">
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <label class="form-label small fw-bold mb-1">Número:</label>
+                                                            <input type="text" name="numero" id="numeroCliente" class="form-control form-control-sm" placeholder="Nº">
+                                                        </div>
+                                                    </div>
+                                                    <div class="row g-2">
+                                                        <div class="col-md-5">
+                                                            <label class="form-label small fw-bold mb-1">Complemento:</label>
+                                                            <input type="text" name="complemento" id="complementoCliente" class="form-control form-control-sm" placeholder="Apto, Bloco...">
+                                                        </div>
+                                                        <div class="col-md-5">
+                                                            <label class="form-label small fw-bold mb-1">Cidade:</label>
+                                                            <input type="text" name="cidade" id="cidadeCliente" class="form-control form-control-sm" placeholder="Piracicaba">
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <label class="form-label small fw-bold mb-1">UF:</label>
+                                                            <input type="text" name="estado" id="estadoCliente" class="form-control form-control-sm text-uppercase" placeholder="SP" maxlength="2">
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -237,10 +286,20 @@
                                             <?php endfor; ?>
 
                                             <?php if (!empty($config['lcf_produto_destaque_titulo'])): ?>
-                                                <div class="alert alert-info border-0 rounded-3 mt-3 py-2 small mb-0">
-                                                    <i class="fa-solid fa-link me-1"></i> Produto LineFast vinculado nas notificações: <strong><?= esc($config['lcf_produto_destaque_titulo']) ?></strong>
+                                                <div class="alert alert-info border-0 rounded-3 mt-2 py-2 small mb-0">
+                                                    <i class="fa-solid fa-link me-1"></i> Oferta padrão da Vitrine: <strong><?= esc($config['lcf_produto_destaque_titulo']) ?></strong>
                                                 </div>
                                             <?php endif; ?>
+
+                                            <div class="mt-3 pt-2 border-top">
+                                                <label class="form-label small fw-bold text-dark mb-1">
+                                                    <i class="fa-solid fa-link text-primary me-1"></i> Link de Oferta para Enviar no WhatsApp (Opcional):
+                                                </label>
+                                                <input type="url" name="link_oferta_avulso" id="linkOfertaAvulso" class="form-control form-control-sm" placeholder="Cole o link da oferta aqui (ex: https://...)" value="<?= esc($config['lcf_produto_destaque_url'] ?? '') ?>">
+                                                <small class="text-muted" style="font-size: 11px;">
+                                                    O cliente receberá este link no WhatsApp junto com os créditos de cashback acumulados.
+                                                </small>
+                                            </div>
                                         </div>
 
                                         <div class="mt-4">
@@ -657,7 +716,23 @@
                                         <?= (int)$t['lct_origem_id'] === (int)$conta['lcc_id'] ? '-' : '+' ?>
                                         <?= number_format((float)$t['lct_valor_lc'], 2, ',', '.') ?> LC
                                     </td>
-                                    <td><small class="text-muted"><?= esc($t['lct_descricao']) ?></small></td>
+                                    <td>
+                                        <small class="text-muted d-block"><?= esc($t['lct_descricao']) ?></small>
+                                        <?php if (!empty($t['produtos'])): ?>
+                                            <div class="mt-1">
+                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle py-1 px-2" title="Itens da cesta / Zona de Calor">
+                                                    <i class="fa-solid fa-fire me-1"></i> Cesta:
+                                                    <?php 
+                                                    $itensFormatados = [];
+                                                    foreach ($t['produtos'] as $p) {
+                                                        $itensFormatados[] = esc($p['ltp_codigo_produto']) . (!empty($p['ltp_descricao']) ? ' (' . esc($p['ltp_descricao']) . ')' : '');
+                                                    }
+                                                    echo implode(' | ', $itensFormatados);
+                                                    ?>
+                                                </span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
                                     <td><span class="badge bg-success">Concluída</span></td>
                                 </tr>
                             <?php endforeach; ?>
@@ -736,14 +811,71 @@ document.addEventListener('DOMContentLoaded', function() {
                     statusCpfCliente.innerHTML = `<span class="text-success fw-bold"><i class="fa-solid fa-check"></i> Cliente: ${data.nome} | Saldo Atual: ${data.saldo_formatado}</span>`;
                     if (nomeClienteInput && data.nome) nomeClienteInput.value = data.nome;
                     if (whatsappClienteInput && data.whatsapp) whatsappClienteInput.value = data.whatsapp;
+                    if (data.cep && document.getElementById('cepCliente')) document.getElementById('cepCliente').value = data.cep;
+                    if (data.endereco && document.getElementById('enderecoCliente')) document.getElementById('enderecoCliente').value = data.endereco;
+                    if (data.numero && document.getElementById('numeroCliente')) document.getElementById('numeroCliente').value = data.numero;
+                    if (data.complemento && document.getElementById('complementoCliente')) document.getElementById('complementoCliente').value = data.complemento;
+                    if (data.bairro && document.getElementById('bairroCliente')) document.getElementById('bairroCliente').value = data.bairro;
+                    if (data.cidade && document.getElementById('cidadeCliente')) document.getElementById('cidadeCliente').value = data.cidade;
+                    if (data.estado && document.getElementById('estadoCliente')) document.getElementById('estadoCliente').value = data.estado;
+                    if (data.endereco) {
+                        const colEnd = document.getElementById('collapseEnderecoCliente');
+                        if (colEnd && !colEnd.classList.contains('show')) {
+                            const bsCol = new bootstrap.Collapse(colEnd, { toggle: true });
+                        }
+                    }
                 } else {
                     const linkConvite = '<?= $linkCadastroCli ?>';
                     const whatsConvite = 'https://api.whatsapp.com/send?text=' + encodeURIComponent('Olá! Cadastre-se no LineCash para acumular seu cashback nas suas compras aqui na <?= addslashes($nomeLoja) ?>: ' + linkConvite);
-                    statusCpfCliente.innerHTML = `<span class="text-info"><i class="fa-solid fa-user-plus"></i> Novo cliente! Informe o nome e WhatsApp abaixo, ou <a href="${whatsConvite}" target="_blank" class="fw-bold text-success text-decoration-underline"><i class="fa-brands fa-whatsapp"></i> envie o link de cadastro para ele</a>.</span>`;
+                    statusCpfCliente.innerHTML = `<span class="text-info"><i class="fa-solid fa-user-plus"></i> Novo cliente! Informe nome e WhatsApp abaixo (ou inclua o endereço completo), ou <a href="${whatsConvite}" target="_blank" class="fw-bold text-success text-decoration-underline"><i class="fa-brands fa-whatsapp"></i> envie o link no WhatsApp para ele complementar</a>.</span>`;
                 }
             })
             .catch(() => {
                 statusCpfCliente.innerHTML = '<span class="text-warning">Não foi possível validar o CPF agora.</span>';
+            });
+    }
+
+    // Auto-complete ViaCEP no Caixa do PDV
+    const cepCliPdv = document.getElementById('cepCliente');
+    const statusCepPdv = document.getElementById('statusCepPdv');
+    if (cepCliPdv) {
+        cepCliPdv.addEventListener('input', function(e) {
+            let v = e.target.value.replace(/\D/g, '');
+            if (v.length > 8) v = v.substring(0, 8);
+            if (v.length > 5) {
+                e.target.value = v.replace(/(\d{5})(\d{1,3})/, '$1-$2');
+            } else {
+                e.target.value = v;
+            }
+            if (v.length === 8) {
+                buscarViaCepPdv(v);
+            }
+        });
+    }
+
+    function buscarViaCepPdv(cep) {
+        if (statusCepPdv) statusCepPdv.innerHTML = '<span class="text-primary"><i class="fa-solid fa-spinner fa-spin"></i> Localizando CEP...</span>';
+        fetch(`https://viacep.com.br/ws/${cep}/json/`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.erro) {
+                    if (statusCepPdv) statusCepPdv.innerHTML = '<span class="text-danger">CEP não encontrado.</span>';
+                } else {
+                    if (statusCepPdv) statusCepPdv.innerHTML = '<span class="text-success"><i class="fa-solid fa-check"></i> Endereço preenchido!</span>';
+                    const end = document.getElementById('enderecoCliente');
+                    const bai = document.getElementById('bairroCliente');
+                    const cid = document.getElementById('cidadeCliente');
+                    const uf = document.getElementById('estadoCliente');
+                    const num = document.getElementById('numeroCliente');
+                    if (end && data.logradouro) end.value = data.logradouro;
+                    if (bai && data.bairro) bai.value = data.bairro;
+                    if (cid && data.localidade) cid.value = data.localidade;
+                    if (uf && data.uf) uf.value = data.uf;
+                    if (num) num.focus();
+                }
+            })
+            .catch(() => {
+                if (statusCepPdv) statusCepPdv.innerHTML = '';
             });
     }
 

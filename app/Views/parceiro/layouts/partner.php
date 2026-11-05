@@ -240,18 +240,6 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="<?= base_url('parceiro/fidelidade') ?>" class="nav-link <?= (uri_string() === 'parceiro/fidelidade' || (str_contains(uri_string(), 'parceiro/fidelidade') && !str_contains(uri_string(), 'lancamentos'))) ? 'active' : '' ?>">
-                            <i class="fa-solid fa-id-card"></i>
-                            <span>Fidelidade</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="<?= base_url('parceiro/fidelidade/lancamentos') ?>" class="nav-link nav-link-pontos <?= str_contains(uri_string(), 'parceiro/fidelidade/lancamentos') ? 'active' : '' ?>">
-                            <i class="fa-solid fa-stamp"></i>
-                            <span>Lançar Pontos</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a href="<?= base_url('parceiro/linecash') ?>" class="nav-link nav-link-linecash <?= str_contains(uri_string(), 'parceiro/linecash') ? 'active' : '' ?>">
                             <i class="fa-solid fa-coins"></i>
                             <span>LineCash PDV</span>

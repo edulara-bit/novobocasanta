@@ -14,7 +14,8 @@ class ClienteModel extends Model
     protected $returnType       = 'array';
     protected $protectFields    = false;
     protected $allowedFields    = [
-        'cli_cpf', 'cli_nome', 'cli_cep', 'cli_email', 'cli_celular',
+        'cli_cpf', 'cli_nome', 'cli_cep', 'cli_endereco', 'cli_numero', 'cli_complemento',
+        'cli_bairro', 'cli_cidade', 'cli_estado', 'cli_email', 'cli_celular',
         'cli_sexo', 'cli_nascimento', 'cli_profissao', 'cli_empresa',
         'cli_parceiro', 'cli_data', 'cli_senha'
     ];

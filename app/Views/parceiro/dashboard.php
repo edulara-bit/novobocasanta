@@ -19,14 +19,11 @@
                 <i class="fa-solid fa-envelope me-1"></i> <?= esc($parceiro->par_email ?? '') ?>
             </p>
             <div class="d-flex flex-wrap gap-2">
-                <a href="<?= base_url('parceiro/fidelidade/lancamentos') ?>" class="btn btn-warning btn-sm rounded-pill fw-bold px-3 text-dark shadow-sm">
-                    <i class="fa-solid fa-stamp me-1"></i> Lançar Pontos / Compras
+                <a href="<?= base_url('parceiro/linecash') ?>" class="btn btn-success btn-sm rounded-pill fw-bold px-3 shadow-sm">
+                    <i class="fa-solid fa-coins me-1"></i> Abrir LineCash PDV (Caixa)
                 </a>
                 <a href="<?= base_url('parceiro/ofertas/criar') ?>" class="btn btn-danger btn-sm rounded-pill fw-bold px-3">
                     <i class="fa-solid fa-plus-circle me-1"></i> Criar Nova Oferta
-                </a>
-                <a href="<?= base_url('parceiro/fidelidade/criar') ?>" class="btn btn-outline-dark btn-sm rounded-pill px-3">
-                    <i class="fa-solid fa-id-card me-1"></i> Novo Cartão
                 </a>
                 <a href="<?= base_url('parceiro/perfil') ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
                     <i class="fa-solid fa-edit me-1"></i> Editar Meus Dados

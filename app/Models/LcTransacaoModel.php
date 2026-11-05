@@ -33,7 +33,7 @@ class LcTransacaoModel extends Model
     public function getExtratoByConta(int|string $contaId, int $limit = 50): array
     {
         $id = (int)$contaId;
-        return $this->select('tb_lc_transacoes.*, 
+        $transacoes = $this->select('tb_lc_transacoes.*, 
                              co.lcc_nome as origem_nome, co.lcc_tipo as origem_tipo, 
                              cd.lcc_nome as destino_nome, cd.lcc_tipo as destino_tipo')
                     ->join('tb_lc_contas co', 'co.lcc_id = tb_lc_transacoes.lct_origem_id', 'left')
@@ -44,5 +44,24 @@ class LcTransacaoModel extends Model
                     ->groupEnd()
                     ->orderBy('lct_id', 'DESC')
                     ->findAll($limit);
+
+        if (!empty($transacoes)) {
+            $ids = array_column($transacoes, 'lct_id');
+            if (!empty($ids)) {
+                $produtos = $this->db->table('tb_lc_transacoes_produtos')
+                                     ->whereIn('ltp_transacao_id', $ids)
+                                     ->get()
+                                     ->getResultArray();
+                $produtosPorTransacao = [];
+                foreach ($produtos as $p) {
+                    $produtosPorTransacao[$p['ltp_transacao_id']][] = $p;
+                }
+                foreach ($transacoes as &$t) {
+                    $t['produtos'] = $produtosPorTransacao[$t['lct_id']] ?? [];
+                }
+            }
+        }
+
+        return $transacoes;
     }
 }

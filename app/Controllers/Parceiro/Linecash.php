@@ -104,13 +104,27 @@ class Linecash extends BaseController
         $cleanCpf = $this->linecashService->cleanDoc($cpf);
         $contaCliente = $this->contaModel->findByDoc($cleanCpf);
 
-        if ($contaCliente) {
+        $clienteModel = new \App\Models\ClienteModel();
+        $cliente = $clienteModel->where('cli_cpf', $cleanCpf)->first();
+
+        if ($contaCliente || $cliente) {
+            $nome = $contaCliente['lcc_nome'] ?? $cliente['cli_nome'] ?? '';
+            $whatsapp = $contaCliente['lcc_whatsapp'] ?? $cliente['cli_celular'] ?? '';
+            $saldo = (float)($contaCliente['lcc_saldo'] ?? 0);
+
             return $this->response->setJSON([
-                'found'    => true,
-                'nome'     => $contaCliente['lcc_nome'],
-                'whatsapp' => $contaCliente['lcc_whatsapp'],
-                'saldo'    => (float)$contaCliente['lcc_saldo'],
-                'saldo_formatado' => number_format((float)$contaCliente['lcc_saldo'], 2, ',', '.') . ' LC',
+                'found'           => true,
+                'nome'            => $nome,
+                'whatsapp'        => $whatsapp,
+                'saldo'           => $saldo,
+                'saldo_formatado' => number_format($saldo, 2, ',', '.') . ' LC',
+                'cep'             => $cliente['cli_cep'] ?? '',
+                'endereco'        => $cliente['cli_endereco'] ?? '',
+                'numero'          => $cliente['cli_numero'] ?? '',
+                'complemento'     => $cliente['cli_complemento'] ?? '',
+                'bairro'          => $cliente['cli_bairro'] ?? '',
+                'cidade'          => $cliente['cli_cidade'] ?? '',
+                'estado'          => $cliente['cli_estado'] ?? '',
             ]);
         }
 
@@ -139,6 +153,16 @@ class Linecash extends BaseController
         $nome = trim((string)$this->request->getPost('nome'));
         $whatsapp = trim((string)$this->request->getPost('whatsapp'));
 
+        // Novos campos de endereço preenchidos na tela do caixa (se houver)
+        $cep = trim((string)$this->request->getPost('cep'));
+        $endereco = trim((string)$this->request->getPost('endereco'));
+        $numero = trim((string)$this->request->getPost('numero'));
+        $complemento = trim((string)$this->request->getPost('complemento'));
+        $bairro = trim((string)$this->request->getPost('bairro'));
+        $cidade = trim((string)$this->request->getPost('cidade'));
+        $estado = strtoupper(trim((string)$this->request->getPost('estado')));
+        $linkOfertaAvulso = trim((string)$this->request->getPost('link_oferta_avulso'));
+
         // Cesta / Zona de Calor (até 3 produtos)
         $produtos = [];
         for ($i = 1; $i <= 3; $i++) {
@@ -160,10 +184,40 @@ class Linecash extends BaseController
         );
 
         if ($res['success']) {
+            $cleanCpf = $this->linecashService->cleanDoc($cpf);
+
+            // Se foram informados dados de endereço ou complementares, sincroniza com tb_clientes
+            $clienteModel = new \App\Models\ClienteModel();
+            $cliente = $clienteModel->where('cli_cpf', $cleanCpf)->first();
+
+            $dadosCli = [
+                'cli_cpf'      => $cleanCpf,
+                'cli_nome'     => $nome ?: ($cliente['cli_nome'] ?? ''),
+                'cli_celular'  => $whatsapp ?: ($cliente['cli_celular'] ?? ''),
+                'cli_parceiro' => $parceiro->par_id,
+            ];
+            if (!empty($cep)) $dadosCli['cli_cep'] = $cep;
+            if (!empty($endereco)) $dadosCli['cli_endereco'] = $endereco;
+            if (!empty($numero)) $dadosCli['cli_numero'] = $numero;
+            if (!empty($complemento)) $dadosCli['cli_complemento'] = $complemento;
+            if (!empty($bairro)) $dadosCli['cli_bairro'] = $bairro;
+            if (!empty($cidade)) $dadosCli['cli_cidade'] = $cidade;
+            if (!empty($estado)) $dadosCli['cli_estado'] = $estado;
+
+            if (!$cliente) {
+                $dadosCli['cli_data'] = date('Y-m-d H:i:s');
+                $clienteModel->insert($dadosCli);
+            } else {
+                $clienteModel->update($cliente['cli_id'], $dadosCli);
+            }
+
             // Busca dados da vitrine LineFast do lojista
             $config = $this->configModel->find($contaId);
             $clienteWhats = $res['cliente']['lcc_whatsapp'] ?? $whatsapp;
             $clienteNome = $res['cliente']['lcc_nome'] ?? $nome;
+
+            $prodTitulo = $config['lcf_produto_destaque_titulo'] ?? null;
+            $prodUrl = !empty($linkOfertaAvulso) ? $linkOfertaAvulso : ($config['lcf_produto_destaque_url'] ?? null);
 
             $whatsMsg = LinecashWhatsappService::gerarMensagemCashback(
                 $clienteNome,
@@ -171,8 +225,8 @@ class Linecash extends BaseController
                 $valorCompra,
                 (float)$res['valor_lc'],
                 (float)$res['novo_saldo_cliente'],
-                $config['lcf_produto_destaque_titulo'] ?? null,
-                $config['lcf_produto_destaque_url'] ?? null,
+                $prodTitulo,
+                $prodUrl,
                 $config['lcf_mensagem_customizada'] ?? null
             );
 

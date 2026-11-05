@@ -152,6 +152,15 @@ class Linecash extends BaseController
         $email = trim((string)$this->request->getPost('email'));
         $parceiroId = (int)$this->request->getPost('parceiro_id');
 
+        // Novos campos de endereço
+        $cep = trim((string)$this->request->getPost('cep'));
+        $endereco = trim((string)$this->request->getPost('endereco'));
+        $numero = trim((string)$this->request->getPost('numero'));
+        $complemento = trim((string)$this->request->getPost('complemento'));
+        $bairro = trim((string)$this->request->getPost('bairro'));
+        $cidade = trim((string)$this->request->getPost('cidade'));
+        $estado = strtoupper(trim((string)$this->request->getPost('estado')));
+
         $cleanCpf = $this->linecashService->cleanDoc($cpf);
         $cleanWhats = preg_replace('/\D/', '', $whatsapp);
 
@@ -171,25 +180,41 @@ class Linecash extends BaseController
             // Cria ou recupera conta no LineCash
             $conta = $this->linecashService->getOrCreateContaCliente($cleanCpf, $nome, $whatsapp);
 
-            // Garante registro em tb_clientes
+            // Garante registro em tb_clientes com endereço completo
             $clienteModel = new \App\Models\ClienteModel();
             $cliente = $clienteModel->where('cli_cpf', $cleanCpf)->first();
 
+            $dadosCliente = [
+                'cli_cpf'         => $cleanCpf,
+                'cli_nome'        => $nome,
+                'cli_celular'     => $whatsapp,
+                'cli_email'       => $email ?: null,
+                'cli_cep'         => $cep ?: null,
+                'cli_endereco'    => $endereco ?: null,
+                'cli_numero'      => $numero ?: null,
+                'cli_complemento' => $complemento ?: null,
+                'cli_bairro'      => $bairro ?: null,
+                'cli_cidade'      => $cidade ?: null,
+                'cli_estado'      => $estado ?: null,
+                'cli_parceiro'    => $parceiroId > 0 ? $parceiroId : null,
+            ];
+
             if (!$cliente) {
-                $clienteModel->insert([
-                    'cli_cpf'      => $cleanCpf,
-                    'cli_nome'     => $nome,
-                    'cli_celular'  => $whatsapp,
-                    'cli_email'    => $email ?: null,
-                    'cli_parceiro' => $parceiroId > 0 ? $parceiroId : null,
-                    'cli_data'     => date('Y-m-d H:i:s'),
-                ]);
+                $dadosCliente['cli_data'] = date('Y-m-d H:i:s');
+                $clienteModel->insert($dadosCliente);
             } else {
                 $upd = [];
                 if (empty($cliente['cli_nome'])) $upd['cli_nome'] = $nome;
                 if (empty($cliente['cli_celular'])) $upd['cli_celular'] = $whatsapp;
                 if (empty($cliente['cli_email']) && !empty($email)) $upd['cli_email'] = $email;
                 if (empty($cliente['cli_parceiro']) && $parceiroId > 0) $upd['cli_parceiro'] = $parceiroId;
+                if (!empty($cep)) $upd['cli_cep'] = $cep;
+                if (!empty($endereco)) $upd['cli_endereco'] = $endereco;
+                if (!empty($numero)) $upd['cli_numero'] = $numero;
+                if (!empty($complemento)) $upd['cli_complemento'] = $complemento;
+                if (!empty($bairro)) $upd['cli_bairro'] = $bairro;
+                if (!empty($cidade)) $upd['cli_cidade'] = $cidade;
+                if (!empty($estado)) $upd['cli_estado'] = $estado;
                 if (!empty($upd)) {
                     $clienteModel->update($cliente['cli_id'], $upd);
                 }
