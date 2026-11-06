@@ -29,6 +29,12 @@ class Home extends BaseController
 
     public function index(string $cidadeSlug = 'piracicaba')
     {
+        // Se acessado diretamente via domínio linecash.com.br, direciona para o portal do LineCash
+        $host = (string)($this->request->getServer('HTTP_HOST') ?? '');
+        if (str_contains($host, 'linecash')) {
+            return redirect()->to(base_url('linecash'));
+        }
+
         $cidade = $this->cidadeModel->getBySlug($cidadeSlug) ?? $this->cidadeModel->first();
         if (!$cidade) {
             $cidade = ['cid_id' => 1, 'cid_nome' => 'Piracicaba', 'cid_url' => 'piracicaba'];

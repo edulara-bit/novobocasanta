@@ -79,6 +79,10 @@ class Linecash extends BaseController
         $depositos = $this->depositoModel->where('lcd_lojista_id', $contaId)->orderBy('lcd_id', 'DESC')->findAll(10);
         $resgates = $this->resgateModel->where('lcr_lojista_id', $contaId)->orderBy('lcr_id', 'DESC')->findAll(10);
 
+        // Busca ofertas ativas do parceiro para atalho no PDV
+        $produtoModel = new \App\Models\ProdutoModel();
+        $minhasOfertas = $produtoModel->where('pro_parceiro', $parceiro->par_id)->orderBy('pro_id', 'DESC')->findAll(30);
+
         return view('parceiro/linecash/index', [
             'title'             => 'LineCash PDV - Caixa e Fidelidade',
             'parceiro'          => $parceiro,
@@ -88,6 +92,7 @@ class Linecash extends BaseController
             'ultimasTransacoes' => $ultimasTransacoes,
             'depositos'         => $depositos,
             'resgates'          => $resgates,
+            'minhasOfertas'     => $minhasOfertas,
         ]);
     }
 
@@ -162,6 +167,7 @@ class Linecash extends BaseController
         $cidade = trim((string)$this->request->getPost('cidade'));
         $estado = strtoupper(trim((string)$this->request->getPost('estado')));
         $linkOfertaAvulso = trim((string)$this->request->getPost('link_oferta_avulso'));
+        $tituloOfertaAvulso = trim((string)$this->request->getPost('titulo_oferta_avulso'));
 
         // Cesta / Zona de Calor (até 3 produtos)
         $produtos = [];
@@ -216,7 +222,7 @@ class Linecash extends BaseController
             $clienteWhats = $res['cliente']['lcc_whatsapp'] ?? $whatsapp;
             $clienteNome = $res['cliente']['lcc_nome'] ?? $nome;
 
-            $prodTitulo = $config['lcf_produto_destaque_titulo'] ?? null;
+            $prodTitulo = !empty($tituloOfertaAvulso) ? $tituloOfertaAvulso : ($config['lcf_produto_destaque_titulo'] ?? null);
             $prodUrl = !empty($linkOfertaAvulso) ? $linkOfertaAvulso : ($config['lcf_produto_destaque_url'] ?? null);
 
             $whatsMsg = LinecashWhatsappService::gerarMensagemCashback(

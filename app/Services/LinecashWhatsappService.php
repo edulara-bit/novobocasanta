@@ -25,6 +25,29 @@ class LinecashWhatsappService
     }
 
     /**
+     * Retorna a URL pública do LineCash (usando env LINECASH_URL ou fallback para base_url('linecash'))
+     */
+    public static function getLinecashUrl(): string
+    {
+        $customUrl = '';
+        if (function_exists('env')) {
+            $customUrl = env('linecash.url', env('LINECASH_URL', ''));
+        } else {
+            $customUrl = getenv('LINECASH_URL') ?: '';
+        }
+
+        if (!empty($customUrl)) {
+            return rtrim((string)$customUrl, '/');
+        }
+
+        if (function_exists('base_url')) {
+            return base_url('linecash');
+        }
+
+        return 'https://linecash.com.br';
+    }
+
+    /**
      * Monta a mensagem de WhatsApp para notificação de cashback recebido no PDV
      */
     public static function gerarMensagemCashback(
@@ -47,9 +70,15 @@ class LinecashWhatsappService
         $msg .= "💰 *Seu Saldo Disponível:* {$saldoFormatado} LC (R$ {$saldoFormatado})\n";
         $msg .= "_(1 LC = R$ 1,00 para usar em compras nas lojas parceiras)_\n\n";
 
-        if (!empty($produtoDestaqueTitulo)) {
-            $msg .= "✨ *Destaque de hoje no LineFast:*\n";
-            $msg .= "👉 {$produtoDestaqueTitulo}\n";
+        // Exibe destaque se houver URL ou Título informado
+        if (!empty($produtoDestaqueUrl) || !empty($produtoDestaqueTitulo)) {
+            $msg .= "✨ *Destaque no LineFast:*\n";
+            if (!empty($produtoDestaqueTitulo)) {
+                $msg .= "👉 {$produtoDestaqueTitulo}\n";
+            } else {
+                $msg .= "👉 Aproveite esta oferta especial da nossa loja:\n";
+            }
+
             if (!empty($produtoDestaqueUrl)) {
                 $msg .= "🔗 {$produtoDestaqueUrl}\n\n";
             } else {
@@ -61,8 +90,9 @@ class LinecashWhatsappService
             $msg .= "_{$msgAgradecimento}_\n\n";
         }
 
+        $urlLinecash = self::getLinecashUrl();
         $msg .= "📱 Acompanhe sua carteira e parceiros em:\n";
-        $msg .= "https://linecash.com.br";
+        $msg .= $urlLinecash;
 
         return $msg;
     }
@@ -80,10 +110,11 @@ class LinecashWhatsappService
         $lcFormatado = number_format($valorLc, 2, ',', '.');
         $saldoFormatado = number_format($saldoRestanteLc, 2, ',', '.');
 
+        $urlLinecash = self::getLinecashUrl();
         $msg = "✅ {$saudacao}\n\n";
         $msg .= "Você utilizou *{$lcFormatado} LC* para pagar suas compras na loja *{$lojaNome}*.\n\n";
         $msg .= "💰 *Saldo Restante na Carteira:* {$saldoFormatado} LC (R$ {$saldoFormatado})\n\n";
-        $msg .= "📱 Consulte seu extrato completo em: https://linecash.com.br";
+        $msg .= "📱 Consulte seu extrato completo em: {$urlLinecash}";
 
         return $msg;
     }

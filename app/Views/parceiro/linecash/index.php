@@ -292,12 +292,41 @@
                                             <?php endif; ?>
 
                                             <div class="mt-3 pt-2 border-top">
-                                                <label class="form-label small fw-bold text-dark mb-1">
-                                                    <i class="fa-solid fa-link text-primary me-1"></i> Link de Oferta para Enviar no WhatsApp (Opcional):
-                                                </label>
-                                                <input type="url" name="link_oferta_avulso" id="linkOfertaAvulso" class="form-control form-control-sm" placeholder="Cole o link da oferta aqui (ex: https://...)" value="<?= esc($config['lcf_produto_destaque_url'] ?? '') ?>">
-                                                <small class="text-muted" style="font-size: 11px;">
-                                                    O cliente receberá este link no WhatsApp junto com os créditos de cashback acumulados.
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <label class="form-label small fw-bold text-dark mb-0">
+                                                        <i class="fa-solid fa-bolt text-warning me-1"></i> Encaminhar Oferta no WhatsApp (LineFast):
+                                                    </label>
+                                                    <?php if (!empty($minhasOfertas)): ?>
+                                                        <span class="badge bg-primary-subtle text-primary border" style="font-size: 10px;">Atalho de Ofertas</span>
+                                                    <?php endif; ?>
+                                                </div>
+
+                                                <?php if (!empty($minhasOfertas)): ?>
+                                                    <div class="mb-2">
+                                                        <select class="form-select form-select-sm" id="selectOfertaParceiro">
+                                                            <option value="">-- Selecionar uma oferta da sua loja (opcional) --</option>
+                                                            <?php foreach ($minhasOfertas as $of): ?>
+                                                                <?php 
+                                                                    $urlOf = !empty($of->linefast_buy_url) ? $of->linefast_buy_url : (!empty($of->pro_comprar) ? $of->pro_comprar : base_url('ofertas/' . $of->pro_id));
+                                                                ?>
+                                                                <option value="<?= esc($urlOf) ?>" data-titulo="<?= esc($of->pro_titulo) ?>">
+                                                                    <?= esc($of->pro_titulo) ?> (R$ <?= number_format((float)($of->pro_precodesconto > 0 ? $of->pro_precodesconto : $of->pro_preco), 2, ',', '.') ?>)
+                                                                </option>
+                                                            <?php endforeach; ?>
+                                                        </select>
+                                                    </div>
+                                                <?php endif; ?>
+
+                                                <div class="row g-1 mb-1">
+                                                    <div class="col-md-5">
+                                                        <input type="text" name="titulo_oferta_avulso" id="tituloOfertaAvulso" class="form-control form-control-sm" placeholder="Título da oferta" value="<?= esc($config['lcf_produto_destaque_titulo'] ?? '') ?>">
+                                                    </div>
+                                                    <div class="col-md-7">
+                                                        <input type="url" name="link_oferta_avulso" id="linkOfertaAvulso" class="form-control form-control-sm" placeholder="Link LineFast (https://linefast.com.br/...)" value="<?= esc($config['lcf_produto_destaque_url'] ?? '') ?>">
+                                                    </div>
+                                                </div>
+                                                <small class="text-muted d-block" style="font-size: 11px;">
+                                                    <i class="fa-solid fa-circle-check text-success me-1"></i> O cliente receberá este link e destaque no WhatsApp junto com o comprovante de cashback.
                                                 </small>
                                             </div>
                                         </div>
@@ -937,6 +966,22 @@ document.addEventListener('DOMContentLoaded', function() {
             const desagio = (lc * 0.02).toFixed(2);
             const liq = (lc - desagio).toFixed(2);
             simulaResgate.textContent = `Deságio 2%: R$ ${desagio.replace('.', ',')} | Líquido a receber: R$ ${liq.replace('.', ',')}`;
+        });
+    }
+
+    // Atalho de Oferta Rápida no Caixa
+    const selectOfertaParceiro = document.getElementById('selectOfertaParceiro');
+    if (selectOfertaParceiro) {
+        selectOfertaParceiro.addEventListener('change', function() {
+            const selected = this.options[this.selectedIndex];
+            const url = this.value;
+            const titulo = selected ? selected.getAttribute('data-titulo') : '';
+            if (url) {
+                const linkInput = document.getElementById('linkOfertaAvulso');
+                const tituloInput = document.getElementById('tituloOfertaAvulso');
+                if (linkInput) linkInput.value = url;
+                if (tituloInput && titulo) tituloInput.value = titulo;
+            }
         });
     }
 
