@@ -31,12 +31,15 @@
                             </small>
                         <?php endif; ?>
                     </div>
-                    <div class="d-flex flex-column gap-2">
+                    <div class="d-flex flex-column flex-sm-row gap-2">
                         <button type="button" class="btn btn-warning fw-bold rounded-pill px-3 shadow-sm btn-sm" onclick="bootstrap.Tab.getOrCreateInstance(document.querySelector('#tab-recarga-nav')).show()">
                             <i class="fa-solid fa-plus-circle me-1"></i> Fazer Recarga
                         </button>
                         <button type="button" class="btn btn-outline-danger fw-bold rounded-pill px-3 btn-sm" onclick="bootstrap.Tab.getOrCreateInstance(document.querySelector('#tab-resgate-nav')).show()">
                             <i class="fa-solid fa-money-bill-transfer me-1"></i> Resgatar PIX
+                        </button>
+                        <button type="button" class="btn btn-outline-dark fw-bold rounded-pill px-3 btn-sm" onclick="bootstrap.Tab.getOrCreateInstance(document.querySelector('#tab-extrato-nav')).show()">
+                            <i class="fa-solid fa-clock-rotate-left me-1"></i> Ver Extrato
                         </button>
                     </div>
                 </div>
@@ -146,6 +149,11 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link fw-bold py-3 px-3 text-dark border-0" id="tab-assinatura-nav" data-bs-toggle="tab" data-bs-target="#tab-assinatura" type="button" role="tab">
                             <i class="fa-solid fa-credit-card text-purple me-1"></i> 6. Assinatura (R$ 20/mês)
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-bold py-3 px-3 text-dark border-0" id="tab-extrato-nav" data-bs-toggle="tab" data-bs-target="#tab-extrato" type="button" role="tab">
+                            <i class="fa-solid fa-clock-rotate-left text-primary me-1"></i> 7. Extrato do Lojista
                         </button>
                     </li>
                 </ul>
@@ -353,6 +361,100 @@
                                 </div>
                             </div>
                         </form>
+
+                        <!-- HISTÓRICO RÁPIDO: ÚLTIMAS VENDAS NESTE CAIXA -->
+                        <div class="mt-4 pt-3 border-top">
+                            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
+                                <div>
+                                    <h5 class="fw-bold text-dark mb-0">
+                                        <i class="fa-solid fa-clock-rotate-left text-success me-1"></i> Últimas Vendas Registradas no Caixa
+                                    </h5>
+                                    <small class="text-muted">Lançamentos recentes de cashback. Reenvie o comprovante no WhatsApp a qualquer momento.</small>
+                                </div>
+                                <button type="button" class="btn btn-outline-dark btn-sm rounded-pill fw-bold px-3" onclick="bootstrap.Tab.getOrCreateInstance(document.querySelector('#tab-extrato-nav')).show()">
+                                    Ver Extrato Completo <i class="fa-solid fa-arrow-right ms-1"></i>
+                                </button>
+                            </div>
+
+                            <div class="table-responsive bg-white rounded-4 border">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Data / Hora</th>
+                                            <th>Cliente</th>
+                                            <th>Valor Compra</th>
+                                            <th>Cashback Concedido</th>
+                                            <th>Cesta / Produtos</th>
+                                            <th class="text-end">Comprovante WhatsApp</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php 
+                                        $vendasCaixa = array_filter($ultimasTransacoes ?? [], fn($t) => $t['lct_tipo'] === 'cashback_venda');
+                                        ?>
+                                        <?php if (empty($vendasCaixa)): ?>
+                                            <tr>
+                                                <td colspan="6" class="text-center py-4 text-muted">
+                                                    <i class="fa-solid fa-receipt fs-4 d-block mb-1 opacity-50"></i>
+                                                    Nenhuma venda registrada ainda no caixa.
+                                                </td>
+                                            </tr>
+                                        <?php else: ?>
+                                            <?php foreach (array_slice($vendasCaixa, 0, 5) as $v): ?>
+                                                <?php 
+                                                $prodDestaqueTit = !empty($config['lcf_produto_destaque_titulo']) ? $config['lcf_produto_destaque_titulo'] : null;
+                                                $prodDestaqueLink = !empty($config['lcf_produto_destaque_url']) ? $config['lcf_produto_destaque_url'] : null;
+                                                $msgWhatsVenda = \App\Services\LinecashWhatsappService::gerarMensagemCashback(
+                                                    $v['destino_nome'] ?: 'Cliente',
+                                                    $parceiro->getNome() ?: 'Loja Parceira',
+                                                    (float)$v['lct_valor_compra_reais'],
+                                                    (float)$v['lct_valor_lc'],
+                                                    (float)$v['lct_valor_lc'],
+                                                    $prodDestaqueTit,
+                                                    $prodDestaqueLink,
+                                                    $config['lcf_mensagem_customizada'] ?? null
+                                                );
+                                                $linkWhatsVenda = \App\Services\LinecashWhatsappService::gerarLinkDireto('', $msgWhatsVenda);
+                                                ?>
+                                                <tr>
+                                                    <td class="small fw-semibold"><?= date('d/m/Y H:i', strtotime($v['lct_criado_em'])) ?></td>
+                                                    <td>
+                                                        <strong class="text-dark d-block"><?= esc($v['destino_nome'] ?: 'Cliente') ?></strong>
+                                                        <small class="text-muted">Transação #<?= $v['lct_id'] ?></small>
+                                                    </td>
+                                                    <td class="fw-bold text-dark">
+                                                        R$ <?= number_format((float)$v['lct_valor_compra_reais'], 2, ',', '.') ?>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-success bg-opacity-15 text-success fw-bold px-2 py-1 fs-6">
+                                                            +<?= number_format((float)$v['lct_valor_lc'], 2, ',', '.') ?> LC
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <?php if (!empty($v['produtos'])): ?>
+                                                            <div class="d-flex flex-wrap gap-1">
+                                                                <?php foreach ($v['produtos'] as $p): ?>
+                                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle small py-1">
+                                                                        <i class="fa-solid fa-fire me-1"></i><?= esc($p['ltp_codigo_produto']) ?><?= !empty($p['ltp_descricao']) ? ': ' . esc($p['ltp_descricao']) : '' ?>
+                                                                    </span>
+                                                                <?php endforeach; ?>
+                                                            </div>
+                                                        <?php else: ?>
+                                                            <span class="text-muted small">-</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td class="text-end">
+                                                        <a href="<?= esc($linkWhatsVenda) ?>" target="_blank" class="btn btn-sm btn-success rounded-pill fw-bold px-3 shadow-sm">
+                                                            <i class="fa-brands fa-whatsapp me-1"></i> Enviar Comprovante
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- ABA 2: RECEBER EM LINECASH (CLIENTE PAGA COM LC) -->
@@ -700,87 +802,124 @@
                         </div>
                     </div>
 
-                </div>
-            </div>
-        </div>
-    </div>
+                    <!-- ABA 7: EXTRATO COMPLETO DO LOJISTA -->
+                    <div class="tab-pane fade" id="tab-extrato" role="tabpanel">
+                        <div class="p-4 bg-light rounded-4 border">
+                            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+                                <div>
+                                    <h4 class="fw-bold text-dark mb-1">
+                                        <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Extrato de Movimentações da sua Loja
+                                    </h4>
+                                    <p class="text-muted small mb-0">
+                                        Histórico completo de cashbacks concedidos, pagamentos recebidos, recargas e resgates PIX.
+                                    </p>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm btn-sm" onclick="bootstrap.Tab.getOrCreateInstance(document.querySelector('#tab-cashback-nav')).show()">
+                                        <i class="fa-solid fa-plus me-1"></i> Novo Cashback no Caixa
+                                    </button>
+                                </div>
+                            </div>
 
-    <!-- EXTRATO RECENTE DE TRANSAÇÕES NO CAIXA -->
-    <div class="col-12">
-        <div class="bg-white p-4 rounded-4 shadow-sm">
-            <h5 class="fw-bold text-dark mb-3">
-                <i class="fa-solid fa-clock-rotate-left text-muted me-1"></i> Extrato de Movimentações Recentes da sua Loja
-            </h5>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>#ID</th>
-                            <th>Data / Hora</th>
-                            <th>Operação</th>
-                            <th>Origem / Destino</th>
-                            <th>Valor (LC)</th>
-                            <th>Descrição</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (empty($ultimasTransacoes)): ?>
-                            <tr>
-                                <td colspan="7" class="text-center py-4 text-muted">Nenhuma movimentação realizada ainda no caixa.</td>
-                            </tr>
-                        <?php else: ?>
-                            <?php foreach ($ultimasTransacoes as $t): ?>
-                                <tr>
-                                    <td>#<?= $t['lct_id'] ?></td>
-                                    <td><?= date('d/m/Y H:i', strtotime($t['lct_criado_em'])) ?></td>
-                                    <td>
-                                        <?php if ($t['lct_tipo'] === 'cashback_venda'): ?>
-                                            <span class="badge bg-success bg-opacity-10 text-success"><i class="fa-solid fa-gift"></i> Cashback Concedido</span>
-                                        <?php elseif ($t['lct_tipo'] === 'pagamento_compra'): ?>
-                                            <span class="badge bg-primary bg-opacity-10 text-primary"><i class="fa-solid fa-cart-shopping"></i> Pagamento Recebido</span>
-                                        <?php elseif ($t['lct_tipo'] === 'deposito_recarga'): ?>
-                                            <span class="badge bg-info bg-opacity-10 text-info"><i class="fa-solid fa-plus-circle"></i> Recarga</span>
-                                        <?php elseif ($t['lct_tipo'] === 'resgate_pix'): ?>
-                                            <span class="badge bg-warning bg-opacity-10 text-warning"><i class="fa-solid fa-money-bill-transfer"></i> Resgate PIX</span>
+                            <div class="table-responsive bg-white rounded-4 border">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#ID</th>
+                                            <th>Data / Hora</th>
+                                            <th>Operação</th>
+                                            <th>Origem / Destino</th>
+                                            <th>Valor (LC)</th>
+                                            <th>Detalhes / Cesta</th>
+                                            <th class="text-end">Comprovante / Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if (empty($ultimasTransacoes)): ?>
+                                            <tr>
+                                                <td colspan="7" class="text-center py-5 text-muted">
+                                                    <i class="fa-solid fa-receipt fs-2 d-block mb-2 opacity-50"></i>
+                                                    Nenhuma movimentação realizada ainda no caixa.
+                                                </td>
+                                            </tr>
                                         <?php else: ?>
-                                            <span class="badge bg-secondary"><?= esc($t['lct_tipo']) ?></span>
+                                            <?php foreach ($ultimasTransacoes as $t): ?>
+                                                <?php 
+                                                $linkWhatsComprovante = '';
+                                                if ($t['lct_tipo'] === 'cashback_venda') {
+                                                    $prodDestaqueTit = !empty($config['lcf_produto_destaque_titulo']) ? $config['lcf_produto_destaque_titulo'] : null;
+                                                    $prodDestaqueLink = !empty($config['lcf_produto_destaque_url']) ? $config['lcf_produto_destaque_url'] : null;
+                                                    $msgWhats = \App\Services\LinecashWhatsappService::gerarMensagemCashback(
+                                                        $t['destino_nome'] ?: 'Cliente',
+                                                        $parceiro->getNome() ?: 'Loja Parceira',
+                                                        (float)$t['lct_valor_compra_reais'],
+                                                        (float)$t['lct_valor_lc'],
+                                                        (float)$t['lct_valor_lc'],
+                                                        $prodDestaqueTit,
+                                                        $prodDestaqueLink,
+                                                        $config['lcf_mensagem_customizada'] ?? null
+                                                    );
+                                                    $linkWhatsComprovante = \App\Services\LinecashWhatsappService::gerarLinkDireto('', $msgWhats);
+                                                }
+                                                ?>
+                                                <tr>
+                                                    <td class="fw-bold text-muted small">#<?= $t['lct_id'] ?></td>
+                                                    <td class="small fw-semibold"><?= date('d/m/Y H:i', strtotime($t['lct_criado_em'])) ?></td>
+                                                    <td>
+                                                        <?php if ($t['lct_tipo'] === 'cashback_venda'): ?>
+                                                            <span class="badge bg-success bg-opacity-10 text-success fw-bold"><i class="fa-solid fa-gift"></i> Cashback Concedido</span>
+                                                        <?php elseif ($t['lct_tipo'] === 'pagamento_compra'): ?>
+                                                            <span class="badge bg-primary bg-opacity-10 text-primary fw-bold"><i class="fa-solid fa-cart-shopping"></i> Pagamento Recebido</span>
+                                                        <?php elseif ($t['lct_tipo'] === 'deposito_recarga'): ?>
+                                                            <span class="badge bg-info bg-opacity-10 text-info fw-bold"><i class="fa-solid fa-plus-circle"></i> Recarga</span>
+                                                        <?php elseif ($t['lct_tipo'] === 'resgate_pix'): ?>
+                                                            <span class="badge bg-warning bg-opacity-10 text-warning fw-bold"><i class="fa-solid fa-money-bill-transfer"></i> Resgate PIX</span>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-secondary"><?= esc($t['lct_tipo']) ?></span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td>
+                                                        <?php if ((int)$t['lct_origem_id'] === (int)$conta['lcc_id']): ?>
+                                                            <span class="text-danger fw-bold">Para:</span> <?= esc($t['destino_nome'] ?: 'Cliente') ?>
+                                                        <?php else: ?>
+                                                            <span class="text-success fw-bold">De:</span> <?= esc($t['origem_nome'] ?: 'Emissão Central') ?>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td class="fw-bold fs-6 <?= (int)$t['lct_origem_id'] === (int)$conta['lcc_id'] ? 'text-danger' : 'text-success' ?>">
+                                                        <?= (int)$t['lct_origem_id'] === (int)$conta['lcc_id'] ? '-' : '+' ?>
+                                                        <?= number_format((float)$t['lct_valor_lc'], 2, ',', '.') ?> LC
+                                                    </td>
+                                                    <td>
+                                                        <small class="text-muted d-block"><?= esc($t['lct_descricao']) ?></small>
+                                                        <?php if (!empty($t['produtos'])): ?>
+                                                            <div class="mt-1 d-flex flex-wrap gap-1">
+                                                                <?php foreach ($t['produtos'] as $p): ?>
+                                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle small py-1" title="Item da cesta">
+                                                                        <i class="fa-solid fa-fire me-1"></i><?= esc($p['ltp_codigo_produto']) ?><?= !empty($p['ltp_descricao']) ? ': ' . esc($p['ltp_descricao']) : '' ?>
+                                                                    </span>
+                                                                <?php endforeach; ?>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td class="text-end">
+                                                        <?php if (!empty($linkWhatsComprovante)): ?>
+                                                            <a href="<?= esc($linkWhatsComprovante) ?>" target="_blank" class="btn btn-sm btn-outline-success rounded-pill fw-bold px-3">
+                                                                <i class="fa-brands fa-whatsapp me-1"></i> Comprovante
+                                                            </a>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-success bg-opacity-10 text-success">Concluída</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
                                         <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <?php if ((int)$t['lct_origem_id'] === (int)$conta['lcc_id']): ?>
-                                            <span class="text-danger fw-bold">Para:</span> <?= esc($t['destino_nome'] ?: 'Cliente') ?>
-                                        <?php else: ?>
-                                            <span class="text-success fw-bold">De:</span> <?= esc($t['origem_nome'] ?: 'Emissão Central') ?>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="fw-bold fs-6 <?= (int)$t['lct_origem_id'] === (int)$conta['lcc_id'] ? 'text-danger' : 'text-success' ?>">
-                                        <?= (int)$t['lct_origem_id'] === (int)$conta['lcc_id'] ? '-' : '+' ?>
-                                        <?= number_format((float)$t['lct_valor_lc'], 2, ',', '.') ?> LC
-                                    </td>
-                                    <td>
-                                        <small class="text-muted d-block"><?= esc($t['lct_descricao']) ?></small>
-                                        <?php if (!empty($t['produtos'])): ?>
-                                            <div class="mt-1">
-                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle py-1 px-2" title="Itens da cesta / Zona de Calor">
-                                                    <i class="fa-solid fa-fire me-1"></i> Cesta:
-                                                    <?php 
-                                                    $itensFormatados = [];
-                                                    foreach ($t['produtos'] as $p) {
-                                                        $itensFormatados[] = esc($p['ltp_codigo_produto']) . (!empty($p['ltp_descricao']) ? ' (' . esc($p['ltp_descricao']) . ')' : '');
-                                                    }
-                                                    echo implode(' | ', $itensFormatados);
-                                                    ?>
-                                                </span>
-                                            </div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td><span class="badge bg-success">Concluída</span></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
     </div>
