@@ -11,6 +11,7 @@ use App\Models\LcDepositoModel;
 use App\Models\LcResgateModel;
 use App\Models\LcConfigLojistaModel;
 use App\Models\LcAssinaturaLojistaModel;
+use App\Models\LcParceiroProdutoModel;
 use App\Models\ParceiroModel;
 use App\Services\LinecashService;
 use App\Services\LinecashWhatsappService;
@@ -27,6 +28,7 @@ class Linecash extends BaseController
     protected LcResgateModel $resgateModel;
     protected LcConfigLojistaModel $configModel;
     protected LcAssinaturaLojistaModel $assinaturaModel;
+    protected LcParceiroProdutoModel $parceiroProdutoModel;
     protected ParceiroModel $parceiroModel;
 
     public function __construct()
@@ -40,6 +42,7 @@ class Linecash extends BaseController
         $this->resgateModel = new LcResgateModel();
         $this->configModel = new LcConfigLojistaModel();
         $this->assinaturaModel = new LcAssinaturaLojistaModel();
+        $this->parceiroProdutoModel = new LcParceiroProdutoModel();
         $this->parceiroModel = new ParceiroModel();
     }
 
@@ -83,6 +86,9 @@ class Linecash extends BaseController
         $produtoModel = new \App\Models\ProdutoModel();
         $minhasOfertas = $produtoModel->where('pro_parceiro', $parceiro->par_id)->orderBy('pro_id', 'DESC')->findAll(30);
 
+        // Busca produtos cadastrados para a Zona de Calor / Cesta LineCash
+        $meusProdutosCesta = $this->parceiroProdutoModel->getByParceiro($parceiro->par_id);
+
         return view('parceiro/linecash/index', [
             'title'             => 'LineCash PDV - Caixa e Fidelidade',
             'parceiro'          => $parceiro,
@@ -93,6 +99,7 @@ class Linecash extends BaseController
             'depositos'         => $depositos,
             'resgates'          => $resgates,
             'minhasOfertas'     => $minhasOfertas,
+            'meusProdutosCesta' => $meusProdutosCesta,
         ]);
     }
 
@@ -393,6 +400,104 @@ class Linecash extends BaseController
         ]);
 
         return redirect()->to(base_url('parceiro/linecash'))->with('success', 'Configurações de PDV e Vitrine LineFast salvas com sucesso!');
+    }
+
+    /**
+     * Lista os produtos da cesta/zona de calor cadastrados pelo parceiro (JSON)
+     */
+    public function listarProdutos()
+    {
+        $parceiro = $this->getParceiroLogado();
+        if (!$parceiro) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Não autorizado'])->setStatusCode(401);
+        }
+
+        $produtos = $this->parceiroProdutoModel->getByParceiro($parceiro->par_id);
+        return $this->response->setJSON(['success' => true, 'produtos' => $produtos]);
+    }
+
+    /**
+     * Salva ou atualiza um produto da cesta/zona de calor (JSON)
+     */
+    public function salvarProduto()
+    {
+        $parceiro = $this->getParceiroLogado();
+        if (!$parceiro) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Não autorizado'])->setStatusCode(401);
+        }
+
+        $id = (int)$this->request->getPost('id');
+        $codigo = trim((string)$this->request->getPost('codigo'));
+        $descricao = trim((string)$this->request->getPost('descricao'));
+
+        if (empty($codigo) || empty($descricao)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Informe o código e o nome do produto.']);
+        }
+
+        // Verifica se já existe outro produto com o mesmo código para este parceiro
+        $existente = $this->parceiroProdutoModel->where('lpp_parceiro_id', $parceiro->par_id)
+            ->where('lpp_codigo', $codigo)
+            ->where('lpp_ativo', 1)
+            ->first();
+
+        if ($existente && (int)$existente['lpp_id'] !== $id) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => "O código '{$codigo}' já está cadastrado para o produto '{$existente['lpp_descricao']}'.",
+            ]);
+        }
+
+        $data = [
+            'lpp_parceiro_id' => $parceiro->par_id,
+            'lpp_codigo'      => $codigo,
+            'lpp_descricao'   => $descricao,
+            'lpp_ativo'       => 1,
+        ];
+
+        if ($id > 0) {
+            $data['lpp_id'] = $id;
+            $this->parceiroProdutoModel->save($data);
+            $msg = 'Produto atualizado com sucesso!';
+        } else {
+            $this->parceiroProdutoModel->insert($data);
+            $msg = 'Produto cadastrado com sucesso!';
+        }
+
+        $produtosAtualizados = $this->parceiroProdutoModel->getByParceiro($parceiro->par_id);
+
+        return $this->response->setJSON([
+            'success'  => true,
+            'message'  => $msg,
+            'produtos' => $produtosAtualizados,
+        ]);
+    }
+
+    /**
+     * Exclui (desativa) um produto da cesta/zona de calor (JSON)
+     */
+    public function excluirProduto(int $id)
+    {
+        $parceiro = $this->getParceiroLogado();
+        if (!$parceiro) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Não autorizado'])->setStatusCode(401);
+        }
+
+        $prod = $this->parceiroProdutoModel->where('lpp_id', $id)
+            ->where('lpp_parceiro_id', $parceiro->par_id)
+            ->first();
+
+        if (!$prod) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Produto não encontrado.']);
+        }
+
+        $this->parceiroProdutoModel->delete($id);
+        $produtosAtualizados = $this->parceiroProdutoModel->getByParceiro($parceiro->par_id);
+
+        return $this->response->setJSON([
+            'success'  => true,
+            'message'  => 'Produto removido com sucesso!',
+            'produtos' => $produtosAtualizados,
+        ]);
     }
 
     /**

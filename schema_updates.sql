@@ -178,3 +178,17 @@ CREATE TABLE IF NOT EXISTS `tb_lgpd_paginas` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_slug` (`slug`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 8. PRODUTOS DO PARCEIRO PARA ZONA DE CALOR / CESTA LINECASH
+CREATE TABLE IF NOT EXISTS `tb_lc_parceiro_produtos` (
+  `lpp_id` INT(11) NOT NULL AUTO_INCREMENT,
+  `lpp_parceiro_id` INT(11) NOT NULL,
+  `lpp_codigo` VARCHAR(50) NOT NULL,
+  `lpp_descricao` VARCHAR(255) NOT NULL,
+  `lpp_ativo` TINYINT(1) DEFAULT 1,
+  `lpp_criado_em` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `lpp_atualizado_em` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`lpp_id`),
+  KEY `idx_parceiro` (`lpp_parceiro_id`),
+  KEY `idx_codigo` (`lpp_parceiro_id`, `lpp_codigo`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

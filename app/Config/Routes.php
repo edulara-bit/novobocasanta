@@ -68,6 +68,9 @@ $routes->group('parceiro', static function ($routes) {
     $routes->post('linecash/resgate', 'Parceiro\Linecash::solicitarResgate');
     $routes->post('linecash/config', 'Parceiro\Linecash::salvarConfig');
     $routes->get('linecash/assinar-mp', 'Parceiro\Linecash::assinarMercadoPago');
+    $routes->get('linecash/produtos', 'Parceiro\Linecash::listarProdutos');
+    $routes->post('linecash/produtos/salvar', 'Parceiro\Linecash::salvarProduto');
+    $routes->post('linecash/produtos/excluir/(:num)', 'Parceiro\Linecash::excluirProduto/$1');
 });
 
 // LGPD & POLÍTICAS

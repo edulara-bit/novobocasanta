@@ -263,27 +263,32 @@
                                 <!-- Coluna Direita: Zona de Calor (Produtos) -->
                                 <div class="col-lg-6">
                                     <div class="p-3 bg-light rounded-4 border h-100 d-flex flex-column justify-content-between">
-                                        <div>
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <h5 class="fw-bold text-dark mb-0">
                                                     <i class="fa-solid fa-fire text-danger me-1"></i> Zona de Calor (Cesta de Itens)
                                                 </h5>
-                                                <span class="badge bg-secondary">Opcional</span>
+                                                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill fw-bold py-1 px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalGerenciarProdutosCesta">
+                                                    <i class="fa-solid fa-tags me-1"></i> Meus Produtos
+                                                </button>
                                             </div>
                                             <p class="text-muted small mb-3">
-                                                Informe até 3 principais produtos comprados para alimentar a inteligência de consumo e conversão da sua loja.
+                                                Informe até 3 principais produtos comprados. Digite o código ou o nome para preencher automaticamente.
                                             </p>
 
                                             <?php for ($i = 1; $i <= 3; $i++): ?>
                                                 <div class="row g-2 mb-2 align-items-center">
                                                     <div class="col-4">
-                                                        <input type="text" name="prod_codigo_<?= $i ?>" class="form-control form-control-sm" placeholder="Cód/Ref #<?= $i ?>">
+                                                        <input type="text" name="prod_codigo_<?= $i ?>" id="prod_codigo_<?= $i ?>" class="form-control form-control-sm fw-bold input-prod-codigo" placeholder="Cód/Ref #<?= $i ?>" list="datalistCodigosProdutos" autocomplete="off" data-index="<?= $i ?>">
                                                     </div>
                                                     <div class="col-8">
-                                                        <input type="text" name="prod_desc_<?= $i ?>" class="form-control form-control-sm" placeholder="Nome/Descrição do Item <?= $i ?>">
+                                                        <input type="text" name="prod_desc_<?= $i ?>" id="prod_desc_<?= $i ?>" class="form-control form-control-sm input-prod-desc" placeholder="Nome/Descrição do Item <?= $i ?>" list="datalistNomesProdutos" autocomplete="off" data-index="<?= $i ?>">
                                                     </div>
                                                 </div>
                                             <?php endfor; ?>
+
+                                            <!-- Datalists para sugestões rápidas -->
+                                            <datalist id="datalistCodigosProdutos"></datalist>
+                                            <datalist id="datalistNomesProdutos"></datalist>
 
                                             <?php if (!empty($config['lcf_produto_destaque_titulo'])): ?>
                                                 <div class="alert alert-info border-0 rounded-3 mt-2 py-2 small mb-0">
@@ -1006,6 +1011,285 @@ document.addEventListener('DOMContentLoaded', function() {
             prompt('Copie o link abaixo:', link);
         });
     };
+
+    // ==========================================
+    // AUTOCOMPLETE BIDIRECIONAL DA ZONA DE CALOR
+    // ==========================================
+    let listaProdutosCesta = <?= json_encode($meusProdutosCesta ?? []) ?>;
+
+    const datalistCodigos = document.getElementById('datalistCodigosProdutos');
+    const datalistNomes = document.getElementById('datalistNomesProdutos');
+    const tabelaCorpo = document.getElementById('tabelaCorpoProdutosCesta');
+    const totalProdCestaSpan = document.getElementById('totalProdutosCesta');
+
+    function renderizarDatalistsETabela() {
+        if (totalProdCestaSpan) totalProdCestaSpan.textContent = listaProdutosCesta.length;
+
+        // 1. Datalist de Códigos
+        if (datalistCodigos) {
+            datalistCodigos.innerHTML = listaProdutosCesta.map(p => 
+                `<option value="${p.lpp_codigo}">${p.lpp_codigo} - ${p.lpp_descricao}</option>`
+            ).join('');
+        }
+
+        // 2. Datalist de Nomes
+        if (datalistNomes) {
+            datalistNomes.innerHTML = listaProdutosCesta.map(p => 
+                `<option value="${p.lpp_descricao}">${p.lpp_descricao} (Cód: ${p.lpp_codigo})</option>`
+            ).join('');
+        }
+
+        // 3. Tabela do Modal
+        if (tabelaCorpo) {
+            if (listaProdutosCesta.length === 0) {
+                tabelaCorpo.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="text-center py-4 text-muted small">
+                            <i class="fa-solid fa-box-open fs-3 d-block mb-1 text-muted opacity-50"></i>
+                            Nenhum produto cadastrado ainda. Adicione acima para autocompletar no caixa!
+                        </td>
+                    </tr>
+                `;
+            } else {
+                tabelaCorpo.innerHTML = listaProdutosCesta.map(p => `
+                    <tr>
+                        <td class="fw-bold text-dark"><span class="badge bg-light text-dark border">${p.lpp_codigo}</span></td>
+                        <td>${p.lpp_descricao}</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 rounded-pill me-1 btn-editar-prod" data-id="${p.lpp_id}" data-codigo="${p.lpp_codigo}" data-descricao="${p.lpp_descricao}" title="Editar">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 rounded-pill btn-excluir-prod" data-id="${p.lpp_id}" data-descricao="${p.lpp_descricao}" title="Excluir">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+    }
+
+    renderizarDatalistsETabela();
+
+    // Eventos de preenchimento bidirecional nos 3 pares de inputs
+    for (let i = 1; i <= 3; i++) {
+        const inputCod = document.getElementById(`prod_codigo_${i}`);
+        const inputDesc = document.getElementById(`prod_desc_${i}`);
+
+        if (inputCod && inputDesc) {
+            // Quando altera o CÓDIGO -> preenche a DESCRIÇÃO
+            const buscarPorCodigo = function() {
+                const codDigitado = inputCod.value.trim();
+                if (!codDigitado) return;
+                const match = listaProdutosCesta.find(p => String(p.lpp_codigo).trim().toLowerCase() === codDigitado.toLowerCase());
+                if (match) {
+                    inputDesc.value = match.lpp_descricao;
+                }
+            };
+            inputCod.addEventListener('input', buscarPorCodigo);
+            inputCod.addEventListener('change', buscarPorCodigo);
+
+            // Quando altera a DESCRIÇÃO -> preenche o CÓDIGO
+            const buscarPorDescricao = function() {
+                const descDigitada = inputDesc.value.trim();
+                if (!descDigitada) return;
+                const match = listaProdutosCesta.find(p => String(p.lpp_descricao).trim().toLowerCase() === descDigitada.toLowerCase());
+                if (match) {
+                    inputCod.value = match.lpp_codigo;
+                }
+            };
+            inputDesc.addEventListener('input', buscarPorDescricao);
+            inputDesc.addEventListener('change', buscarPorDescricao);
+        }
+    }
+
+    // Formulário do Modal de Produtos
+    const formProdutoCesta = document.getElementById('formProdutoCesta');
+    const prodCestaId = document.getElementById('prodCestaId');
+    const prodCestaCodigo = document.getElementById('prodCestaCodigo');
+    const prodCestaDescricao = document.getElementById('prodCestaDescricao');
+    const btnSalvarProdCestaTexto = document.getElementById('btnSalvarProdCestaTexto');
+    const btnCancelarEdicaoProdCesta = document.getElementById('btnCancelarEdicaoProdCesta');
+    const msgAlertaProdCesta = document.getElementById('msgAlertaProdCesta');
+
+    function mostrarMsgAlerta(texto, tipo = 'success') {
+        if (!msgAlertaProdCesta) return;
+        msgAlertaProdCesta.className = `mt-2 small alert alert-${tipo} py-1 px-2 mb-0 rounded-3`;
+        msgAlertaProdCesta.innerHTML = texto;
+        msgAlertaProdCesta.classList.remove('d-none');
+        setTimeout(() => {
+            msgAlertaProdCesta.classList.add('d-none');
+        }, 4000);
+    }
+
+    function resetarFormProdCesta() {
+        if (prodCestaId) prodCestaId.value = '';
+        if (prodCestaCodigo) prodCestaCodigo.value = '';
+        if (prodCestaDescricao) prodCestaDescricao.value = '';
+        if (btnSalvarProdCestaTexto) btnSalvarProdCestaTexto.textContent = 'Adicionar';
+        if (btnCancelarEdicaoProdCesta) btnCancelarEdicaoProdCesta.classList.add('d-none');
+    }
+
+    if (btnCancelarEdicaoProdCesta) {
+        btnCancelarEdicaoProdCesta.addEventListener('click', resetarFormProdCesta);
+    }
+
+    if (formProdutoCesta) {
+        formProdutoCesta.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            fetch('<?= base_url('parceiro/linecash/produtos/salvar') ?>', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    listaProdutosCesta = data.produtos || [];
+                    renderizarDatalistsETabela();
+                    resetarFormProdCesta();
+                    mostrarMsgAlerta(`<i class="fa-solid fa-check me-1"></i> ${data.message}`, 'success');
+                } else {
+                    mostrarMsgAlerta(`<i class="fa-solid fa-triangle-exclamation me-1"></i> ${data.message}`, 'danger');
+                }
+            })
+            .catch(() => {
+                mostrarMsgAlerta('<i class="fa-solid fa-triangle-exclamation me-1"></i> Erro ao conectar ao servidor.', 'danger');
+            });
+        });
+    }
+
+    // Ações de Editar e Excluir na Tabela
+    if (tabelaCorpo) {
+        tabelaCorpo.addEventListener('click', function(e) {
+            const btnEditar = e.target.closest('.btn-editar-prod');
+            const btnExcluir = e.target.closest('.btn-excluir-prod');
+
+            if (btnEditar) {
+                const id = btnEditar.getAttribute('data-id');
+                const codigo = btnEditar.getAttribute('data-codigo');
+                const descricao = btnEditar.getAttribute('data-descricao');
+
+                if (prodCestaId) prodCestaId.value = id;
+                if (prodCestaCodigo) prodCestaCodigo.value = codigo;
+                if (prodCestaDescricao) {
+                    prodCestaDescricao.value = descricao;
+                    prodCestaDescricao.focus();
+                }
+                if (btnSalvarProdCestaTexto) btnSalvarProdCestaTexto.textContent = 'Salvar Alteração';
+                if (btnCancelarEdicaoProdCesta) btnCancelarEdicaoProdCesta.classList.remove('d-none');
+            }
+
+            if (btnExcluir) {
+                const id = btnExcluir.getAttribute('data-id');
+                const desc = btnExcluir.getAttribute('data-descricao');
+
+                if (confirm(`Deseja realmente remover o produto "${desc}" da sua lista?`)) {
+                    const fd = new FormData();
+                    fd.append('<?= csrf_token() ?>', '<?= csrf_hash() ?>');
+
+                    fetch(`<?= base_url('parceiro/linecash/produtos/excluir/') ?>${id}`, {
+                        method: 'POST',
+                        body: fd
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            listaProdutosCesta = data.produtos || [];
+                            renderizarDatalistsETabela();
+                            mostrarMsgAlerta(`<i class="fa-solid fa-trash me-1"></i> ${data.message}`, 'warning');
+                        } else {
+                            mostrarMsgAlerta(`<i class="fa-solid fa-triangle-exclamation me-1"></i> ${data.message}`, 'danger');
+                        }
+                    })
+                    .catch(() => {
+                        mostrarMsgAlerta('<i class="fa-solid fa-triangle-exclamation me-1"></i> Erro ao excluir produto.', 'danger');
+                    });
+                }
+            }
+        });
+    }
 });
 </script>
+
+<!-- MODAL GERENCIAR PRODUTOS DA ZONA DE CALOR -->
+<div class="modal fade" id="modalGerenciarProdutosCesta" tabindex="-1" aria-labelledby="modalProdutosLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-dark text-white rounded-top-4 py-3">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-danger bg-opacity-20 text-danger p-2 me-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                        <i class="fa-solid fa-fire fs-6"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0 text-white" id="modalProdutosLabel">Meus Produtos da Zona de Calor</h5>
+                        <small class="text-white-50">Catálogo rápido para autocompletar no Caixa</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small mb-3">
+                    Cadastre os produtos que você tem interesse em monitorar. Quando estiver no caixa, ao digitar o código (ex: <code>15</code>) ele preencherá o nome sozinho, e ao buscar pelo nome ele completará o código!
+                </p>
+
+                <!-- FORMULÁRIO DE CADASTRO / EDIÇÃO RÁPIDA -->
+                <div class="card bg-light border-0 rounded-4 p-3 mb-4 shadow-sm">
+                    <form id="formProdutoCesta" class="row g-2 align-items-end">
+                        <?= csrf_field() ?>
+                        <input type="hidden" id="prodCestaId" name="id" value="">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-dark mb-1">Cód/Ref:</label>
+                            <input type="text" class="form-control form-control-sm fw-bold" id="prodCestaCodigo" name="codigo" placeholder="Ex: 15" required autocomplete="off">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-dark mb-1">Nome / Descrição do Item:</label>
+                            <input type="text" class="form-control form-control-sm" id="prodCestaDescricao" name="descricao" placeholder="Ex: Colágeno UC2" required autocomplete="off">
+                        </div>
+                        <div class="col-md-3 d-flex gap-1">
+                            <button type="submit" class="btn btn-danger btn-sm w-100 rounded-pill fw-bold" id="btnSalvarProdCesta">
+                                <i class="fa-solid fa-plus me-1"></i> <span id="btnSalvarProdCestaTexto">Adicionar</span>
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm rounded-pill fw-bold d-none px-3" id="btnCancelarEdicaoProdCesta" title="Cancelar edição">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </form>
+                    <div id="msgAlertaProdCesta" class="mt-2 small d-none alert py-1 px-2 mb-0 rounded-3"></div>
+                </div>
+
+                <!-- LISTA DE PRODUTOS CADASTRADOS -->
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold text-dark mb-0">
+                        <i class="fa-solid fa-list-check me-1 text-danger"></i> Produtos Cadastrados (<span id="totalProdutosCesta">0</span>)
+                    </h6>
+                    <small class="text-muted">Clique em um produto para editar</small>
+                </div>
+
+                <div class="table-responsive border rounded-3 bg-white" style="max-height: 280px; overflow-y: auto;">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th style="width: 25%;">Código</th>
+                                <th style="width: 55%;">Nome / Descrição</th>
+                                <th style="width: 20%;" class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaCorpoProdutosCesta">
+                            <tr>
+                                <td colspan="3" class="text-center py-4 text-muted small">Carregando produtos...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer bg-light rounded-bottom-4 py-2">
+                <button type="button" class="btn btn-dark btn-sm rounded-pill px-4 fw-bold" data-bs-dismiss="modal">
+                    <i class="fa-solid fa-check me-1"></i> Pronto para usar no Caixa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 <?= $this->endSection() ?>
