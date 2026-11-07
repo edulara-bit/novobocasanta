@@ -46,26 +46,33 @@
 
     <!-- ALERTA DE COMPROVANTE WHATSAPP APÓS OPERAÇÃO -->
     <?php if (session()->getFlashdata('whatsapp_link')): ?>
-        <div class="col-12">
-            <div class="alert alert-success border-0 rounded-4 shadow-sm p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff;">
+        <div class="col-12" id="alertaComprovanteWhatsapp">
+            <div class="alert alert-success border-0 rounded-4 shadow-lg p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #fff;">
                 <div>
-                    <h5 class="fw-bold mb-1 text-white">
-                        <i class="fa-brands fa-whatsapp fs-4 me-2"></i> Operação Concluída com Sucesso!
-                    </h5>
+                    <span class="badge bg-white text-success fw-bold px-3 py-1 rounded-pill mb-2">
+                        <i class="fa-solid fa-circle-check text-success me-1"></i> Operação Concluída com Sucesso!
+                    </span>
+                    <h4 class="fw-bold mb-1 text-white">
+                        <i class="fa-brands fa-whatsapp fs-3 me-2"></i> Enviar Comprovante de Cashback no WhatsApp
+                    </h4>
                     <p class="mb-0 text-white opacity-90 small">
-                        Deseja enviar o comprovante com o saldo acumulado e o produto destaque LineFast para o cliente <?= esc(session()->getFlashdata('whatsapp_cliente') ?: '') ?>?
+                        <?php if (session()->getFlashdata('whatsapp_cliente')): ?>
+                            Número do cliente: <strong><?= esc(session()->getFlashdata('whatsapp_cliente')) ?></strong>. Clique no botão para enviar o comprovante com saldo e ofertas!
+                        <?php else: ?>
+                            Clique no botão ao lado para abrir o WhatsApp e enviar o comprovante com saldo e ofertas para o cliente.
+                        <?php endif; ?>
                     </p>
                 </div>
                 <div>
-                    <a href="<?= esc(session()->getFlashdata('whatsapp_link')) ?>" target="_blank" class="btn btn-light btn-lg rounded-pill fw-bold text-success px-4 shadow">
-                        <i class="fa-brands fa-whatsapp text-success me-2 fs-5"></i> Enviar Comprovante no WhatsApp
+                    <a href="<?= esc(session()->getFlashdata('whatsapp_link')) ?>" target="_blank" class="btn btn-warning btn-lg rounded-pill fw-bold text-dark px-4 shadow py-3 fs-6">
+                        <i class="fa-brands fa-whatsapp text-dark me-2 fs-5"></i> Enviar Comprovante de Cashback
                     </a>
                 </div>
             </div>
         </div>
     <?php endif; ?>
 
-    <!-- CARD: LINK DE CADASTRO PARA O LOJISTA ENVIAR AO CLIENTE -->
+    <!-- CARD: LINK DE CADASTRO PARA O LOJISTA CONVIDAR NOVOS CLIENTES -->
     <?php 
     $slugLoja = !empty($parceiro->par_slug) ? $parceiro->par_slug : $parceiro->par_id;
     $linkCadastroCli = base_url('linecash/cadastro?loja=' . $slugLoja);
@@ -77,31 +84,31 @@
             <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
                 <div class="d-flex align-items-center gap-3">
                     <div class="d-flex align-items-center justify-content-center bg-warning bg-opacity-20 text-dark rounded-circle" style="width: 52px; height: 52px; min-width: 52px;">
-                        <i class="fa-solid fa-share-nodes fs-4 text-warning-emphasis"></i>
+                        <i class="fa-solid fa-user-plus fs-4 text-warning-emphasis"></i>
                     </div>
                     <div>
                         <div class="d-flex align-items-center gap-2 mb-1">
-                            <h6 class="fw-bold text-dark mb-0">Link de Cadastro para seus Clientes</h6>
-                            <span class="badge bg-success-subtle text-success border px-2 py-0 rounded-pill small fw-bold">Sugestão</span>
+                            <h6 class="fw-bold text-dark mb-0">Convite de Cadastro para Novos Clientes</h6>
+                            <span class="badge bg-secondary-subtle text-secondary border px-2 py-0 rounded-pill small">Para clientes sem cadastro</span>
                         </div>
                         <p class="text-muted small mb-0">
-                            Envie este link no WhatsApp para seu cliente se cadastrar no LineCash. Ao comprar no seu caixa, ele já acumula cashback direto pelo CPF!
+                            Envie este link apenas para pessoas que ainda não têm carteira LineCash. (Os comprovantes de compras realizadas aparecem no banner verde acima).
                         </p>
                     </div>
                 </div>
 
                 <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch align-items-sm-center">
-                    <input type="text" class="form-control form-control-sm text-muted bg-light font-monospace" style="min-width: 260px;" value="<?= $linkCadastroCli ?>" readonly id="inputLinkLojista">
+                    <input type="text" class="form-control form-control-sm text-muted bg-light font-monospace" style="min-width: 240px;" value="<?= $linkCadastroCli ?>" readonly id="inputLinkLojista">
                     <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-3 text-nowrap fw-bold" onclick="copiarLinkCadastro('<?= $linkCadastroCli ?>')" id="btnCopiarLinkLojista">
                         <i class="fa-solid fa-copy me-1"></i> Copiar Link
                     </button>
-                    <a href="https://api.whatsapp.com/send?text=<?= $textoWhatsCli ?>" target="_blank" class="btn btn-sm btn-success rounded-pill px-3 text-nowrap fw-bold shadow-sm">
-                        <i class="fa-brands fa-whatsapp me-1 fs-6"></i> Enviar WhatsApp
+                    <a href="https://api.whatsapp.com/send?text=<?= $textoWhatsCli ?>" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-3 text-nowrap fw-bold">
+                        <i class="fa-solid fa-user-plus me-1"></i> Convidar Cliente via WhatsApp
                     </a>
                 </div>
             </div>
             <div class="mt-2 pt-2 border-top text-muted" style="font-size: 11.5px;">
-                <i class="fa-solid fa-circle-info text-primary me-1"></i> <strong>Como funciona:</strong> Este link acima é exclusivo da sua loja para convidar clientes a criarem a carteira LineCash. Para enviar um link de oferta/produto junto com o comprovante de cashback, utilize o campo na Zona de Calor abaixo ou configure na aba <strong>5. Vitrine LineFast</strong>.
+                <i class="fa-solid fa-circle-info text-primary me-1"></i> <strong>Atenção:</strong> Este botão serve exclusivamente para convidar clientes que ainda não compram na sua loja. Para enviar o comprovante de cashback da venda, use o botão que surge automaticamente no topo da tela logo após confirmar a venda.
             </div>
         </div>
     </div>
@@ -263,6 +270,7 @@
                                 <!-- Coluna Direita: Zona de Calor (Produtos) -->
                                 <div class="col-lg-6">
                                     <div class="p-3 bg-light rounded-4 border h-100 d-flex flex-column justify-content-between">
+                                        <div>
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <h5 class="fw-bold text-dark mb-0">
                                                     <i class="fa-solid fa-fire text-danger me-1"></i> Zona de Calor (Cesta de Itens)
@@ -336,8 +344,8 @@
                                             </div>
                                         </div>
 
-                                        <div class="mt-4">
-                                            <button type="submit" class="btn btn-success btn-lg w-100 rounded-pill fw-bold shadow-sm py-3">
+                                        <div class="mt-4 pt-2">
+                                            <button type="submit" id="btnConfirmarCashbackPdv" class="btn btn-success btn-lg w-100 rounded-pill fw-bold shadow py-3" style="cursor: pointer !important; position: relative; z-index: 10;">
                                                 <i class="fa-solid fa-check-circle me-2"></i> Confirmar Cashback no Caixa
                                             </button>
                                         </div>
@@ -1209,6 +1217,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+    }
+
+    // Feedback visual imediato e garantia de envio no clique do botão do caixa
+    const btnConfirmarPdv = document.getElementById('btnConfirmarCashbackPdv');
+    const formCashback = document.getElementById('formCashback');
+    if (btnConfirmarPdv && formCashback) {
+        btnConfirmarPdv.addEventListener('click', function(e) {
+            if (formCashback.checkValidity && !formCashback.checkValidity()) {
+                formCashback.reportValidity();
+                return;
+            }
+            btnConfirmarPdv.style.pointerEvents = 'none';
+            btnConfirmarPdv.style.opacity = '0.85';
+            btnConfirmarPdv.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Confirmando Cashback...';
+        });
+    }
+
+    // Scroll para alerta de comprovante caso tenha sido recém-gerado
+    const alertaWhats = document.getElementById('alertaComprovanteWhatsapp');
+    if (alertaWhats) {
+        alertaWhats.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 });
 </script>

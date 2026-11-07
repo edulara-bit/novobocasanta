@@ -126,7 +126,7 @@ class LinecashWhatsappService
     {
         $numero = self::formatarNumeroWhatsapp($whatsapp);
         if (empty($numero)) {
-            return '';
+            return 'https://api.whatsapp.com/send?text=' . rawurlencode($mensagem);
         }
         return 'https://api.whatsapp.com/send?phone=' . $numero . '&text=' . rawurlencode($mensagem);
     }

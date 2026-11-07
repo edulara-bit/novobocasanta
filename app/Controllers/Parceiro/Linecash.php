@@ -243,7 +243,7 @@ class Linecash extends BaseController
                 $config['lcf_mensagem_customizada'] ?? null
             );
 
-            $whatsLink = !empty($clienteWhats) ? LinecashWhatsappService::gerarLinkDireto($clienteWhats, $whatsMsg) : '';
+            $whatsLink = LinecashWhatsappService::gerarLinkDireto((string)$clienteWhats, $whatsMsg);
 
             return redirect()->to(base_url('parceiro/linecash'))
                 ->with('success', $res['message'])
@@ -277,18 +277,19 @@ class Linecash extends BaseController
             $cleanCpf = $this->linecashService->cleanDoc($cpf);
             $contaCliente = $this->contaModel->findByDoc($cleanCpf);
 
-            if ($contaCliente && !empty($contaCliente['lcc_whatsapp'])) {
+            if ($contaCliente) {
                 $whatsMsg = LinecashWhatsappService::gerarMensagemPagamento(
-                    $contaCliente['lcc_nome'],
+                    $contaCliente['lcc_nome'] ?? '',
                     $parceiro->getNome() ?: 'Loja Parceira',
                     $valorLc,
-                    (float)$contaCliente['lcc_saldo']
+                    (float)($contaCliente['lcc_saldo'] ?? 0)
                 );
-                $whatsLink = LinecashWhatsappService::gerarLinkDireto($contaCliente['lcc_whatsapp'], $whatsMsg);
+                $clienteWhats = $contaCliente['lcc_whatsapp'] ?? '';
+                $whatsLink = LinecashWhatsappService::gerarLinkDireto((string)$clienteWhats, $whatsMsg);
                 return redirect()->to(base_url('parceiro/linecash'))
                     ->with('success', $res['message'])
                     ->with('whatsapp_link', $whatsLink)
-                    ->with('whatsapp_cliente', $contaCliente['lcc_whatsapp']);
+                    ->with('whatsapp_cliente', $clienteWhats);
             }
 
             return redirect()->to(base_url('parceiro/linecash'))->with('success', $res['message']);
