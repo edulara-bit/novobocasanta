@@ -53,9 +53,15 @@ class Parceiro extends Entity
             if (file_exists(FCPATH . 'upimg/' . $logo)) {
                 return base_url('upimg/' . $logo);
             }
+            if (file_exists(FCPATH . 'assets/uploads/parceiros/' . $logo)) {
+                return base_url('assets/uploads/parceiros/' . $logo);
+            }
 
             // Fallback online em desenvolvimento
-            return "https://www.bocasantaofertas.com.br/upimg/{$logo}";
+            if (str_contains($logo, '/')) {
+                return "https://www.bocasantaofertas.com.br/upimg/{$logo}";
+            }
+            return "https://www.bocasantaofertas.com.br/upimg/parceiros/{$logo}";
         }
 
         return base_url('assets/images/logo-small.png');

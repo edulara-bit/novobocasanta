@@ -222,7 +222,7 @@
                 <div class="col-md-4 col-lg-3">
                     <div class="card h-100 border-0 shadow-sm rounded-4 p-3 bg-white text-center">
                         <?php if (!empty($l->par_imagem)): ?>
-                            <img src="<?= base_url('assets/uploads/parceiros/' . $l->par_imagem) ?>" alt="<?= esc($l->getNome()) ?>" class="img-fluid rounded-3 mx-auto mb-3" style="max-height: 70px; object-fit: contain;">
+                            <img src="<?= $l->getLogoUrl() ?>" alt="<?= esc($l->getNome()) ?>" class="img-fluid rounded-3 mx-auto mb-3" style="max-height: 70px; object-fit: contain;" onerror="this.src='<?= base_url('assets/images/logo-small.png') ?>'">
                         <?php else: ?>
                             <div class="bg-light rounded-3 d-flex align-items-center justify-content-center mx-auto mb-3" style="height: 70px; width: 70px;">
                                 <i class="fa-solid fa-store fs-3 text-muted"></i>

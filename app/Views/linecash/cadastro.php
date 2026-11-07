@@ -17,7 +17,16 @@
                     $parceiroId = $parceiroIndicador->par_id ?? 0;
                 } else {
                     $parceiroNome = $parceiroIndicador['par_nome'] ?? $parceiroIndicador['par_fantasia'] ?? 'Loja Parceira';
-                    $parceiroLogo = !empty($parceiroIndicador['par_imagem']) ? base_url('uploads/parceiros/' . $parceiroIndicador['par_imagem']) : '';
+                    $rawLogo = $parceiroIndicador['par_imagem'] ?? '';
+                    if (!empty($rawLogo)) {
+                        if (str_starts_with($rawLogo, 'http://') || str_starts_with($rawLogo, 'https://')) {
+                            $parceiroLogo = $rawLogo;
+                        } elseif (file_exists(FCPATH . 'upimg/parceiros/' . $rawLogo)) {
+                            $parceiroLogo = base_url('upimg/parceiros/' . $rawLogo);
+                        } else {
+                            $parceiroLogo = "https://www.bocasantaofertas.com.br/upimg/parceiros/{$rawLogo}";
+                        }
+                    }
                     $parceiroId = $parceiroIndicador['par_id'] ?? 0;
                 }
             }
