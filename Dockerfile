@@ -47,8 +47,10 @@ COPY . /var/www/html
 # Instala dependências do PHP via Composer
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Ajusta permissões na pasta writable e uploads
-RUN chmod +x /var/www/html/docker-entrypoint.sh \
+# Ajusta permissões na pasta writable e uploads e guarda seed de banners para volumes montados
+RUN mkdir -p /var/www/banners_seed \
+    && cp -r /var/www/html/public/upimg/banners/* /var/www/banners_seed/ 2>/dev/null || true \
+    && chmod +x /var/www/html/docker-entrypoint.sh \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/writable \
     && chmod -R 775 /var/www/html/public/upimg

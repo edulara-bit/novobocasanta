@@ -15,9 +15,27 @@ if [ ! -f /var/www/html/.env ]; then
     chown www-data:www-data /var/www/html/.env
 fi
 
-# Garante permissões em pastas de escrita
-chown -R www-data:www-data /var/www/html/writable /var/www/html/public/upimg || true
-chmod -R 775 /var/www/html/writable /var/www/html/public/upimg || true
+# Garante estrutura de pastas em upimg (mesmo quando /var/www/bocasanta/upimg estiver montado via Bind Mount)
+mkdir -p /var/www/html/public/upimg/banners \
+         /var/www/html/public/upimg/parceiros \
+         /var/www/html/public/upimg/produtos \
+         /var/www/html/public/upimg/premios || true
+
+if [ -d /var/www/banners_seed ]; then
+    cp -rn /var/www/banners_seed/* /var/www/html/public/upimg/banners/ 2>/dev/null || true
+fi
+
+# Garante permissões em pastas de escrita (sem travar no chown recursivo de 31 mil fotos em produtos)
+chown -R www-data:www-data /var/www/html/writable /var/www/html/public/upimg/banners || true
+chmod -R 775 /var/www/html/writable /var/www/html/public/upimg/banners || true
+chown www-data:www-data /var/www/html/public/upimg \
+                        /var/www/html/public/upimg/parceiros \
+                        /var/www/html/public/upimg/produtos \
+                        /var/www/html/public/upimg/premios || true
+chmod 775 /var/www/html/public/upimg \
+          /var/www/html/public/upimg/parceiros \
+          /var/www/html/public/upimg/produtos \
+          /var/www/html/public/upimg/premios || true
 
 # Executa migrações automáticas de schema do banco se necessário
 if [ -f /var/www/html/schema_updates.sql ]; then
