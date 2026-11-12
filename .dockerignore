@@ -2,6 +2,8 @@
 .github
 Originais
 *.sql
+!schema_updates.sql
+!app/Database/Migrations/*.sql
 *.zip
 *.tar.gz
 node_modules

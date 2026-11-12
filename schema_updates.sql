@@ -1,94 +1,26 @@
 -- ========================================================
 -- ATUALIZAÇÕES AUTOMÁTICAS E SEGURAS DE SCHEMA (NOVO BOCA SANTA)
 -- ========================================================
--- Este script pode ser executado QUANTAS VEZES QUISER no phpMyAdmin!
--- Ele verifica o banco e NÃO INTERROMPE se os campos já existirem.
+-- Executado automaticamente pelo docker-entrypoint.sh ou manualmente no phpMyAdmin.
+-- Todas as instruções são compatíveis com execução individual (sem DELIMITER).
 -- ========================================================
 
--- 1. CORREÇÃO DE AUTO INCREMENT
+-- 1. CORREÇÃO DE AUTO INCREMENT E PADRÕES DE BANNERS
 ALTER TABLE `tb_produtos` MODIFY COLUMN `pro_id` INT(11) NOT NULL AUTO_INCREMENT;
 ALTER TABLE `tb_parceiros` MODIFY COLUMN `par_id` INT(11) NOT NULL AUTO_INCREMENT;
-
--- 2. CRIAÇÃO DE PROCEDIMENTO TEMPORÁRIO (Adiciona coluna somente se NÃO existir)
-DROP PROCEDURE IF EXISTS `AddCol`;
-DELIMITER $$
-CREATE PROCEDURE `AddCol`(
-    IN tblName VARCHAR(64),
-    IN colName VARCHAR(64),
-    IN colDef TEXT
-)
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.COLUMNS
-        WHERE TABLE_SCHEMA = DATABASE()
-          AND TABLE_NAME = tblName
-          AND COLUMN_NAME = colName
-    ) THEN
-        SET @ddl = CONCAT('ALTER TABLE `', tblName, '` ADD `', colName, '` ', colDef);
-        PREPARE stmt FROM @ddl;
-        EXECUTE stmt;
-        DEALLOCATE PREPARE stmt;
-    END IF;
-END$$
-DELIMITER ;
-
--- 3. PRODUTOS (tb_produtos)
-CALL AddCol('tb_produtos', 'pro_cartao', 'INT(11) DEFAULT 0');
-CALL AddCol('tb_produtos', 'pro_melhor_preco', 'INT(11) DEFAULT 0');
-CALL AddCol('tb_produtos', 'origem', 'VARCHAR(50) DEFAULT \'local\'');
-CALL AddCol('tb_produtos', 'linefast_product_id', 'VARCHAR(100) DEFAULT NULL');
-CALL AddCol('tb_produtos', 'linefast_sku', 'VARCHAR(100) DEFAULT NULL');
-CALL AddCol('tb_produtos', 'linefast_stock', 'INT(11) DEFAULT 0');
-CALL AddCol('tb_produtos', 'linefast_buy_url', 'VARCHAR(500) DEFAULT NULL');
-CALL AddCol('tb_produtos', 'linefast_sync_at', 'DATETIME DEFAULT NULL');
-
--- 4. CARTÕES DE FIDELIDADE & CASHBACK (tb_cartoes)
-CALL AddCol('tb_cartoes', 'car_oferta', 'INT(11) DEFAULT 0');
-CALL AddCol('tb_cartoes', 'car_percentagem', 'DECIMAL(10,2) DEFAULT 0.00');
-CALL AddCol('tb_cartoes', 'car_minimo', 'DECIMAL(10,2) DEFAULT 0.00');
-
--- 5. PARCEIROS & LINEFAST (tb_parceiros)
-CALL AddCol('tb_parceiros', 'linefast_partner_id', 'VARCHAR(100) DEFAULT NULL');
-CALL AddCol('tb_parceiros', 'linefast_ativo', 'TINYINT(1) DEFAULT 0');
-CALL AddCol('tb_parceiros', 'linefast_is_test', 'TINYINT(1) NOT NULL DEFAULT 0');
-
--- 6. BANNERS (tb_banners)
 ALTER TABLE `tb_banners` MODIFY COLUMN `ban_url` VARCHAR(200) DEFAULT '';
 ALTER TABLE `tb_banners` MODIFY COLUMN `ban_cliente` INT(11) DEFAULT 0;
 ALTER TABLE `tb_banners` MODIFY COLUMN `ban_link` VARCHAR(300) DEFAULT '';
-CALL AddCol('tb_banners', 'ban_titulo', 'VARCHAR(255) DEFAULT NULL');
-CALL AddCol('tb_banners', 'ban_badge', 'VARCHAR(100) DEFAULT \'⭐ DESTAQUE\'');
-CALL AddCol('tb_banners', 'ban_descricao', 'TEXT DEFAULT NULL');
-CALL AddCol('tb_banners', 'ban_botao_texto', 'VARCHAR(100) DEFAULT \'Conhecer Ofertas\'');
-CALL AddCol('tb_banners', 'ban_botao_link', 'VARCHAR(255) DEFAULT \'anuncie\'');
-CALL AddCol('tb_banners', 'ban_tipo_fundo', 'VARCHAR(50) DEFAULT \'degrade\'');
-CALL AddCol('tb_banners', 'ban_fundo_cor', 'VARCHAR(50) DEFAULT \'#0d1b2a\'');
-CALL AddCol('tb_banners', 'ban_fundo_degrade', 'VARCHAR(255) DEFAULT NULL');
-CALL AddCol('tb_banners', 'ban_fundo_imagem', 'VARCHAR(255) DEFAULT NULL');
-CALL AddCol('tb_banners', 'ban_imagem_direita', 'VARCHAR(255) DEFAULT NULL');
-CALL AddCol('tb_banners', 'ban_ordem', 'INT(11) DEFAULT 0');
-CALL AddCol('tb_banners', 'ban_status', 'VARCHAR(20) DEFAULT \'ativo\'');
 
--- 7. ADMINISTRADORES (tb_administradores)
-CALL AddCol('tb_administradores', 'adm_nivel', 'VARCHAR(50) DEFAULT \'admin\'');
-CALL AddCol('tb_administradores', 'adm_criado_em', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
+-- 2. ATIVAÇÃO DO BANNER OFICIAL LINEFAST (Apenas se ainda não existir)
+UPDATE `tb_banners` SET `ban_status` = 'inativo' WHERE `ban_fundo_imagem` IS NULL OR `ban_fundo_imagem` NOT LIKE '%banner_linefast_oficial%';
 
--- REMOVE O PROCEDIMENTO TEMPORÁRIO
-DROP PROCEDURE IF EXISTS `AddCol`;
-
--- 8. ATIVAÇÃO DO BANNER EXCLUSIVO LINEFAST (Conforme solicitação do Lowel)
--- Desativa TODOS os banners antigos existentes na tabela para que não disputem espaço
-UPDATE `tb_banners` SET `ban_status` = 'inativo';
-
--- Remove versão anterior do banner oficial se houver, para recriar limpo
-DELETE FROM `tb_banners` WHERE `ban_fundo_imagem` LIKE '%banner_linefast_oficial%';
-
--- Insere o Banner Oficial do Linefast como ÚNICO ATIVO
 INSERT INTO `tb_banners` (
     `ban_titulo`, `ban_badge`, `ban_descricao`, `ban_botao_texto`, `ban_botao_link`,
     `ban_tipo_fundo`, `ban_fundo_cor`, `ban_fundo_degrade`, `ban_fundo_imagem`,
     `ban_ordem`, `ban_status`
-) VALUES (
+)
+SELECT
     'Linefast - O Jeito Antigo de Vender Novinho em Folha',
     'LINEFAST',
     '',
@@ -100,9 +32,12 @@ INSERT INTO `tb_banners` (
     'upimg/banners/banner_linefast_oficial.png',
     1,
     'ativo'
+FROM DUAL
+WHERE NOT EXISTS (
+    SELECT 1 FROM `tb_banners` WHERE `ban_fundo_imagem` LIKE '%banner_linefast_oficial%'
 );
 
--- 9. CRIAÇÃO DE NOVAS TABELAS (Se não existirem)
+-- 3. TABELAS DE REDIRECIONAMENTO E LGPD (Se não existirem)
 CREATE TABLE IF NOT EXISTS `tb_redirecionamentos` (
   `red_id` INT(11) NOT NULL AUTO_INCREMENT,
   `red_origem` VARCHAR(255) NOT NULL,
@@ -179,7 +114,49 @@ CREATE TABLE IF NOT EXISTS `tb_lgpd_paginas` (
   UNIQUE KEY `uk_slug` (`slug`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 8. PRODUTOS DO PARCEIRO PARA ZONA DE CALOR / CESTA LINECASH
+-- 4. TABELAS DO ECOSSISTEMA LINECASH (8 tabelas)
+CREATE TABLE IF NOT EXISTS `tb_lc_contas` (
+  `lcc_id` INT(11) NOT NULL AUTO_INCREMENT,
+  `lcc_tipo` ENUM('cliente','lojista') NOT NULL,
+  `lcc_referencia_id` INT(11) DEFAULT NULL COMMENT 'par_id para lojistas ou cli_id/user_id para clientes',
+  `lcc_cpf_cnpj` VARCHAR(20) NOT NULL,
+  `lcc_nome` VARCHAR(150) NOT NULL,
+  `lcc_whatsapp` VARCHAR(20) NOT NULL,
+  `lcc_saldo` DECIMAL(10,2) DEFAULT 0.00,
+  `lcc_saldo_bloqueado` DECIMAL(10,2) DEFAULT 0.00,
+  `lcc_ultimo_movimento` DATETIME DEFAULT NULL,
+  `lcc_ativo` TINYINT(1) DEFAULT 1,
+  `lcc_criado_em` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`lcc_id`),
+  UNIQUE KEY `lcc_cpf_cnpj` (`lcc_cpf_cnpj`),
+  KEY `idx_lc_contas_ref` (`lcc_tipo`, `lcc_referencia_id`),
+  KEY `idx_lc_contas_cpf` (`lcc_cpf_cnpj`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `tb_lc_config_lojista` (
+  `lcf_lojista_id` INT(11) NOT NULL COMMENT 'ID da tb_lc_contas do lojista',
+  `lcf_percentual_padrao` DECIMAL(5,2) DEFAULT 1.00,
+  `lcf_produto_destaque_titulo` VARCHAR(150) DEFAULT NULL,
+  `lcf_produto_destaque_url` VARCHAR(255) DEFAULT NULL,
+  `lcf_mensagem_customizada` TEXT DEFAULT NULL,
+  `lcf_atualizado_em` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`lcf_lojista_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `tb_lc_assinaturas_lojistas` (
+  `lca_id` INT(11) NOT NULL AUTO_INCREMENT,
+  `lca_lojista_id` INT(11) NOT NULL COMMENT 'ID da tb_lc_contas do lojista',
+  `lca_status` ENUM('ativa','inadimplente','cancelada') DEFAULT 'ativa',
+  `lca_mp_preapproval_id` VARCHAR(100) DEFAULT NULL COMMENT 'ID de assinatura Mercado Pago',
+  `lca_valor_mensal` DECIMAL(10,2) DEFAULT 20.00,
+  `lca_vencimento_dia` INT(11) DEFAULT 10,
+  `lca_ultimo_pagamento` DATETIME DEFAULT NULL,
+  `lca_criado_em` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`lca_id`),
+  KEY `idx_lca_lojista` (`lca_lojista_id`),
+  KEY `idx_lca_status` (`lca_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `tb_lc_parceiro_produtos` (
   `lpp_id` INT(11) NOT NULL AUTO_INCREMENT,
   `lpp_parceiro_id` INT(11) NOT NULL,
@@ -191,4 +168,68 @@ CREATE TABLE IF NOT EXISTS `tb_lc_parceiro_produtos` (
   PRIMARY KEY (`lpp_id`),
   KEY `idx_parceiro` (`lpp_parceiro_id`),
   KEY `idx_codigo` (`lpp_parceiro_id`, `lpp_codigo`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `tb_lc_transacoes` (
+  `lct_id` INT(11) NOT NULL AUTO_INCREMENT,
+  `lct_origem_id` INT(11) DEFAULT NULL COMMENT 'ID da conta origem ou NULL se emissão pelo sistema',
+  `lct_destino_id` INT(11) NOT NULL COMMENT 'ID da conta destino',
+  `lct_tipo` ENUM('cashback_venda','pagamento_compra','deposito_recarga','resgate_pix','mensalidade','expiracao','estorno') NOT NULL,
+  `lct_valor_lc` DECIMAL(10,2) NOT NULL,
+  `lct_valor_compra_reais` DECIMAL(10,2) DEFAULT NULL,
+  `lct_percentual_aplicado` DECIMAL(5,2) DEFAULT NULL,
+  `lct_descricao` VARCHAR(255) DEFAULT NULL,
+  `lct_status` ENUM('concluida','estornada','bloqueada') DEFAULT 'concluida',
+  `lct_criado_em` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`lct_id`),
+  KEY `idx_lct_origem` (`lct_origem_id`),
+  KEY `idx_lct_destino` (`lct_destino_id`),
+  KEY `idx_lct_tipo` (`lct_tipo`),
+  KEY `idx_lct_criado_em` (`lct_criado_em`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `tb_lc_transacoes_produtos` (
+  `ltp_id` INT(11) NOT NULL AUTO_INCREMENT,
+  `ltp_transacao_id` INT(11) NOT NULL,
+  `ltp_codigo_produto` VARCHAR(50) NOT NULL,
+  `ltp_descricao` VARCHAR(150) DEFAULT NULL,
+  PRIMARY KEY (`ltp_id`),
+  KEY `idx_ltp_transacao` (`ltp_transacao_id`),
+  KEY `idx_ltp_codigo` (`ltp_codigo_produto`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `tb_lc_depositos` (
+  `lcd_id` INT(11) NOT NULL AUTO_INCREMENT,
+  `lcd_lojista_id` INT(11) NOT NULL COMMENT 'ID da tb_lc_contas do lojista',
+  `lcd_valor_reais` DECIMAL(10,2) NOT NULL,
+  `lcd_valor_lc_creditado` DECIMAL(10,2) NOT NULL COMMENT '90% do valor',
+  `lcd_taxa_bs_reais` DECIMAL(10,2) NOT NULL COMMENT '10% de comissao retida Boca Santa',
+  `lcd_comprovante_url` VARCHAR(255) DEFAULT NULL,
+  `lcd_status` ENUM('pendente','aprovado','rejeitado') DEFAULT 'pendente',
+  `lcd_observacao` TEXT DEFAULT NULL,
+  `lcd_aprovado_por` INT(11) DEFAULT NULL,
+  `lcd_criado_em` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `lcd_aprovado_em` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`lcd_id`),
+  KEY `idx_lcd_lojista` (`lcd_lojista_id`),
+  KEY `idx_lcd_status` (`lcd_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `tb_lc_resgates` (
+  `lcr_id` INT(11) NOT NULL AUTO_INCREMENT,
+  `lcr_lojista_id` INT(11) NOT NULL COMMENT 'ID da tb_lc_contas do lojista',
+  `lcr_valor_lc` DECIMAL(10,2) NOT NULL,
+  `lcr_desagio_reais` DECIMAL(10,2) NOT NULL COMMENT '2% desagio retido Boca Santa',
+  `lcr_valor_liquido_reais` DECIMAL(10,2) NOT NULL COMMENT '98% pago ao lojista',
+  `lcr_chave_pix` VARCHAR(150) NOT NULL,
+  `lcr_tipo_chave` VARCHAR(50) DEFAULT NULL,
+  `lcr_status` ENUM('pendente','pago','cancelado') DEFAULT 'pendente',
+  `lcr_comprovante_pix` VARCHAR(255) DEFAULT NULL,
+  `lcr_observacao` TEXT DEFAULT NULL,
+  `lcr_pago_por` INT(11) DEFAULT NULL,
+  `lcr_criado_em` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `lcr_pago_em` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`lcr_id`),
+  KEY `idx_lcr_lojista` (`lcr_lojista_id`),
+  KEY `idx_lcr_status` (`lcr_status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
