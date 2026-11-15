@@ -111,6 +111,27 @@ class Parceiro extends Entity
     }
 
     /**
+     * Retorna o número de WhatsApp formatado para leitura humana: (19) 99999-9999
+     */
+    public function getWhatsappFormatado(): ?string
+    {
+        $whats = $this->getWhatsappNumero();
+        if (empty($whats)) {
+            return null;
+        }
+
+        $local = str_starts_with($whats, '55') ? substr($whats, 2) : $whats;
+        if (strlen($local) === 11) {
+            return '(' . substr($local, 0, 2) . ') ' . substr($local, 2, 5) . '-' . substr($local, 7);
+        }
+        if (strlen($local) === 10) {
+            return '(' . substr($local, 0, 2) . ') ' . substr($local, 2, 4) . '-' . substr($local, 6);
+        }
+
+        return $whats;
+    }
+
+    /**
      * Retorna o link formatado para WhatsApp com mensagem personalizada
      */
     public function getWhatsappLink(?string $customMessage = null): ?string

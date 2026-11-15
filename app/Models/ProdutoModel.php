@@ -30,7 +30,7 @@ class ProdutoModel extends Model
      */
     public function getOfertas(array $params = [], int $limit = 12, int $offset = 0): array
     {
-        $builder = $this->select('tb_produtos.*, tb_parceiros.par_nome, tb_parceiros.par_apelido, tb_parceiros.par_imagem, tb_parceiros.par_whatsapp, tb_parceiros.par_telefone, tb_parceiros.par_email, tb_cidades.cid_nome, tb_cidades.cid_url, tb_categorias.cat_titulo, tb_categorias.cat_url, ft.fot_imagem, ft.fot_thumb, ft.fot_parceiro')
+        $builder = $this->select('tb_produtos.*, tb_parceiros.par_nome, tb_parceiros.par_apelido, tb_parceiros.par_imagem, tb_parceiros.par_whatsapp, tb_parceiros.par_telefone, tb_parceiros.par_telefone2, tb_parceiros.par_telefone3, tb_parceiros.par_email, tb_cidades.cid_nome, tb_cidades.cid_url, tb_categorias.cat_titulo, tb_categorias.cat_url, ft.fot_imagem, ft.fot_thumb, ft.fot_parceiro')
             ->join('tb_parceiros', 'tb_produtos.pro_parceiro = tb_parceiros.par_id', 'left')
             ->join('tb_cidades', 'tb_produtos.pro_cidade = tb_cidades.cid_id', 'left')
             ->join('tb_categorias', 'tb_produtos.pro_categoria = tb_categorias.cat_id', 'left')
@@ -127,10 +127,13 @@ class ProdutoModel extends Model
 
     /**
      * Busca uma oferta única por ID ou Slug com dados completos do parceiro e categoria
+     * Inclui suporte aos slugs históricos da tabela tb_slug e pro_slug2
      */
     public function getDetalhesOferta(int|string $idOrSlug): ?Produto
     {
-        $builder = $this->select('tb_produtos.*, tb_parceiros.par_nome, tb_parceiros.par_apelido, tb_parceiros.par_endereco, tb_parceiros.par_numero, tb_parceiros.par_complemento, tb_parceiros.par_bairro, tb_parceiros.par_cep, tb_parceiros.par_telefone, tb_parceiros.par_telefone2, tb_parceiros.par_telefone3, tb_parceiros.par_whatsapp, tb_parceiros.par_email, tb_parceiros.par_descricao as par_descricao_empresa, tb_parceiros.par_imagem, tb_parceiros.par_site, tb_parceiros.par_facebook, tb_parceiros.par_maps, tb_cidades.cid_nome, tb_cidades.cid_url, tb_categorias.cat_titulo, tb_categorias.cat_url, ft.fot_imagem, ft.fot_thumb, ft.fot_parceiro')
+        $selectCols = 'tb_produtos.*, tb_parceiros.par_nome, tb_parceiros.par_apelido, tb_parceiros.par_endereco, tb_parceiros.par_numero, tb_parceiros.par_complemento, tb_parceiros.par_bairro, tb_parceiros.par_cep, tb_parceiros.par_telefone, tb_parceiros.par_telefone2, tb_parceiros.par_telefone3, tb_parceiros.par_whatsapp, tb_parceiros.par_email, tb_parceiros.par_descricao as par_descricao_empresa, tb_parceiros.par_imagem, tb_parceiros.par_site, tb_parceiros.par_facebook, tb_parceiros.par_maps, tb_cidades.cid_nome, tb_cidades.cid_url, tb_categorias.cat_titulo, tb_categorias.cat_url, ft.fot_imagem, ft.fot_thumb, ft.fot_parceiro';
+
+        $builder = $this->select($selectCols)
             ->join('tb_parceiros', 'tb_produtos.pro_parceiro = tb_parceiros.par_id', 'left')
             ->join('tb_cidades', 'tb_produtos.pro_cidade = tb_cidades.cid_id', 'left')
             ->join('tb_categorias', 'tb_produtos.pro_categoria = tb_categorias.cat_id', 'left')
@@ -139,10 +142,48 @@ class ProdutoModel extends Model
         if (is_numeric($idOrSlug)) {
             $builder->where('tb_produtos.pro_id', (int)$idOrSlug);
         } else {
-            $builder->where('tb_produtos.pro_slug', $idOrSlug);
+            $slug = trim((string)$idOrSlug);
+            $slugSemTraco = rtrim($slug, '-');
+            $builder->groupStart()
+                ->where('tb_produtos.pro_slug', $slug)
+                ->orWhere('tb_produtos.pro_slug', $slugSemTraco)
+                ->orWhere('tb_produtos.pro_slug', $slugSemTraco . '-');
+
+            if ($this->db->fieldExists('pro_slug2', 'tb_produtos')) {
+                $builder->orWhere('tb_produtos.pro_slug2', $slug)
+                    ->orLike('tb_produtos.pro_slug2', '/' . $slug, 'before');
+            }
+            $builder->groupEnd();
         }
 
         $produto = $builder->first();
+
+        // Se não encontrou diretamente em tb_produtos e for string, verifica no histórico tb_slug
+        if (!$produto && !is_numeric($idOrSlug) && $this->db->tableExists('tb_slug')) {
+            $slug = trim((string)$idOrSlug);
+            $slugSemTraco = rtrim($slug, '-');
+            $slugRow = $this->db->table('tb_slug')
+                ->groupStart()
+                    ->where('slu_slug', $slug)
+                    ->orWhere('slu_slug', $slugSemTraco)
+                    ->orWhere('slu_slug', $slugSemTraco . '-')
+                ->groupEnd()
+                ->where('slu_produto >', 0)
+                ->orderBy('slu_id', 'DESC')
+                ->get()
+                ->getRowArray();
+
+            if (!empty($slugRow['slu_produto'])) {
+                $produto = $this->select($selectCols)
+                    ->join('tb_parceiros', 'tb_produtos.pro_parceiro = tb_parceiros.par_id', 'left')
+                    ->join('tb_cidades', 'tb_produtos.pro_cidade = tb_cidades.cid_id', 'left')
+                    ->join('tb_categorias', 'tb_produtos.pro_categoria = tb_categorias.cat_id', 'left')
+                    ->join('tb_fotos_produtos as ft', 'tb_produtos.pro_id = ft.fot_produto AND ft.fot_ordem = 0', 'left')
+                    ->where('tb_produtos.pro_id', (int)$slugRow['slu_produto'])
+                    ->first();
+            }
+        }
+
         if ($produto) {
             // Incrementa contador de visualizações
             $this->where('pro_id', $produto->pro_id)->increment('pro_visitas', 1);
@@ -152,18 +193,85 @@ class ProdutoModel extends Model
     }
 
     /**
+     * Consulta a tabela legada tb_slug para redirecionamento de ofertas antigas/excluídas
+     */
+    public function getSlugHistorico(string $slug): ?array
+    {
+        if (!$this->db->tableExists('tb_slug')) {
+            return null;
+        }
+
+        $slug = trim($slug);
+        $slugSemTraco = rtrim($slug, '-');
+
+        $row = $this->db->table('tb_slug')
+            ->groupStart()
+                ->where('slu_slug', $slug)
+                ->orWhere('slu_slug', $slugSemTraco)
+                ->orWhere('slu_slug', $slugSemTraco . '-')
+            ->groupEnd()
+            ->orderBy('slu_id', 'DESC')
+            ->get()
+            ->getRowArray();
+
+        return $row ?: null;
+    }
+
+    /**
+     * Retorna todas as fotos cadastradas da oferta em tb_fotos_produtos
+     */
+    public function getFotosOferta(int $proId, int $parceiroId = 0): array
+    {
+        if (!$this->db->tableExists('tb_fotos_produtos')) {
+            return [];
+        }
+
+        $rows = $this->db->table('tb_fotos_produtos')
+            ->where('fot_produto', $proId)
+            ->orderBy('fot_ordem', 'ASC')
+            ->orderBy('fot_id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $fotos = [];
+        foreach ($rows as $r) {
+            $img = $r['fot_imagem'] ?? $r['fot_thumb'] ?? '';
+            if (empty($img)) {
+                continue;
+            }
+            $pId = !empty($r['fot_parceiro']) ? $r['fot_parceiro'] : $parceiroId;
+
+            if (str_starts_with($img, 'http://') || str_starts_with($img, 'https://')) {
+                $url = $img;
+            } elseif (!empty($pId) && file_exists(FCPATH . 'upimg/produtos/' . $pId . '/' . $img)) {
+                $url = base_url('upimg/produtos/' . $pId . '/' . $img);
+            } elseif (file_exists(FCPATH . 'upimg/produtos/' . $img)) {
+                $url = base_url('upimg/produtos/' . $img);
+            } elseif (!empty($pId)) {
+                $url = "https://www.bocasantaofertas.com.br/upimg/produtos/{$pId}/{$img}";
+            } else {
+                $url = "https://www.bocasantaofertas.com.br/upimg/produtos/{$img}";
+            }
+
+            $fotos[] = $url;
+        }
+
+        return array_values(array_unique($fotos));
+    }
+
+    /**
      * Retorna ofertas relacionadas da mesma categoria ou cidade
      */
     public function getRelacionadas(Produto $produto, int $limit = 4): array
     {
-        return $this->select('tb_produtos.*, tb_parceiros.par_nome, tb_cidades.cid_url, tb_categorias.cat_url, ft.fot_imagem, ft.fot_thumb, ft.fot_parceiro')
+        return $this->select('tb_produtos.*, tb_parceiros.par_nome, tb_parceiros.par_whatsapp, tb_parceiros.par_telefone, tb_parceiros.par_telefone2, tb_parceiros.par_telefone3, tb_cidades.cid_url, tb_categorias.cat_url, ft.fot_imagem, ft.fot_thumb, ft.fot_parceiro')
             ->join('tb_parceiros', 'tb_produtos.pro_parceiro = tb_parceiros.par_id', 'left')
             ->join('tb_cidades', 'tb_produtos.pro_cidade = tb_cidades.cid_id', 'left')
             ->join('tb_categorias', 'tb_produtos.pro_categoria = tb_categorias.cat_id', 'left')
             ->join('tb_fotos_produtos as ft', 'tb_produtos.pro_id = ft.fot_produto AND ft.fot_ordem = 0', 'left')
             ->where('tb_produtos.pro_id !=', $produto->pro_id)
             ->where('tb_produtos.pro_categoria', $produto->pro_categoria)
-            ->orderBy('tb_produtos.pro_destaque DESC, tb_produtos.pro_id DESC')
+            ->orderBy('RAND()')
             ->limit($limit)
             ->find();
     }

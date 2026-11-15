@@ -20,7 +20,7 @@
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white">
                 <div class="position-relative bg-light text-center">
-                    <img src="<?= $oferta->getImagemUrl() ?>" alt="<?= esc($oferta->pro_titulo) ?>" class="img-fluid rounded-top" style="max-height: 480px; width: 100%; object-fit: contain; background: #f8fafc;" onerror="this.src='<?= base_url('assets/images/sem_foto.gif') ?>'">
+                    <img id="mainOfferImage" src="<?= $oferta->getImagemUrl() ?>" alt="<?= esc($oferta->pro_titulo) ?>" class="img-fluid rounded-top" style="max-height: 480px; width: 100%; object-fit: contain; background: #f8fafc;" onerror="this.src='<?= base_url('assets/images/sem_foto.gif') ?>'">
                     <?php if ($oferta->getPercentualDesconto() > 0): ?>
                         <span class="position-absolute top-0 start-0 m-3 badge bg-danger fs-6 px-3 py-2 rounded-pill shadow">
                             -<?= $oferta->getPercentualDesconto() ?>% DE DESCONTO
@@ -33,20 +33,48 @@
                     <?php endif; ?>
                 </div>
 
+                <?php if (!empty($fotos) && count($fotos) > 1): ?>
+                <div class="d-flex flex-wrap justify-content-center gap-2 p-3 bg-light border-top">
+                    <?php foreach ($fotos as $idx => $fotoUrl): ?>
+                        <img src="<?= esc($fotoUrl) ?>" 
+                             alt="<?= esc($oferta->pro_titulo) ?> - Foto <?= $idx + 1 ?>" 
+                             class="rounded-3 border bg-white p-1 shadow-sm" 
+                             style="width: 76px; height: 76px; object-fit: cover; cursor: pointer;"
+                             onclick="document.getElementById('mainOfferImage').src = this.src;"
+                             onerror="this.style.display='none'">
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+
                 <div class="card-body p-4 p-md-5">
                     <h1 class="h2 fw-bold text-dark mb-3"><?= esc($oferta->pro_titulo) ?></h1>
 
-                    <div class="d-flex flex-wrap align-items-center gap-3 text-muted small pb-4 border-bottom mb-4">
-                        <span><i class="fa-solid fa-eye me-1"></i> <?= number_format($oferta->pro_visitas ?? 0, 0, ',', '.') ?> visualizações</span>
-                        <span><i class="fa-solid fa-location-dot me-1 text-danger"></i> <?= esc($oferta->cid_nome ?? 'Piracicaba') ?> - SP</span>
-                        <span><i class="fa-solid fa-store me-1"></i> <?= esc($oferta->par_nome ?? 'Parceiro') ?></span>
+                    <?php
+                        $canonicalOfferUrl = $oferta->getUrl($cidadeAtual['cid_url'] ?? 'piracicaba');
+                        $fbShareUrl = 'https://www.facebook.com/sharer/sharer.php?u=' . urlencode($canonicalOfferUrl);
+                        $waShareUrl = 'https://api.whatsapp.com/send?text=' . urlencode($oferta->pro_titulo . ' - Confira no Boca Santa Ofertas: ' . $canonicalOfferUrl);
+                    ?>
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 text-muted small pb-4 border-bottom mb-4">
+                        <div class="d-flex flex-wrap align-items-center gap-3">
+                            <span><i class="fa-solid fa-eye me-1"></i> <?= number_format($oferta->pro_visitas ?? 0, 0, ',', '.') ?> visualizações</span>
+                            <span><i class="fa-solid fa-location-dot me-1 text-danger"></i> <?= esc($oferta->cid_nome ?? 'Piracicaba') ?> - SP</span>
+                            <span><i class="fa-solid fa-store me-1"></i> <?= esc($oferta->par_nome ?? 'Parceiro') ?></span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="<?= esc($fbShareUrl) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm text-white fw-bold rounded-pill px-3 shadow-sm" style="background-color: #1877F2;" title="Compartilhar no Facebook">
+                                <i class="fa-brands fa-facebook-f me-1"></i> Compartilhar
+                            </a>
+                            <a href="<?= esc($waShareUrl) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-success fw-bold rounded-pill px-3" title="Compartilhar no WhatsApp">
+                                <i class="fa-brands fa-whatsapp me-1"></i> Enviar
+                            </a>
+                        </div>
                     </div>
 
                     <!-- DESCRIÇÃO DA OFERTA -->
                     <div class="mb-4">
                         <h4 class="fw-bold mb-3"><i class="fa-solid fa-circle-info text-danger me-2"></i> Descrição da Oferta</h4>
                         <div class="text-secondary lh-lg fs-6">
-                            <?= nl2br(esc($oferta->pro_descricao ?? '')) ?>
+                            <?= !empty($oferta->pro_descricao) ? nl2br(esc($oferta->pro_descricao)) : '<span class="text-muted">Confira os detalhes desta oferta entrando em contato diretamente com o anunciante abaixo.</span>' ?>
                         </div>
                     </div>
 
@@ -55,6 +83,16 @@
                         <h4 class="fw-bold mb-3"><i class="fa-solid fa-list-check text-danger me-2"></i> Características & Especificações</h4>
                         <div class="text-secondary lh-lg">
                             <?= nl2br(esc($oferta->pro_caracteristicas)) ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php $youtubeEmbed = $oferta->getYoutubeEmbedUrl(); ?>
+                    <?php if (!empty($youtubeEmbed)): ?>
+                    <div class="mb-4">
+                        <h4 class="fw-bold mb-3"><i class="fa-brands fa-youtube text-danger me-2"></i> Vídeo da Oferta</h4>
+                        <div class="ratio ratio-16x9 rounded-4 overflow-hidden border shadow-sm">
+                            <iframe src="<?= esc($youtubeEmbed) ?>" title="<?= esc($oferta->pro_titulo) ?>" allowfullscreen loading="lazy"></iframe>
                         </div>
                     </div>
                     <?php endif; ?>
@@ -73,7 +111,7 @@
                                         <div>
                                             <strong class="d-block text-dark">Endereço:</strong>
                                             <span class="text-muted small">
-                                                <?= esc($oferta->par_endereco ?? '') ?>, <?= esc($oferta->par_numero ?? 'S/N') ?>
+                                                <?= esc($oferta->par_endereco ?? '') ?><?= !empty($oferta->par_numero) ? ', ' . esc($oferta->par_numero) : '' ?>
                                                 <?php if (!empty($oferta->par_complemento)): ?> - <?= esc($oferta->par_complemento) ?><?php endif; ?>
                                                 <br><?= esc($oferta->par_bairro ?? '') ?> &bull; <?= esc($oferta->cid_nome ?? 'Piracicaba') ?> - SP
                                                 <?php if (!empty($oferta->par_cep)): ?><br>CEP: <?= esc($oferta->par_cep) ?><?php endif; ?>
@@ -84,13 +122,31 @@
 
                                 <div class="col-md-6">
                                     <div class="d-flex align-items-start gap-3">
-                                        <div class="fs-4 text-success"><i class="fa-brands fa-whatsapp"></i></div>
+                                        <div class="fs-4 text-success"><i class="fa-solid fa-phone-volume"></i></div>
                                         <div>
                                             <strong class="d-block text-dark">Telefones & Atendimento:</strong>
                                             <span class="text-muted small">
-                                                <?php if (!empty($oferta->par_telefone)): ?><i class="fa-solid fa-phone me-1"></i> <?= esc($oferta->par_telefone) ?><br><?php endif; ?>
-                                                <?php if (!empty($oferta->par_telefone2)): ?><i class="fa-solid fa-phone me-1"></i> <?= esc($oferta->par_telefone2) ?><br><?php endif; ?>
-                                                <?php if (!empty($oferta->par_whatsapp)): ?><i class="fa-brands fa-whatsapp text-success me-1"></i> <?= esc($oferta->par_whatsapp) ?><?php endif; ?>
+                                                <?php
+                                                    $telefonesParceiro = $parceiro ? $parceiro->getTelefones() : [];
+                                                    $whatsFormatado = $parceiro ? $parceiro->getWhatsappFormatado() : null;
+                                                    $whatsNumero = $parceiro ? $parceiro->getWhatsappNumero() : $oferta->getWhatsappNumero();
+                                                ?>
+                                                <?php if (!empty($telefonesParceiro)): ?>
+                                                    <?php foreach ($telefonesParceiro as $tel): ?>
+                                                        <a href="tel:<?= esc($tel['clean']) ?>" class="text-muted text-decoration-none d-block mb-1">
+                                                            <i class="fa-solid fa-phone me-1 text-primary"></i> <?= esc($tel['display']) ?>
+                                                        </a>
+                                                    <?php endforeach; ?>
+                                                <?php else: ?>
+                                                    <?php if (!empty($oferta->par_telefone)): ?><i class="fa-solid fa-phone me-1"></i> <?= esc($oferta->par_telefone) ?><br><?php endif; ?>
+                                                    <?php if (!empty($oferta->par_telefone2)): ?><i class="fa-solid fa-phone me-1"></i> <?= esc($oferta->par_telefone2) ?><br><?php endif; ?>
+                                                    <?php if (!empty($oferta->par_telefone3)): ?><i class="fa-solid fa-phone me-1"></i> <?= esc($oferta->par_telefone3) ?><br><?php endif; ?>
+                                                <?php endif; ?>
+                                                <?php if (!empty($whatsFormatado) && !empty($whatsNumero)): ?>
+                                                    <a href="<?= esc($oferta->getWhatsappConsultaLink($whatsNumero)) ?>" target="_blank" class="text-success fw-semibold text-decoration-none d-block mt-1">
+                                                        <i class="fa-brands fa-whatsapp me-1"></i> <?= esc($whatsFormatado) ?> (WhatsApp)
+                                                    </a>
+                                                <?php endif; ?>
                                             </span>
                                         </div>
                                     </div>
@@ -108,13 +164,20 @@
                                 </div>
                                 <?php endif; ?>
 
-                                <?php if (!empty($oferta->par_site)): ?>
+                                <?php if (!empty($oferta->par_site) || !empty($oferta->par_facebook)): ?>
                                 <div class="col-md-6">
                                     <div class="d-flex align-items-start gap-3">
                                         <div class="fs-4 text-info"><i class="fa-solid fa-globe"></i></div>
                                         <div>
-                                            <strong class="d-block text-dark">Website / Redes:</strong>
-                                            <a href="<?= esc($oferta->par_site) ?>" target="_blank" class="text-muted small text-decoration-none"><?= esc($oferta->par_site) ?></a>
+                                            <strong class="d-block text-dark">Website & Redes Sociais:</strong>
+                                            <?php if (!empty($oferta->par_site)): ?>
+                                                <?php $siteUrl = str_starts_with($oferta->par_site, 'http') ? $oferta->par_site : 'http://' . $oferta->par_site; ?>
+                                                <a href="<?= esc($siteUrl) ?>" target="_blank" class="text-muted small text-decoration-none d-block"><i class="fa-solid fa-up-right-from-square me-1"></i> <?= esc($oferta->par_site) ?></a>
+                                            <?php endif; ?>
+                                            <?php if (!empty($oferta->par_facebook)): ?>
+                                                <?php $fbUrl = str_starts_with($oferta->par_facebook, 'http') ? $oferta->par_facebook : 'https://www.facebook.com/' . ltrim($oferta->par_facebook, '/'); ?>
+                                                <a href="<?= esc($fbUrl) ?>" target="_blank" class="small text-decoration-none d-block mt-1" style="color: #1877F2;"><i class="fa-brands fa-facebook me-1"></i> Página no Facebook</a>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </div>
@@ -195,11 +258,30 @@
                         </div>
                     <?php endif; ?>
 
-                    <div>
-                        <a href="<?= $oferta->getWhatsappConsultaLink($parceiro ? $parceiro->getWhatsappNumero() : ($oferta->par_whatsapp ?? '')) ?>" class="btn btn-success btn-lg fw-bold rounded-pill w-100 py-3 shadow" target="_blank">
-                            <i class="fa-brands fa-whatsapp me-2 fs-5"></i> <?= !$oferta->hasPreco() ? 'Consultar Preço no WhatsApp' : 'Garantir Desconto no WhatsApp' ?>
+                    <?php
+                        $whatsSidebar = $parceiro ? $parceiro->getWhatsappNumero() : $oferta->getWhatsappNumero();
+                        $telsSidebar = $parceiro ? $parceiro->getTelefones() : [];
+                    ?>
+                    <?php if (!empty($whatsSidebar)): ?>
+                        <div>
+                            <a href="<?= esc($oferta->getWhatsappConsultaLink($whatsSidebar)) ?>" class="btn btn-success btn-lg fw-bold rounded-pill w-100 py-3 shadow" target="_blank">
+                                <i class="fa-brands fa-whatsapp me-2 fs-5"></i> <?= !$oferta->hasPreco() ? 'Consultar Preço no WhatsApp' : 'Garantir Desconto no WhatsApp' ?>
+                            </a>
+                            <small class="text-center text-muted d-block mt-1">Fale diretamente com o anunciante pelo WhatsApp</small>
+                        </div>
+                    <?php elseif (!empty($telsSidebar)): ?>
+                        <div>
+                            <a href="tel:<?= esc($telsSidebar[0]['clean']) ?>" class="btn btn-primary btn-lg fw-bold rounded-pill w-100 py-3 shadow">
+                                <i class="fa-solid fa-phone me-2"></i> Ligar: <?= esc($telsSidebar[0]['display']) ?>
+                            </a>
+                            <small class="text-center text-muted d-block mt-1">Atendimento direto por telefone com o estabelecimento</small>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="d-flex gap-2">
+                        <a href="<?= esc($fbShareUrl) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm text-white fw-semibold rounded-pill w-100 py-2 shadow-sm" style="background-color: #1877F2;">
+                            <i class="fa-brands fa-facebook-f me-1"></i> Compartilhar no Facebook
                         </a>
-                        <small class="text-center text-muted d-block mt-1">Fale diretamente com o anunciante pelo WhatsApp</small>
                     </div>
                 </div>
 

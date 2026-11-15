@@ -180,8 +180,8 @@
                                         <a href="<?= $oferta->getLinefastCartUrl() ?>" class="btn-linefast-direct" target="_blank" title="Comprar direto no Linefast">
                                             <i class="fa-solid fa-cart-shopping"></i> Comprar
                                         </a>
-                                    <?php elseif (!$oferta->hasPreco()): ?>
-                                        <a href="<?= $oferta->getWhatsappConsultaLink($oferta->par_whatsapp ?? '') ?>" class="btn btn-sm btn-success rounded-pill fw-bold" target="_blank">
+                                    <?php elseif (!$oferta->hasPreco() && $oferta->getWhatsappNumero()): ?>
+                                        <a href="<?= $oferta->getWhatsappConsultaLink() ?>" class="btn btn-sm btn-success rounded-pill fw-bold" target="_blank">
                                             <i class="fa-brands fa-whatsapp"></i> Consultar
                                         </a>
                                     <?php else: ?>
@@ -289,8 +289,8 @@
                                             <?= $oferta->getPrecoVendaFormatado() ?>
                                         </div>
                                     </div>
-                                    <?php if (!$oferta->hasPreco()): ?>
-                                        <a href="<?= $oferta->getWhatsappConsultaLink($oferta->par_whatsapp ?? '') ?>" class="btn btn-sm btn-success rounded-pill fw-bold" target="_blank">
+                                    <?php if (!$oferta->hasPreco() && $oferta->getWhatsappNumero()): ?>
+                                        <a href="<?= $oferta->getWhatsappConsultaLink() ?>" class="btn btn-sm btn-success rounded-pill fw-bold" target="_blank">
                                             <i class="fa-brands fa-whatsapp"></i> Consultar
                                         </a>
                                     <?php else: ?>

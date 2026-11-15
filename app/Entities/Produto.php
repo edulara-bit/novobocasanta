@@ -153,18 +153,86 @@ class Produto extends Entity
     }
 
     /**
+     * Extrai o número de WhatsApp válido associado ao produto/parceiro
+     */
+    public function getWhatsappNumero(?string $whatsAppNumero = null): ?string
+    {
+        $raw = trim((string)($whatsAppNumero !== null && $whatsAppNumero !== '' ? $whatsAppNumero : ($this->attributes['par_whatsapp'] ?? '')));
+
+        // No banco legado, 1 = telefone 1, 2 = telefone 2, 3 = telefone 3
+        if ($raw === '1') {
+            $raw = (string)($this->attributes['par_telefone'] ?? '');
+        } elseif ($raw === '2') {
+            $raw = (string)($this->attributes['par_telefone2'] ?? '');
+        } elseif ($raw === '3') {
+            $raw = (string)($this->attributes['par_telefone3'] ?? '');
+        }
+
+        $digits = preg_replace('/\D/', '', $raw);
+
+        if (strlen($digits) < 8) {
+            foreach (['par_telefone', 'par_telefone2', 'par_telefone3'] as $col) {
+                $tel = preg_replace('/\D/', '', (string)($this->attributes[$col] ?? ''));
+                if (strlen($tel) === 11 || (strlen($tel) === 9 && str_starts_with($tel, '9'))) {
+                    $digits = $tel;
+                    break;
+                }
+            }
+        }
+
+        if (strlen($digits) === 8 || strlen($digits) === 9) {
+            $digits = '19' . $digits;
+        }
+
+        if (strlen($digits) === 10 || strlen($digits) === 11) {
+            return '55' . $digits;
+        }
+
+        if (strlen($digits) === 12 || strlen($digits) === 13) {
+            return $digits;
+        }
+
+        return null;
+    }
+
+    /**
      * Retorna o link de consulta no WhatsApp
      */
-    public function getWhatsappConsultaLink(string $whatsAppNumero = ''): string
+    public function getWhatsappConsultaLink(?string $whatsAppNumero = null): string
     {
-        $whats = preg_replace('/\D/', '', $whatsAppNumero ?: ($this->attributes['par_whatsapp'] ?? $this->attributes['par_telefone'] ?? ''));
-        if (strlen($whats) === 10 || strlen($whats) === 11) {
-            $whats = '55' . $whats;
+        $whats = $this->getWhatsappNumero($whatsAppNumero);
+        if (empty($whats)) {
+            $fallback = preg_replace('/\D/', '', (string)($this->attributes['par_telefone'] ?? $this->attributes['par_telefone2'] ?? $this->attributes['par_telefone3'] ?? ''));
+            if (strlen($fallback) === 8 || strlen($fallback) === 9) {
+                $fallback = '19' . $fallback;
+            }
+            if (strlen($fallback) === 10 || strlen($fallback) === 11) {
+                $whats = '55' . $fallback;
+            } else {
+                $whats = $fallback;
+            }
         }
 
         $titulo = $this->attributes['pro_titulo'] ?? 'Oferta';
         $msg = urlencode("Olá! Vi o anúncio \"{$titulo}\" no Boca Santa Ofertas e gostaria de consultar o preço e mais informações.");
         return "https://api.whatsapp.com/send?phone={$whats}&text={$msg}";
+    }
+
+    /**
+     * Retorna o código de incorporação (embed) do YouTube caso o produto tenha vídeo
+     */
+    public function getYoutubeEmbedUrl(): ?string
+    {
+        $video = trim((string)($this->attributes['pro_video'] ?? ''));
+        if (empty($video)) {
+            return null;
+        }
+
+        if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i', $video, $matches)) {
+            return 'https://www.youtube.com/embed/' . $matches[1];
+        }
+
+        return null;
     }
 
     /**

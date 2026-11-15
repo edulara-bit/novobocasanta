@@ -199,10 +199,12 @@ $routes->get('linecash/lojas', 'Linecash::lojas');
 $routes->get('linecash/cadastro', 'Linecash::cadastro');
 $routes->post('linecash/cadastrar', 'Linecash::cadastrarCliente');
 
-// ROTAS DINÂMICAS DO PORTAL POR CIDADE
+// ROTAS DINÂMICAS DO PORTAL POR CIDADE & COMPATIBILIDADE LEGADA
 $routes->get('(:segment)/busca', 'Ofertas::busca/$1');
 $routes->get('(:segment)/categoria/(:segment)', 'Ofertas::categoria/$1/$2');
 $routes->get('(:segment)/parceiros', 'Parceiros::index/$1');
 $routes->get('(:segment)/parceiro/(:segment)', 'Parceiros::detalhes/$1/$2');
+$routes->get('(:segment)/(:segment)/(:segment)/(:num)/(:any)', 'Ofertas::mostra/$4');
 $routes->get('(:segment)/(:segment)/(:segment)', 'Ofertas::detalhes/$1/$2/$3');
+$routes->get('(:segment)/(:segment)', 'Ofertas::resolverSegmentoDuplo/$1/$2');
 $routes->get('(:segment)', 'Home::index/$1');
