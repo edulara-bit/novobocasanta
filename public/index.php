@@ -29,6 +29,12 @@ if (version_compare(PHP_VERSION, $minPhpVersion, '<')) {
  *---------------------------------------------------------------
  */
 
+// Trata requisicoes HTTP HEAD (enviadas por Facebook, WhatsApp e Twitter crawlers)
+// convertendo internamente para GET para que o roteamento retorne 200 OK com os cabecalhos corretos.
+if (isset($_SERVER['REQUEST_METHOD']) && strtoupper($_SERVER['REQUEST_METHOD']) === 'HEAD') {
+    $_SERVER['REQUEST_METHOD'] = 'GET';
+}
+
 // Path to the front controller (this file)
 define('FCPATH', __DIR__ . DIRECTORY_SEPARATOR);
 

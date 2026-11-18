@@ -6,6 +6,11 @@ use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
 
+// Garante suporte global a requisicoes HEAD (usadas por Facebook, WhatsApp e Twitter crawlers)
+if (isset($_SERVER['REQUEST_METHOD']) && strtoupper($_SERVER['REQUEST_METHOD']) === 'HEAD') {
+    $_SERVER['REQUEST_METHOD'] = 'GET';
+}
+
 // ROTA RAIZ PADRÃO
 $routes->get('/', 'Home::index/piracicaba');
 
