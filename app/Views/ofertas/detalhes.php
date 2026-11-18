@@ -77,8 +77,7 @@
 
                     <?php
                         $canonicalOfferUrl = $oferta->getUrl($cidadeAtual['cid_url'] ?? 'piracicaba');
-                        $shareTargetUrl = $canonicalOfferUrl . '?fb=' . ($oferta->pro_id ?? 1);
-                        $fbShareUrl = 'https://www.facebook.com/sharer/sharer.php?u=' . urlencode($shareTargetUrl);
+                        $fbShareUrl = 'https://www.facebook.com/sharer/sharer.php?u=' . urlencode($canonicalOfferUrl);
                         $waShareUrl = 'https://api.whatsapp.com/send?text=' . urlencode($oferta->pro_titulo . ' - ' . ($oferta->par_nome ?? '') . ' - Confira no Boca Santa Ofertas: ' . $canonicalOfferUrl);
                     ?>
                     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 text-muted small pb-4 border-bottom mb-4">

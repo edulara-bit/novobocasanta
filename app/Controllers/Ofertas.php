@@ -97,16 +97,17 @@ class Ofertas extends BaseController
         $metaDesc  = (!empty($nomeParceiro) ? $nomeParceiro . ' - ' : '') . ($descLimpa !== '' ? $descLimpa : $tituloOferta . ' no Boca Santa Ofertas');
 
         $canonicalUrl = $oferta->getUrl($cidade['cid_url'] ?? 'piracicaba');
-        $fbParam = $this->request->getGet('fb');
-        $ogUrl = !empty($fbParam) ? $canonicalUrl . '?fb=' . urlencode((string)$fbParam) : $canonicalUrl;
+        $imgDims = $oferta->getImagemDimensions();
 
         $seo = $this->seoService->generateMeta([
-            'title'       => $metaTitle,
-            'description' => mb_substr($metaDesc, 0, 160),
-            'image'       => $oferta->getImagemUrl(),
-            'url'         => $ogUrl,
-            'type'        => 'product',
-            'schema_json' => $schemaJson,
+            'title'        => $metaTitle,
+            'description'  => mb_substr($metaDesc, 0, 160),
+            'image'        => $oferta->getImagemUrl(),
+            'url'          => $canonicalUrl,
+            'type'         => 'website',
+            'image_width'  => $imgDims['width'],
+            'image_height' => $imgDims['height'],
+            'schema_json'  => $schemaJson,
         ]);
         $seo['canonical'] = $canonicalUrl;
 

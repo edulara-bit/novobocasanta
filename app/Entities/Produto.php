@@ -331,6 +331,37 @@ class Produto extends Entity
     }
 
     /**
+     * Retorna as dimensões [width, height] da imagem principal para Open Graph
+     */
+    public function getImagemDimensions(): array
+    {
+        $foto = $this->attributes['fot_imagem'] ?? $this->attributes['pro_foto'] ?? $this->attributes['fot_thumb'] ?? $this->attributes['pro_thumb'] ?? '';
+        $parceiroId = $this->attributes['fot_parceiro'] ?? $this->attributes['pro_parceiro'] ?? '';
+
+        if (!empty($foto)) {
+            $candidates = [
+                FCPATH . 'upimg/produtos/' . $parceiroId . '/' . $foto,
+                FCPATH . 'upimg/produtos/' . $foto,
+            ];
+            foreach (['https://www.bocasantaofertas.com.br/upimg/', 'http://www.bocasantaofertas.com.br/upimg/', 'https://bocasantaofertas.com.br/upimg/', 'http://bocasantaofertas.com.br/upimg/'] as $prefix) {
+                if (str_starts_with($foto, $prefix)) {
+                    $candidates[] = FCPATH . 'upimg/' . substr($foto, strlen($prefix));
+                }
+            }
+            foreach ($candidates as $candidate) {
+                if (file_exists($candidate)) {
+                    $info = @getimagesize($candidate);
+                    if (!empty($info[0]) && !empty($info[1])) {
+                        return ['width' => (string)$info[0], 'height' => (string)$info[1]];
+                    }
+                }
+            }
+        }
+
+        return ['width' => '600', 'height' => '450'];
+    }
+
+    /**
      * Gera a URL canônica amigável para SEO
      */
     public function getUrl(string $cidadeSlug = '', string $categoriaSlug = ''): string

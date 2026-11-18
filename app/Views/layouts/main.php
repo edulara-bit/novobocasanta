@@ -15,6 +15,7 @@
     <link rel="canonical" href="<?= esc($seo['canonical'] ?? current_url()) ?>">
 
     <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="fb:app_id" content="100010784527476">
     <meta property="og:locale" content="pt_BR">
     <meta property="og:type" content="<?= esc($seo['og']['type'] ?? 'website') ?>">
     <meta property="og:title" content="<?= esc($seo['og']['title'] ?? '') ?>">
@@ -23,6 +24,13 @@
     <meta property="og:image" content="<?= esc($seo['og']['image'] ?? '') ?>">
     <meta property="og:image:secure_url" content="<?= esc($seo['og']['image'] ?? '') ?>">
     <meta property="og:image:type" content="image/jpeg">
+    <?php if (!empty($seo['og']['image_width'])): ?>
+    <meta property="og:image:width" content="<?= esc($seo['og']['image_width']) ?>">
+    <meta property="og:image:height" content="<?= esc($seo['og']['image_height']) ?>">
+    <?php endif; ?>
+    <?php if (!empty($seo['og']['title'])): ?>
+    <meta property="og:image:alt" content="<?= esc($seo['og']['title']) ?>">
+    <?php endif; ?>
     <meta property="og:site_name" content="Boca Santa Ofertas">
     <?php if (!empty($seo['og']['image'])): ?>
     <link rel="image_src" href="<?= esc($seo['og']['image']) ?>">
