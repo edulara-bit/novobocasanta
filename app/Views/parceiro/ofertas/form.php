@@ -47,39 +47,45 @@
                 </div>
 
                 <div class="row g-3 mb-3">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label fw-semibold">Preço "De" (R$)</label>
                         <input type="text" name="pro_preco" class="form-control" placeholder="0,00" value="<?= !empty($oferta) ? number_format((float)$oferta->pro_preco, 2, ',', '.') : '' ?>">
                         <small class="text-muted">Deixe 0,00 para não exibir.</small>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Preço "Por" (R$)</label>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Preço com Desconto "Por" (R$)</label>
                         <input type="text" name="pro_precodesconto" class="form-control" placeholder="0,00" value="<?= !empty($oferta) ? number_format((float)$oferta->pro_precodesconto, 2, ',', '.') : '' ?>">
                         <small class="text-muted">0,00 = Consulte WhatsApp.</small>
                     </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">A partir de (R$)</label>
+                        <input type="text" name="pro_apartirde" class="form-control" placeholder="0,00" value="<?= !empty($oferta) ? number_format((float)($oferta->pro_apartirde ?? 0), 2, ',', '.') : '' ?>">
+                        <small class="text-muted">Se preenchido, exibe "A partir de R$".</small>
+                    </div>
                 </div>
 
-                <!-- VINCULAR A UM CARTÃO FIDELIDADE -->
-                <div class="card p-3 rounded-4 bg-light border my-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <label class="form-label fw-bold text-dark mb-0">
-                            <i class="fa-solid fa-id-card text-danger me-1"></i> Cartão Fidelidade da Oferta
-                        </label>
-                        <a href="<?= base_url('parceiro/fidelidade') ?>" target="_blank" class="small text-danger fw-semibold text-decoration-none">
-                            <i class="fa-solid fa-gear me-1"></i> Gerenciar Cartões
-                        </a>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Marca do Produto</label>
+                        <input type="text" name="pro_marca" class="form-control" placeholder="Ex:Marca / Fabricante (opcional)" value="<?= esc($oferta->pro_marca ?? old('pro_marca') ?? '') ?>">
                     </div>
-                    <select name="pro_cartao" class="form-select mb-2">
-                        <option value="0">Nenhum cartão vinculado (Oferta avulsa)</option>
-                        <?php if (!empty($cartoes)): ?>
-                            <?php foreach ($cartoes as $cart): ?>
-                                <option value="<?= $cart['car_id'] ?>" <?= (!empty($oferta->pro_cartao) && (int)$oferta->pro_cartao === (int)$cart['car_id']) ? 'selected' : '' ?>>
-                                    <?= esc($cart['car_nome']) ?> (Meta: <?= $cart['car_pontos'] ?> Pontos/Carimbos &bull; <?= $cart['car_validade'] ?> dias)
-                                </option>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </select>
-                    <small class="text-muted">Ao selecionar um cartão, a oferta exibirá o selo e as vantagens do seu programa de fidelidade para os clientes pontuarem ao comprar.</small>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Unidade</label>
+                        <input type="text" name="pro_unidade" class="form-control" placeholder="Ex: Un, Kg, Caixa, Litro, Pç, etc." value="<?= esc($oferta->pro_unidade ?? old('pro_unidade') ?? '') ?>">
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold"><i class="fa-solid fa-bag-shopping text-warning me-1"></i> Link para Venda On-line (Mercado Livre / Loja Virtual)</label>
+                        <input type="text" name="pro_comprar" class="form-control" placeholder="Copie e cole aqui o link para venda on-line (Mercado Livre, Loja, etc.)" value="<?= esc($oferta->pro_comprar ?? old('pro_comprar') ?? '') ?>">
+                        <small class="text-muted">Exibe o botão de compra online / Mercado Livre na página da oferta.</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold"><i class="fa-brands fa-youtube text-danger me-1"></i> Link de Vídeo (YouTube)</label>
+                        <input type="text" name="pro_video" class="form-control" placeholder="Copie e cole aqui o link do vídeo no YouTube (se tiver)" value="<?= esc($oferta->pro_video ?? old('pro_video') ?? '') ?>">
+                        <small class="text-muted">Exibe o botão "Assistir Vídeo" na página da oferta.</small>
+                    </div>
                 </div>
 
                 <!-- OPÇÃO MELHOR PREÇO GARANTIDO (DEFAULT: NÃO EXIBIR) -->

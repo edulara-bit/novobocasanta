@@ -66,7 +66,7 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-4 form-group">
+                        <div class="col-md-3 form-group">
                             <label for="pro_cidade">Cidade da Oferta <span class="text-danger">*</span></label>
                             <select name="pro_cidade" id="pro_cidade" class="form-control" required>
                                 <?php foreach ($cidades as $c): ?>
@@ -77,16 +77,44 @@
                             </select>
                         </div>
 
-                        <div class="col-md-4 form-group">
+                        <div class="col-md-3 form-group">
                             <label for="pro_preco">Preço "De" (R$)</label>
                             <input type="text" name="pro_preco" id="pro_preco" class="form-control" placeholder="0,00" value="<?= !empty($oferta) ? number_format((float)$oferta->pro_preco, 2, ',', '.') : '' ?>">
                             <small class="text-muted">Deixe 0,00 se não houver.</small>
                         </div>
 
-                        <div class="col-md-4 form-group">
+                        <div class="col-md-3 form-group">
                             <label for="pro_precodesconto">Preço "Por" (R$)</label>
                             <input type="text" name="pro_precodesconto" id="pro_precodesconto" class="form-control" placeholder="0,00" value="<?= !empty($oferta) ? number_format((float)$oferta->pro_precodesconto, 2, ',', '.') : '' ?>">
                             <small class="text-muted">0,00 = Consulte WhatsApp.</small>
+                        </div>
+
+                        <div class="col-md-3 form-group">
+                            <label for="pro_apartirde">A partir de (R$)</label>
+                            <input type="text" name="pro_apartirde" id="pro_apartirde" class="form-control" placeholder="0,00" value="<?= !empty($oferta) ? number_format((float)($oferta->pro_apartirde ?? 0), 2, ',', '.') : '' ?>">
+                            <small class="text-muted">Se preenchido, exibe "A partir de".</small>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label for="pro_marca">Marca do Produto</label>
+                            <input type="text" name="pro_marca" id="pro_marca" class="form-control" placeholder="Marca / Fabricante (opcional)" value="<?= esc($oferta->pro_marca ?? old('pro_marca') ?? '') ?>">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label for="pro_unidade">Unidade</label>
+                            <input type="text" name="pro_unidade" id="pro_unidade" class="form-control" placeholder="Ex: Un, Kg, Caixa, Litro, Pç, etc." value="<?= esc($oferta->pro_unidade ?? old('pro_unidade') ?? '') ?>">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label for="pro_comprar"><i class="fas fa-shopping-bag text-warning mr-1"></i> Link para Venda On-line (Mercado Livre / Loja)</label>
+                            <input type="text" name="pro_comprar" id="pro_comprar" class="form-control" placeholder="Ex: https://produto.mercadolivre.com.br/..." value="<?= esc($oferta->pro_comprar ?? old('pro_comprar') ?? '') ?>">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label for="pro_video"><i class="fab fa-youtube text-danger mr-1"></i> Link de Vídeo (YouTube)</label>
+                            <input type="text" name="pro_video" id="pro_video" class="form-control" placeholder="Ex: https://www.youtube.com/watch?v=..." value="<?= esc($oferta->pro_video ?? old('pro_video') ?? '') ?>">
                         </div>
                     </div>
 

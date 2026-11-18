@@ -88,12 +88,27 @@ class Ofertas extends BaseController
         // Schema.org JSON-LD estruturado
         $schemaJson = $this->seoService->generateProductSchema($oferta, $parceiro);
 
+        $nomeParceiro = trim((string)($oferta->par_nome ?? ($parceiro ? $parceiro->getNome() : '')));
+        $tituloOferta = trim((string)$oferta->pro_titulo);
+        $nomeCidade   = $cidade['cid_nome'] ?? 'Piracicaba';
+
+        $metaTitle = $tituloOferta . ' em ' . $nomeCidade . (!empty($nomeParceiro) ? ' - ' . $nomeParceiro : '');
+        $descLimpa = trim(preg_replace('/\s+/', ' ', strip_tags((string)$oferta->pro_descricao)));
+        $metaDesc  = (!empty($nomeParceiro) ? $nomeParceiro . ' - ' : '') . ($descLimpa !== '' ? $descLimpa : $tituloOferta . ' no Boca Santa Ofertas');
+
+        $canonicalUrl = $oferta->getUrl($cidade['cid_url'] ?? 'piracicaba');
+        $fbParam = $this->request->getGet('fb');
+        $ogUrl = !empty($fbParam) ? $canonicalUrl . '?fb=' . urlencode((string)$fbParam) : $canonicalUrl;
+
         $seo = $this->seoService->generateMeta([
-            'title'       => $oferta->pro_titulo . ' em ' . ($cidade['cid_nome'] ?? 'Piracicaba'),
-            'description' => substr(strip_tags((string)$oferta->pro_descricao), 0, 160),
+            'title'       => $metaTitle,
+            'description' => mb_substr($metaDesc, 0, 160),
             'image'       => $oferta->getImagemUrl(),
+            'url'         => $ogUrl,
+            'type'        => 'product',
             'schema_json' => $schemaJson,
         ]);
+        $seo['canonical'] = $canonicalUrl;
 
         // Categoria Pai (se a oferta estiver vinculada a uma subcategoria)
         $categoriaPai = null;

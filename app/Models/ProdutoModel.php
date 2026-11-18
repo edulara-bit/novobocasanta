@@ -122,7 +122,44 @@ class ProdutoModel extends Model
             $builder->limit($limit, $offset);
         }
 
+        $builder->groupBy('tb_produtos.pro_id');
+
         return $builder->find();
+    }
+
+    /**
+     * Conta o total de ofertas para paginação com suporte a filtros
+     */
+    public function countOfertas(array $params = []): int
+    {
+        $builder = $this->db->table('tb_produtos')
+            ->join('tb_parceiros', 'tb_produtos.pro_parceiro = tb_parceiros.par_id', 'left');
+
+        if (!empty($params['cidade_id'])) {
+            $builder->where('tb_produtos.pro_cidade', (int)$params['cidade_id']);
+        }
+
+        if (!empty($params['parceiro_id'])) {
+            $builder->where('tb_produtos.pro_parceiro', (int)$params['parceiro_id']);
+        }
+
+        if (!empty($params['categoria_id'])) {
+            $builder->groupStart()
+                ->where('tb_produtos.pro_categoria', (int)$params['categoria_id'])
+                ->orWhere('tb_produtos.pro_categoria_pai', (int)$params['categoria_id'])
+                ->groupEnd();
+        }
+
+        if (!empty($params['busca'])) {
+            $termo = trim((string)$params['busca']);
+            $builder->groupStart()
+                ->like('tb_produtos.pro_titulo', $termo)
+                ->orLike('tb_produtos.pro_descricao', $termo)
+                ->orLike('tb_parceiros.par_nome', $termo)
+                ->groupEnd();
+        }
+
+        return (int)$builder->countAllResults();
     }
 
     /**

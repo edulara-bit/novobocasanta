@@ -3,20 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
-    <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
+    <?php
+        $currentHost = strtolower((string)($_SERVER['HTTP_HOST'] ?? ''));
+        $robotsMeta = str_starts_with($currentHost, 'teste.') ? 'noindex, nofollow, noarchive, nosnippet' : 'index, follow';
+    ?>
+    <meta name="robots" content="<?= $robotsMeta ?>">
+    <meta name="googlebot" content="<?= $robotsMeta ?>">
     <title><?= esc($seo['title'] ?? 'Boca Santa Ofertas') ?></title>
     <meta name="description" content="<?= esc($seo['description'] ?? '') ?>">
     <meta name="keywords" content="<?= esc($seo['keywords'] ?? '') ?>">
     <link rel="canonical" href="<?= esc($seo['canonical'] ?? current_url()) ?>">
 
     <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:locale" content="pt_BR">
     <meta property="og:type" content="<?= esc($seo['og']['type'] ?? 'website') ?>">
     <meta property="og:title" content="<?= esc($seo['og']['title'] ?? '') ?>">
     <meta property="og:description" content="<?= esc($seo['og']['description'] ?? '') ?>">
     <meta property="og:url" content="<?= esc($seo['og']['url'] ?? current_url()) ?>">
     <meta property="og:image" content="<?= esc($seo['og']['image'] ?? '') ?>">
+    <meta property="og:image:secure_url" content="<?= esc($seo['og']['image'] ?? '') ?>">
+    <meta property="og:image:type" content="image/jpeg">
     <meta property="og:site_name" content="Boca Santa Ofertas">
+    <?php if (!empty($seo['og']['image'])): ?>
+    <link rel="image_src" href="<?= esc($seo['og']['image']) ?>">
+    <?php endif; ?>
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">

@@ -59,17 +59,25 @@ class Produto extends Entity
     }
 
     /**
+     * Verifica se o produto usa a modalidade "A partir de R$"
+     */
+    public function isAPartirDe(): bool
+    {
+        return ((float) ($this->attributes['pro_apartirde'] ?? 0)) > 0.00;
+    }
+
+    /**
      * Retorna o preço com desconto (preço de venda real)
      */
     public function getPrecoVenda(): float
     {
+        $aPartirDe = (float) ($this->attributes['pro_apartirde'] ?? 0);
         $precoDesconto = (float) ($this->attributes['pro_precodesconto'] ?? 0);
         $precoNormal = (float) ($this->attributes['pro_preco'] ?? 0);
-        $aPartirDe = (float) ($this->attributes['pro_apartirde'] ?? 0);
 
+        if ($aPartirDe > 0) return $aPartirDe;
         if ($precoDesconto > 0) return $precoDesconto;
         if ($precoNormal > 0) return $precoNormal;
-        if ($aPartirDe > 0) return $aPartirDe;
 
         return 0.00;
     }
@@ -82,6 +90,10 @@ class Produto extends Entity
         $preco = $this->getPrecoVenda();
         if ($preco <= 0.00) {
             return 'Consulte o preço';
+        }
+
+        if ($this->isAPartirDe()) {
+            return 'A partir de R$ ' . number_format($preco, 2, ',', '.');
         }
 
         return 'R$ ' . number_format($preco, 2, ',', '.');
@@ -150,6 +162,45 @@ class Produto extends Entity
         }
 
         return '';
+    }
+
+    /**
+     * Verifica se o produto possui link externo de compra (Mercado Livre, Loja Virtual, etc.)
+     */
+    public function hasExternalBuyLink(): bool
+    {
+        $link = trim((string)($this->attributes['pro_comprar'] ?? ''));
+        if (empty($link)) {
+            return false;
+        }
+        if (str_contains($link, 'linefast') || str_contains($link, 'cidadepremium')) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Retorna a URL externa de compra (Mercado Livre / Loja Virtual)
+     */
+    public function getExternalBuyUrl(): string
+    {
+        if (!$this->hasExternalBuyLink()) {
+            return '';
+        }
+        $link = trim((string)($this->attributes['pro_comprar'] ?? ''));
+        if (!str_starts_with($link, 'http://') && !str_starts_with($link, 'https://')) {
+            $link = 'https://' . $link;
+        }
+        return $link;
+    }
+
+    /**
+     * Verifica se o link externo de compra é do Mercado Livre
+     */
+    public function isMercadoLivre(): bool
+    {
+        $link = strtolower(trim((string)($this->attributes['pro_comprar'] ?? '')));
+        return str_contains($link, 'mercadolivre') || str_contains($link, 'mercadolibre');
     }
 
     /**
@@ -246,6 +297,16 @@ class Produto extends Entity
         if (!empty($foto)) {
             // Normaliza imagens vindas da integração local do Linefast
             $foto = str_replace(['http://localhost/cidadepremium', 'https://localhost/cidadepremium'], 'https://linefast.com.br', $foto);
+
+            // Se for URL absoluta do próprio Boca Santa e o arquivo existir localmente no servidor, usa o base_url() atual
+            foreach (['https://www.bocasantaofertas.com.br/upimg/', 'http://www.bocasantaofertas.com.br/upimg/', 'https://bocasantaofertas.com.br/upimg/', 'http://bocasantaofertas.com.br/upimg/'] as $prefix) {
+                if (str_starts_with($foto, $prefix)) {
+                    $relPath = substr($foto, strlen($prefix));
+                    if (file_exists(FCPATH . 'upimg/' . $relPath)) {
+                        return base_url('upimg/' . $relPath);
+                    }
+                }
+            }
 
             if (str_starts_with($foto, 'http://') || str_starts_with($foto, 'https://')) {
                 return $foto;

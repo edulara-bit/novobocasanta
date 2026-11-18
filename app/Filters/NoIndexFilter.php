@@ -15,8 +15,11 @@ class NoIndexFilter implements FilterInterface
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
-        // Garante cabeçalho HTTP noindex em todas as respostas (HTML, JSON, downloads, etc.)
-        $response->setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+        // Aplica cabeçalho HTTP noindex apenas no subdomínio de testes/homologação
+        $host = strtolower((string)($_SERVER['HTTP_HOST'] ?? ''));
+        if (str_starts_with($host, 'teste.')) {
+            $response->setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+        }
         return $response;
     }
 }

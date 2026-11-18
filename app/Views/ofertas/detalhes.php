@@ -19,8 +19,22 @@
         <!-- COLUNA ESQUERDA: IMAGEM, DESCRIÇÃO, DADOS DO PARCEIRO & MAPA -->
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white">
+                <?php $youtubeEmbed = $oferta->getYoutubeEmbedUrl(); ?>
                 <div class="position-relative bg-light text-center">
                     <img id="mainOfferImage" src="<?= $oferta->getImagemUrl() ?>" alt="<?= esc($oferta->pro_titulo) ?>" class="img-fluid rounded-top" style="max-height: 480px; width: 100%; object-fit: contain; background: #f8fafc;" onerror="this.src='<?= base_url('assets/images/sem_foto.gif') ?>'">
+                    <?php if (!empty($youtubeEmbed)): ?>
+                        <div id="mainOfferVideoBox" class="d-none bg-dark">
+                            <div class="d-flex justify-content-between align-items-center px-3 py-2 bg-dark text-white border-bottom border-secondary">
+                                <span class="small fw-bold"><i class="fa-brands fa-youtube text-danger me-1"></i> Vídeo da Oferta</span>
+                                <button type="button" class="btn btn-sm btn-outline-light rounded-pill py-0 px-3" onclick="fecharVideoOferta()">
+                                    <i class="fa-solid fa-image me-1"></i> Voltar para Fotos
+                                </button>
+                            </div>
+                            <div class="ratio ratio-16x9">
+                                <iframe id="mainOfferVideoIframe" src="" data-src="<?= esc($youtubeEmbed) ?>?autoplay=1&rel=0" title="<?= esc($oferta->pro_titulo) ?>" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                     <?php if ($oferta->getPercentualDesconto() > 0): ?>
                         <span class="position-absolute top-0 start-0 m-3 badge bg-danger fs-6 px-3 py-2 rounded-pill shadow">
                             -<?= $oferta->getPercentualDesconto() ?>% DE DESCONTO
@@ -33,16 +47,28 @@
                     <?php endif; ?>
                 </div>
 
-                <?php if (!empty($fotos) && count($fotos) > 1): ?>
-                <div class="d-flex flex-wrap justify-content-center gap-2 p-3 bg-light border-top">
-                    <?php foreach ($fotos as $idx => $fotoUrl): ?>
-                        <img src="<?= esc($fotoUrl) ?>" 
-                             alt="<?= esc($oferta->pro_titulo) ?> - Foto <?= $idx + 1 ?>" 
-                             class="rounded-3 border bg-white p-1 shadow-sm" 
-                             style="width: 76px; height: 76px; object-fit: cover; cursor: pointer;"
-                             onclick="document.getElementById('mainOfferImage').src = this.src;"
-                             onerror="this.style.display='none'">
-                    <?php endforeach; ?>
+                <?php if ((!empty($fotos) && count($fotos) > 1) || !empty($youtubeEmbed)): ?>
+                <div class="d-flex flex-wrap align-items-center justify-content-center gap-2 p-3 bg-light border-top">
+                    <?php if (!empty($fotos)): ?>
+                        <?php foreach ($fotos as $idx => $fotoUrl): ?>
+                            <img src="<?= esc($fotoUrl) ?>" 
+                                 alt="<?= esc($oferta->pro_titulo) ?> - Foto <?= $idx + 1 ?>" 
+                                 class="rounded-3 border bg-white p-1 shadow-sm" 
+                                 style="width: 76px; height: 76px; object-fit: cover; cursor: pointer;"
+                                 onclick="mostrarFotoOferta(this.src)"
+                                 onerror="this.style.display='none'">
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                    <?php if (!empty($youtubeEmbed)): ?>
+                        <button type="button" 
+                                onclick="abrirVideoOferta()" 
+                                class="btn btn-danger fw-bold rounded-3 shadow-sm d-flex flex-column align-items-center justify-content-center px-3"
+                                style="height: 76px; min-width: 120px;"
+                                title="Assista o vídeo desta oferta">
+                            <i class="fa-brands fa-youtube fs-3 mb-1"></i>
+                            <span style="font-size: 0.75rem; line-height: 1;">Assistir Vídeo</span>
+                        </button>
+                    <?php endif; ?>
                 </div>
                 <?php endif; ?>
 
@@ -51,16 +77,25 @@
 
                     <?php
                         $canonicalOfferUrl = $oferta->getUrl($cidadeAtual['cid_url'] ?? 'piracicaba');
-                        $fbShareUrl = 'https://www.facebook.com/sharer/sharer.php?u=' . urlencode($canonicalOfferUrl);
-                        $waShareUrl = 'https://api.whatsapp.com/send?text=' . urlencode($oferta->pro_titulo . ' - Confira no Boca Santa Ofertas: ' . $canonicalOfferUrl);
+                        $shareTargetUrl = $canonicalOfferUrl . '?fb=' . ($oferta->pro_id ?? 1);
+                        $fbShareUrl = 'https://www.facebook.com/sharer/sharer.php?u=' . urlencode($shareTargetUrl);
+                        $waShareUrl = 'https://api.whatsapp.com/send?text=' . urlencode($oferta->pro_titulo . ' - ' . ($oferta->par_nome ?? '') . ' - Confira no Boca Santa Ofertas: ' . $canonicalOfferUrl);
                     ?>
                     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 text-muted small pb-4 border-bottom mb-4">
                         <div class="d-flex flex-wrap align-items-center gap-3">
                             <span><i class="fa-solid fa-eye me-1"></i> <?= number_format($oferta->pro_visitas ?? 0, 0, ',', '.') ?> visualizações</span>
                             <span><i class="fa-solid fa-location-dot me-1 text-danger"></i> <?= esc($oferta->cid_nome ?? 'Piracicaba') ?> - SP</span>
                             <span><i class="fa-solid fa-store me-1"></i> <?= esc($oferta->par_nome ?? 'Parceiro') ?></span>
+                            <?php if (!empty($oferta->pro_marca)): ?>
+                                <span><i class="fa-solid fa-tag me-1"></i> Marca: <strong><?= esc($oferta->pro_marca) ?></strong></span>
+                            <?php endif; ?>
                         </div>
                         <div class="d-flex align-items-center gap-2">
+                            <?php if (!empty($youtubeEmbed)): ?>
+                                <button type="button" onclick="abrirVideoOferta()" class="btn btn-sm btn-danger fw-bold rounded-pill px-3 shadow-sm" title="Assistir o vídeo desta oferta">
+                                    <i class="fa-brands fa-youtube me-1"></i> Assistir Vídeo
+                                </button>
+                            <?php endif; ?>
                             <a href="<?= esc($fbShareUrl) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-sm text-white fw-bold rounded-pill px-3 shadow-sm" style="background-color: #1877F2;" title="Compartilhar no Facebook">
                                 <i class="fa-brands fa-facebook-f me-1"></i> Compartilhar
                             </a>
@@ -83,16 +118,6 @@
                         <h4 class="fw-bold mb-3"><i class="fa-solid fa-list-check text-danger me-2"></i> Características & Especificações</h4>
                         <div class="text-secondary lh-lg">
                             <?= nl2br(esc($oferta->pro_caracteristicas)) ?>
-                        </div>
-                    </div>
-                    <?php endif; ?>
-
-                    <?php $youtubeEmbed = $oferta->getYoutubeEmbedUrl(); ?>
-                    <?php if (!empty($youtubeEmbed)): ?>
-                    <div class="mb-4">
-                        <h4 class="fw-bold mb-3"><i class="fa-brands fa-youtube text-danger me-2"></i> Vídeo da Oferta</h4>
-                        <div class="ratio ratio-16x9 rounded-4 overflow-hidden border shadow-sm">
-                            <iframe src="<?= esc($youtubeEmbed) ?>" title="<?= esc($oferta->pro_titulo) ?>" allowfullscreen loading="lazy"></iframe>
                         </div>
                     </div>
                     <?php endif; ?>
@@ -233,6 +258,9 @@
                     <div class="display-6 fw-extrabold text-danger mb-1">
                         <?= $oferta->getPrecoVendaFormatado() ?>
                     </div>
+                    <?php if (!empty($oferta->pro_unidade)): ?>
+                        <div class="text-muted small mb-1"><?= esc($oferta->pro_unidade) ?></div>
+                    <?php endif; ?>
 
                     <!-- MELHOR PREÇO GARANTIDO (ITEM 3 - SÓ SE pro_melhor_preco == 1) -->
                     <?php if (!empty($oferta->pro_melhor_preco) && (int)$oferta->pro_melhor_preco === 1): ?>
@@ -255,6 +283,15 @@
                                 <i class="fa-solid fa-cart-shopping me-2 text-warning"></i> Comprar Online no Linefast
                             </a>
                             <small class="text-center text-muted d-block mt-1"><i class="fa-solid fa-lock text-success me-1"></i> Pagamento seguro via Linefast</small>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if ($oferta->hasExternalBuyLink()): ?>
+                        <div>
+                            <a href="<?= esc($oferta->getExternalBuyUrl()) ?>" class="btn btn-warning btn-lg fw-bold rounded-pill w-100 py-3 shadow text-dark" target="_blank" rel="noopener noreferrer" title="Comprar online">
+                                <i class="fa-solid fa-bag-shopping me-2"></i> <?= $oferta->isMercadoLivre() ? 'Comprar no Mercado Livre' : 'Comprar Online' ?>
+                            </a>
+                            <small class="text-center text-muted d-block mt-1"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Link oficial de venda online do anunciante</small>
                         </div>
                     <?php endif; ?>
 
@@ -284,30 +321,6 @@
                         </a>
                     </div>
                 </div>
-
-                <?php if (!empty($cartaoFidelidade)): ?>
-                    <!-- CARD PROGRAMA FIDELIDADE -->
-                    <div class="card border-0 rounded-4 p-3 mb-4 text-white shadow-sm" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);">
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <span class="badge bg-warning text-dark fw-bold px-2 py-1 rounded-pill"><i class="fa-solid fa-star me-1"></i> PROGRAMA FIDELIDADE</span>
-                        </div>
-                        <h6 class="fw-bold mb-1 text-white"><?= esc($cartaoFidelidade['car_nome']) ?></h6>
-                        <p class="small text-white-50 mb-2">
-                            A cada compra nesta empresa você acumula pontos para resgatar recompensas exclusivas!
-                        </p>
-                        <div class="bg-white bg-opacity-10 p-2 rounded-3 small">
-                            <div class="d-flex justify-content-between text-white fw-semibold mb-1">
-                                <span><i class="fa-solid fa-bullseye me-1"></i> Meta do Cartão:</span>
-                                <span><?= $cartaoFidelidade['car_pontos'] ?> Pontos / Carimbos</span>
-                            </div>
-                            <?php if (!empty($cartaoFidelidade['car_regras'])): ?>
-                                <div class="text-white-50 small mt-1">
-                                    <i class="fa-solid fa-gift me-1 text-warning"></i> <?= esc($cartaoFidelidade['car_regras']) ?>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                <?php endif; ?>
 
                 <hr class="my-4">
 
@@ -365,4 +378,39 @@
     <?php endif; ?>
 
 </div>
+
+<script>
+function abrirVideoOferta() {
+    var img = document.getElementById('mainOfferImage');
+    var box = document.getElementById('mainOfferVideoBox');
+    var iframe = document.getElementById('mainOfferVideoIframe');
+    if (box && iframe) {
+        if (img) img.classList.add('d-none');
+        box.classList.remove('d-none');
+        if (!iframe.getAttribute('src')) {
+            iframe.setAttribute('src', iframe.getAttribute('data-src'));
+        }
+        box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function fecharVideoOferta() {
+    var img = document.getElementById('mainOfferImage');
+    var box = document.getElementById('mainOfferVideoBox');
+    var iframe = document.getElementById('mainOfferVideoIframe');
+    if (box) {
+        box.classList.add('d-none');
+        if (iframe) iframe.setAttribute('src', '');
+    }
+    if (img) img.classList.remove('d-none');
+}
+
+function mostrarFotoOferta(src) {
+    fecharVideoOferta();
+    var img = document.getElementById('mainOfferImage');
+    if (img && src) {
+        img.src = src;
+    }
+}
+</script>
 <?= $this->endSection() ?>

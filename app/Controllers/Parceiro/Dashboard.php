@@ -136,12 +136,32 @@ class Dashboard extends BaseController
         $parceiro = $this->getParceiroLogado();
         if (!$parceiro) return redirect()->to(base_url('parceiro/login'));
 
-        $ofertas = $this->produtoModel->getOfertas(['parceiro_id' => $parceiro->par_id], 100);
+        $busca = trim((string)($this->request->getGet('q') ?? ''));
+        $paginaAtual = max(1, (int)($this->request->getGet('page') ?? 1));
+        $porPagina = 15;
+
+        $params = [
+            'parceiro_id' => $parceiro->par_id,
+            'busca'       => $busca,
+        ];
+
+        $totalOfertas = $this->produtoModel->countOfertas($params);
+        $totalPaginas = max(1, (int)ceil($totalOfertas / $porPagina));
+        if ($paginaAtual > $totalPaginas) {
+            $paginaAtual = $totalPaginas;
+        }
+
+        $offset = ($paginaAtual - 1) * $porPagina;
+        $ofertas = $this->produtoModel->getOfertas($params, $porPagina, $offset);
 
         return view('parceiro/ofertas/index', [
-            'title'    => 'Minhas Ofertas & Produtos',
-            'parceiro' => $parceiro,
-            'ofertas'  => $ofertas,
+            'title'        => 'Minhas Ofertas & Produtos',
+            'parceiro'     => $parceiro,
+            'ofertas'      => $ofertas,
+            'busca'        => $busca,
+            'paginaAtual'  => $paginaAtual,
+            'totalPaginas' => $totalPaginas,
+            'totalOfertas' => $totalOfertas,
         ]);
     }
 
@@ -198,7 +218,11 @@ class Dashboard extends BaseController
             'pro_cidade'          => (int)$parceiro->par_cidade,
             'pro_preco'           => (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('pro_preco')),
             'pro_precodesconto'   => (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('pro_precodesconto')),
-            'pro_apartirde'       => $this->request->getPost('pro_apartirde') ? 1 : 0,
+            'pro_apartirde'       => (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('pro_apartirde')),
+            'pro_marca'           => trim((string)$this->request->getPost('pro_marca')),
+            'pro_unidade'         => trim((string)$this->request->getPost('pro_unidade')),
+            'pro_comprar'         => trim((string)$this->request->getPost('pro_comprar')),
+            'pro_video'           => trim((string)$this->request->getPost('pro_video')),
             'pro_destaque'        => $this->request->getPost('pro_destaque') ? 1 : 0,
             'pro_melhor_preco'    => $this->request->getPost('pro_melhor_preco') ? 1 : 0,
             'pro_cartao'          => (int)$this->request->getPost('pro_cartao'),
@@ -302,7 +326,11 @@ class Dashboard extends BaseController
             'pro_categoria_pai'   => $proCategoriaPai,
             'pro_preco'           => (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('pro_preco')),
             'pro_precodesconto'   => (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('pro_precodesconto')),
-            'pro_apartirde'       => $this->request->getPost('pro_apartirde') ? 1 : 0,
+            'pro_apartirde'       => (float)str_replace(['.', ','], ['', '.'], (string)$this->request->getPost('pro_apartirde')),
+            'pro_marca'           => trim((string)$this->request->getPost('pro_marca')),
+            'pro_unidade'         => trim((string)$this->request->getPost('pro_unidade')),
+            'pro_comprar'         => trim((string)$this->request->getPost('pro_comprar')),
+            'pro_video'           => trim((string)$this->request->getPost('pro_video')),
             'pro_destaque'        => $this->request->getPost('pro_destaque') ? 1 : 0,
             'pro_melhor_preco'    => $this->request->getPost('pro_melhor_preco') ? 1 : 0,
             'pro_cartao'          => (int)$this->request->getPost('pro_cartao'),
