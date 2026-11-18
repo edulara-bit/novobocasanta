@@ -40,6 +40,11 @@ class Ofertas extends BaseController
         $cidade = $this->cidadeModel->getBySlug($cidadeSlug) ?? $this->cidadeModel->first();
         $oferta = $this->produtoModel->getDetalhesOferta($slugOrId);
 
+        $ua = (string)($this->request->getUserAgent() ?? '');
+        if (stripos($ua, 'facebook') !== false || stripos($ua, 'bot') !== false || stripos($ua, 'meta') !== false) {
+            log_message('info', '[Crawler Oferta] UA: ' . $ua . ' | IP: ' . $this->request->getIPAddress() . ' | Slug: ' . $slugOrId . ' | Status: ' . ($oferta ? 'OK' : '404'));
+        }
+
         if (!$oferta) {
             // 1. Verifica se era uma subcategoria legada no formato /{cidade}/{cat_pai}/{subcategoria}
             $subcat = $this->categoriaModel->where('cat_url', (string)$slugOrId)->first();

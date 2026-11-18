@@ -104,6 +104,7 @@ $routes->get('admin/logout', 'Admin\Auth::logout');
 $routes->group('admin', static function ($routes) {
     $routes->get('/', 'Admin\Dashboard::index');
     $routes->get('dashboard', 'Admin\Dashboard::index');
+    $routes->get('logs', 'Admin\Dashboard::logs');
 
     // Ofertas
     $routes->get('ofertas', 'Admin\Ofertas::index');

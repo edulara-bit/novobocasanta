@@ -174,6 +174,12 @@
                             <p>Administradores</p>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="<?= base_url('admin/logs') ?>" class="nav-link <?= str_contains(uri_string(), 'admin/logs') ? 'active' : '' ?>">
+                            <i class="nav-icon fas fa-file-code text-info"></i>
+                            <p>Logs do Sistema</p>
+                        </a>
+                    </li>
                 </ul>
             </nav>
         </div>
