@@ -7,6 +7,11 @@
     <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
     <title><?= esc($title ?? 'Admin') ?> | Boca Santa AdminLTE</title>
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="<?= base_url('favicon.ico') ?>?v=4">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= base_url('assets/images/favicon.png') ?>?v=4">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= base_url('assets/images/apple-touch-icon.png') ?>?v=4">
+
     <!-- Google Font: Source Sans Pro & Inter -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
     <!-- Font Awesome -->

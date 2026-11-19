@@ -14,6 +14,11 @@
     <meta name="keywords" content="<?= esc($seo['keywords'] ?? '') ?>">
     <link rel="canonical" href="<?= esc($seo['canonical'] ?? current_url()) ?>">
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="<?= base_url('favicon.ico') ?>?v=4">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= base_url('assets/images/favicon.png') ?>?v=4">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= base_url('assets/images/apple-touch-icon.png') ?>?v=4">
+
     <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="fb:app_id" content="100010784527476">
     <meta property="og:locale" content="pt_BR">
