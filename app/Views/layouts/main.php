@@ -200,7 +200,7 @@
                     <div class="d-flex gap-3 mt-3">
                         <a href="https://facebook.com" class="text-white fs-5" target="_blank"><i class="fa-brands fa-facebook"></i></a>
                         <a href="https://instagram.com" class="text-white fs-5" target="_blank"><i class="fa-brands fa-instagram"></i></a>
-                        <a href="https://whatsapp.com" class="text-white fs-5" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
+                        <a href="https://api.whatsapp.com/send?phone=5519997696660&text=Ol%C3%A1%2C%20vim%20pelo%20Boca%20Santa%20Ofertas" class="text-white fs-5" target="_blank" title="Falar no WhatsApp: (19) 9.9769.66.60"><i class="fa-brands fa-whatsapp"></i></a>
                     </div>
                 </div>
                 <div class="col-6 col-lg-2">
