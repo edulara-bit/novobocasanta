@@ -17,13 +17,25 @@ class EmailService
         ?int $port = null,
         ?string $user = null,
         ?string $pass = null,
-        int $timeout = 10
+        int $timeout = 4
     ) {
-        $this->host = $host ?: (getenv('SMTP_HOST') ?: '129.121.41.139');
+        $this->host = $host ?: (getenv('SMTP_HOST') ?: 'poste');
         $this->port = $port ?: (int)(getenv('SMTP_PORT') ?: 587);
         $this->user = $user ?: (getenv('SMTP_USER') ?: 'contato@bocasantaofertas.com.br');
         $this->pass = $pass ?: (getenv('SMTP_PASS') ?: 'Lppdc5FoeG');
         $this->timeout = $timeout;
+    }
+
+    /**
+     * Registra logs com segurança mesmo se log_message do CI4 não estiver disponível
+     */
+    protected function log(string $level, string $message): void
+    {
+        if (function_exists('log_message')) {
+            log_message($level, $message);
+        } else {
+            error_log("[{$level}] {$message}");
+        }
     }
 
     /**
@@ -42,8 +54,16 @@ class EmailService
         $replyToEmail = $replyToEmail ?: $fromEmail;
         $replyToName = $replyToName ?: $fromName;
 
-        // Lista de hosts para tentar (IP público e nome interno do serviço no Docker)
-        $hosts = array_unique(array_filter([$this->host, 'poste', '129.121.41.139', 'mail.linefast.com.br']));
+        // Lista de hosts para tentar: serviço interno no Docker ('poste'), IP da VPS, domínios e gateway
+        $candidateHosts = [
+            $this->host,
+            'poste',
+            '129.121.41.139',
+            'mail.cidadepremium.com.br',
+            'mail.linefast.com.br',
+            '172.17.0.1'
+        ];
+        $hosts = array_values(array_unique(array_filter($candidateHosts)));
 
         $ctx = stream_context_create([
             'ssl' => [
@@ -54,6 +74,7 @@ class EmailService
         ]);
 
         $fp = false;
+        $connectedHost = '';
         $lastErr = '';
 
         foreach ($hosts as $tryHost) {
@@ -61,22 +82,23 @@ class EmailService
                 "tcp://{$tryHost}:{$this->port}",
                 $errno,
                 $errstr,
-                $this->timeout,
+                (float)$this->timeout,
                 STREAM_CLIENT_CONNECT,
                 $ctx
             );
             if ($fp) {
+                $connectedHost = $tryHost;
                 break;
             }
-            $lastErr = "$errstr ($errno)";
+            $lastErr = "{$tryHost}:{$this->port} -> {$errstr} ({$errno})";
         }
 
         if (!$fp) {
-            log_message('error', "[EmailService] Falha ao conectar ao SMTP em todos os hosts testados: $lastErr");
+            $this->log('error', "[EmailService] Falha ao conectar ao SMTP em todos os hosts testados: {$lastErr}");
             return false;
         }
 
-        stream_set_timeout($fp, $this->timeout);
+        stream_set_timeout($fp, 10);
 
         try {
             $this->expectResponse($fp, ['220']);
@@ -93,7 +115,7 @@ class EmailService
             );
 
             if (!$crypto) {
-                log_message('error', "[EmailService] Falha na negociação TLS com o servidor SMTP.");
+                $this->log('error', "[EmailService] Falha na negociação TLS com o servidor SMTP ({$connectedHost}).");
                 fclose($fp);
                 return false;
             }
@@ -143,10 +165,10 @@ class EmailService
             $this->sendRaw($fp, "QUIT\r\n");
             @fclose($fp);
 
-            log_message('info', "[EmailService] E-mail enviado com sucesso via SMTP para: " . implode(', ', $toAddresses));
+            $this->log('info', "[EmailService] E-mail enviado com sucesso via SMTP ({$connectedHost}) para: " . implode(', ', $toAddresses));
             return true;
         } catch (\Throwable $e) {
-            log_message('error', "[EmailService] Erro durante transação SMTP: " . $e->getMessage());
+            $this->log('error', "[EmailService] Erro durante transação SMTP ({$connectedHost}): " . $e->getMessage());
             @fclose($fp);
             return false;
         }
