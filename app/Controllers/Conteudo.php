@@ -157,14 +157,14 @@ class Conteudo extends BaseController
             </div>
         </div>";
 
-        // 3. Enviar para vendas@bocasantaofertas.com.br via SMTP autenticado (Poste.io porta 587)
-        $destinatario = 'vendas@bocasantaofertas.com.br';
+        // 3. Enviar para vendas@bocasantaofertas.com.br e cópia para loweltrevisan@gmail.com via SMTP autenticado (Poste.io porta 587)
+        $destinatarios = ['vendas@bocasantaofertas.com.br', 'loweltrevisan@gmail.com'];
         $assunto = '[Novo Anunciante] ' . $empresa . ' - ' . $plano;
 
         try {
             $emailSvc = new EmailService();
             $enviado = $emailSvc->send(
-                to: $destinatario,
+                to: $destinatarios,
                 subject: $assunto,
                 htmlBody: $htmlEmail,
                 fromEmail: 'contato@bocasantaofertas.com.br',
@@ -174,9 +174,9 @@ class Conteudo extends BaseController
             );
 
             if ($enviado) {
-                log_message('info', "[Anuncie] Proposta enviada com sucesso para {$destinatario} via SMTP");
+                log_message('info', "[Anuncie] Proposta enviada com sucesso para " . implode(', ', $destinatarios) . " via SMTP");
             } else {
-                log_message('warning', "[Anuncie] EmailService falhou ao enviar para {$destinatario}");
+                log_message('warning', "[Anuncie] EmailService falhou ao enviar para " . implode(', ', $destinatarios));
             }
 
             // 4. Cópia de confirmação para o anunciante (opcional, silencioso)

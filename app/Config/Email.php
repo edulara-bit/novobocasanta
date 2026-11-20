@@ -8,7 +8,7 @@ class Email extends BaseConfig
 {
     public string $fromEmail  = 'contato@bocasantaofertas.com.br';
     public string $fromName   = 'Boca Santa Ofertas';
-    public string $recipients = 'vendas@bocasantaofertas.com.br';
+    public string $recipients = 'vendas@bocasantaofertas.com.br, loweltrevisan@gmail.com';
 
     /**
      * The "user agent"
