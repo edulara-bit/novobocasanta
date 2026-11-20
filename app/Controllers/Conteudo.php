@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Models\CategoriaModel;
 use App\Models\CidadeModel;
+use App\Services\EmailService;
 use App\Services\SeoService;
 use Config\Database;
 
@@ -156,47 +157,30 @@ class Conteudo extends BaseController
             </div>
         </div>";
 
-        // 3. Enviar para vendas@bocasantaofertas.com.br
+        // 3. Enviar para vendas@bocasantaofertas.com.br via SMTP autenticado (Poste.io porta 587)
         $destinatario = 'vendas@bocasantaofertas.com.br';
         $assunto = '[Novo Anunciante] ' . $empresa . ' - ' . $plano;
 
         try {
-            $mailer = \Config\Services::email();
-            $mailer->clear();
-            $mailer->setFrom('vendas@bocasantaofertas.com.br', 'Boca Santa Ofertas');
-            $mailer->setTo($destinatario);
-            $mailer->setReplyTo($email, $nome);
-            $mailer->setSubject($assunto);
-            $mailer->setMessage($htmlEmail);
-            $mailer->setMailType('html');
+            $emailSvc = new EmailService();
+            $enviado = $emailSvc->send(
+                to: $destinatario,
+                subject: $assunto,
+                htmlBody: $htmlEmail,
+                fromEmail: 'contato@bocasantaofertas.com.br',
+                fromName: 'Boca Santa Ofertas',
+                replyToEmail: $email,
+                replyToName: $nome
+            );
 
-            if (!$mailer->send(false)) {
-                log_message('warning', '[Anuncie] Services::email falhou: ' . $mailer->printDebugger(['headers']));
-                // Fallback com mail() nativo
-                $headers  = "MIME-Version: 1.0\r\n";
-                $headers .= "Content-type: text/html; charset=UTF-8\r\n";
-                $headers .= "From: Boca Santa Ofertas <vendas@bocasantaofertas.com.br>\r\n";
-                $headers .= "Reply-To: {$nome} <{$email}>\r\n";
-                @mail($destinatario, $assunto, $htmlEmail, $headers);
+            if ($enviado) {
+                log_message('info', "[Anuncie] Proposta enviada com sucesso para {$destinatario} via SMTP");
+            } else {
+                log_message('warning', "[Anuncie] EmailService falhou ao enviar para {$destinatario}");
             }
-        } catch (\Throwable $e) {
-            log_message('error', '[Anuncie] Exceção ao enviar e-mail comercial: ' . $e->getMessage());
-            $headers  = "MIME-Version: 1.0\r\n";
-            $headers .= "Content-type: text/html; charset=UTF-8\r\n";
-            $headers .= "From: Boca Santa Ofertas <vendas@bocasantaofertas.com.br>\r\n";
-            $headers .= "Reply-To: {$nome} <{$email}>\r\n";
-            @mail($destinatario, $assunto, $htmlEmail, $headers);
-        }
 
-        // 4. Cópia de confirmação para o anunciante (opcional, silencioso)
-        try {
-            $clientMailer = \Config\Services::email();
-            $clientMailer->clear();
-            $clientMailer->setFrom('vendas@bocasantaofertas.com.br', 'Boca Santa Ofertas');
-            $clientMailer->setTo($email);
-            $clientMailer->setSubject('Recebemos sua solicitação - Boca Santa Ofertas');
-            $clientMailer->setMailType('html');
-            $clientMailer->setMessage("
+            // 4. Cópia de confirmação para o anunciante (opcional, silencioso)
+            $clientHtml = "
                 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;'>
                     <div style='background-color: #dc2626; color: #ffffff; padding: 20px; text-align: center;'>
                         <h2 style='margin: 0; font-size: 20px;'>Olá, " . esc($nome) . "!</h2>
@@ -213,11 +197,19 @@ class Conteudo extends BaseController
                         <p>Se preferir falar conosco agora mesmo, entre em contato com nosso consultor comercial:</p>
                         <p><strong>Lowel Trevisan</strong> &bull; Telefone / WhatsApp: <strong>(19) 9.9769.66.60</strong></p>
                     </div>
-                </div>
-            ");
-            $clientMailer->send(false);
+                </div>";
+
+            $emailSvc->send(
+                to: $email,
+                subject: 'Recebemos sua solicitação - Boca Santa Ofertas',
+                htmlBody: $clientHtml,
+                fromEmail: 'contato@bocasantaofertas.com.br',
+                fromName: 'Boca Santa Ofertas',
+                replyToEmail: 'vendas@bocasantaofertas.com.br',
+                replyToName: 'Equipe Comercial Boca Santa'
+            );
         } catch (\Throwable $e) {
-            // Silencioso se der erro na cópia do cliente
+            log_message('error', '[Anuncie] Exceção ao enviar e-mail comercial: ' . $e->getMessage());
         }
 
         return redirect()->to(base_url('anuncie#formularioAnuncio'))
