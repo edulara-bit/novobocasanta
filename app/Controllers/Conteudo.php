@@ -174,9 +174,9 @@ class Conteudo extends BaseController
             );
 
             if ($enviado) {
-                log_message('info', "[Anuncie] Proposta enviada com sucesso para " . implode(', ', $destinatarios) . " via SMTP");
+                log_message('info', "[Anuncie] Proposta de {$empresa} ({$email}) enviada com sucesso para " . implode(', ', $destinatarios) . " via SMTP");
             } else {
-                log_message('warning', "[Anuncie] EmailService falhou ao enviar para " . implode(', ', $destinatarios));
+                log_message('error', "[Anuncie] EmailService falhou ao enviar proposta de {$empresa} ({$email}) para " . implode(', ', $destinatarios) . ". Detalhes: " . $emailSvc->getLastError());
             }
 
             // 4. Cópia de confirmação para o anunciante (opcional, silencioso)

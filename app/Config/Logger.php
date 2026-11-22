@@ -39,7 +39,11 @@ class Logger extends BaseConfig
      *
      * @var int|list<int>
      */
-    public $threshold = (ENVIRONMENT === 'production') ? 4 : 9;
+    /**
+     * Threshold 9: Grava todos os níveis de log (Emergency, Alert, Critical, Error, Warning, Notice, Info, Debug)
+     * Essencial para diagnósticos e rastreamento de envio de e-mails em produção.
+     */
+    public $threshold = 9;
 
     /**
      * --------------------------------------------------------------------------

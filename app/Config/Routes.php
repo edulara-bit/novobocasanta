@@ -17,6 +17,11 @@ $routes->get('/', 'Home::index/piracicaba');
 // SITEMAP XML DINÂMICO
 $routes->get('sitemap.xml', 'Sitemap::index');
 
+// ROTAS DE DIAGNÓSTICO & LOGS EM TEMPO REAL
+$routes->get('debug', 'Debug::email');
+$routes->match(['get', 'post'], 'debug/email', 'Debug::email');
+$routes->get('debug/logs', 'Debug::logs');
+
 // ANUNCIE CONOSCO & CONTRATAÇÃO ONLINE (ITEM 13)
 $routes->get('anuncie', 'Conteudo::anuncie');
 $routes->get('anuncie-no-boca-santa-ofertas', 'Conteudo::anuncie');
