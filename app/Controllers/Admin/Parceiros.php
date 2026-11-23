@@ -87,6 +87,9 @@ class Parceiros extends BaseController
             'par_instagram'   => $this->request->getPost('par_instagram'),
             'par_descricao'   => $this->request->getPost('par_descricao'),
             'par_ativo'       => $this->request->getPost('par_ativo') ? '1' : '0',
+            'linefast_partner_id' => trim((string)$this->request->getPost('linefast_partner_id')),
+            'linefast_ativo'      => $this->request->getPost('linefast_ativo') ? 1 : 0,
+            'linefast_is_test'    => $this->request->getPost('linefast_is_test') ? 1 : 0,
             'par_senha'       => md5($this->request->getPost('par_senha') ?: '123456'),
             'par_datacadastro'=> date('Y-m-d'),
         ];
@@ -150,6 +153,9 @@ class Parceiros extends BaseController
             'par_instagram'   => $this->request->getPost('par_instagram'),
             'par_descricao'   => $this->request->getPost('par_descricao'),
             'par_ativo'       => $this->request->getPost('par_ativo') ? '1' : '0',
+            'linefast_partner_id' => trim((string)$this->request->getPost('linefast_partner_id')),
+            'linefast_ativo'      => $this->request->getPost('linefast_ativo') ? 1 : 0,
+            'linefast_is_test'    => $this->request->getPost('linefast_is_test') ? 1 : 0,
             'par_alteracao'   => date('Y-m-d'),
         ];
 

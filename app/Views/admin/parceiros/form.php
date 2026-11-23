@@ -126,6 +126,35 @@
                         <textarea name="par_descricao" id="par_descricao" rows="4" class="form-control"><?= esc($parceiro->par_descricao ?? old('par_descricao') ?? '') ?></textarea>
                     </div>
 
+                    <div class="card card-outline card-primary mt-4">
+                        <div class="card-header py-2">
+                            <h5 class="card-title font-weight-bold mb-0 text-primary">
+                                <i class="fas fa-bolt mr-1"></i> Integração com o Linefast
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 form-group">
+                                    <label for="linefast_partner_id">Linefast Partner ID (ID do Vendedor / Loja no Linefast)</label>
+                                    <input type="text" name="linefast_partner_id" id="linefast_partner_id" class="form-control" value="<?= esc($parceiro->linefast_partner_id ?? old('linefast_partner_id') ?? '') ?>" placeholder="Ex: 31, 503, ou ID do usuário no Linefast">
+                                    <small class="form-text text-muted">Identificador único do parceiro dentro do sistema Linefast.</small>
+                                </div>
+                                <div class="col-md-3 form-group d-flex align-items-center mt-3">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" name="linefast_ativo" class="custom-control-input" id="linefast_ativo" value="1" <?= (!empty($parceiro) && !empty($parceiro->linefast_ativo)) ? 'checked' : '' ?>>
+                                        <label class="custom-control-label font-weight-bold" for="linefast_ativo">Integração Ativa</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 form-group d-flex align-items-center mt-3">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" name="linefast_is_test" class="custom-control-input" id="linefast_is_test" value="1" <?= (!empty($parceiro) && !empty($parceiro->linefast_is_test)) ? 'checked' : '' ?>>
+                                        <label class="custom-control-label text-warning font-weight-bold" for="linefast_is_test">Ambiente de Teste</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="custom-control custom-switch mt-3">
                         <input type="checkbox" name="par_ativo" class="custom-control-input" id="par_ativo" value="1" <?= (!empty($parceiro) && $parceiro->par_ativo == '1') || empty($parceiro) ? 'checked' : '' ?>>
                         <label class="custom-control-label font-weight-bold" for="par_ativo">Parceiro Ativo no Portal</label>
