@@ -186,10 +186,18 @@ class LinefastService
             : strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title))) . '-linefast-' . $lfId;
 
         $rawBuyUrl = !empty($prodData['url']) ? $prodData['url'] : $this->generateCartUrl($lfId);
-        $buyUrl = str_replace(['http://localhost/cidadepremium', 'https://localhost/cidadepremium'], 'https://linefast.com.br', $rawBuyUrl);
+        $buyUrl = str_replace(
+            ['http://localhost/cidadepremium', 'https://localhost/cidadepremium', 'http://localhost/linefast', 'https://localhost/linefast'],
+            'https://linefast.com.br',
+            $rawBuyUrl
+        );
 
         $rawFoto = $prodData['image_url'] ?? $prodData['image'] ?? '';
-        $foto = str_replace(['http://localhost/cidadepremium', 'https://localhost/cidadepremium'], 'https://linefast.com.br', $rawFoto);
+        $foto = str_replace(
+            ['http://localhost/cidadepremium', 'https://localhost/cidadepremium', 'http://localhost/linefast', 'https://localhost/linefast'],
+            'https://linefast.com.br',
+            $rawFoto
+        );
 
         $saveData = [
             'pro_titulo'          => $title,
