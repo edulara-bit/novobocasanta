@@ -181,9 +181,11 @@ class LinefastService
         }
 
         $title = (string)($prodData['name'] ?? $prodData['title'] ?? 'Produto Linefast');
+        helper(['url', 'text']);
+        $cleanTitle = function_exists('convert_accented_characters') ? convert_accented_characters($title) : $title;
         $slug = function_exists('url_title') 
-            ? url_title($title, '-', true) . '-linefast-' . $lfId 
-            : strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title))) . '-linefast-' . $lfId;
+            ? url_title($cleanTitle, '-', true) . '-linefast-' . $lfId 
+            : strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $cleanTitle))) . '-linefast-' . $lfId;
 
         $rawBuyUrl = !empty($prodData['url']) ? $prodData['url'] : $this->generateCartUrl($lfId);
         $buyUrl = str_replace(

@@ -179,16 +179,23 @@ class ProdutoModel extends Model
         if (is_numeric($idOrSlug)) {
             $builder->where('tb_produtos.pro_id', (int)$idOrSlug);
         } else {
-            $slug = trim((string)$idOrSlug);
-            $slugSemTraco = rtrim($slug, '-');
-            $builder->groupStart()
-                ->where('tb_produtos.pro_slug', $slug)
-                ->orWhere('tb_produtos.pro_slug', $slugSemTraco)
-                ->orWhere('tb_produtos.pro_slug', $slugSemTraco . '-');
+            $variations = $this->getSlugVariations((string)$idOrSlug);
+            $builder->groupStart();
+            $first = true;
+            foreach ($variations as $v) {
+                if ($first) {
+                    $builder->where('tb_produtos.pro_slug', $v);
+                    $first = false;
+                } else {
+                    $builder->orWhere('tb_produtos.pro_slug', $v);
+                }
+            }
 
             if ($this->db->fieldExists('pro_slug2', 'tb_produtos')) {
-                $builder->orWhere('tb_produtos.pro_slug2', $slug)
-                    ->orLike('tb_produtos.pro_slug2', '/' . $slug, 'before');
+                foreach ($variations as $v) {
+                    $builder->orWhere('tb_produtos.pro_slug2', $v)
+                        ->orLike('tb_produtos.pro_slug2', '/' . $v, 'before');
+                }
             }
             $builder->groupEnd();
         }
@@ -197,27 +204,33 @@ class ProdutoModel extends Model
 
         // Se não encontrou diretamente em tb_produtos e for string, verifica no histórico tb_slug
         if (!$produto && !is_numeric($idOrSlug) && $this->db->tableExists('tb_slug')) {
-            $slug = trim((string)$idOrSlug);
-            $slugSemTraco = rtrim($slug, '-');
-            $slugRow = $this->db->table('tb_slug')
-                ->groupStart()
-                    ->where('slu_slug', $slug)
-                    ->orWhere('slu_slug', $slugSemTraco)
-                    ->orWhere('slu_slug', $slugSemTraco . '-')
-                ->groupEnd()
-                ->where('slu_produto >', 0)
-                ->orderBy('slu_id', 'DESC')
-                ->get()
-                ->getRowArray();
+            $variations = $this->getSlugVariations((string)$idOrSlug);
+            if (!empty($variations)) {
+                $slugBuilder = $this->db->table('tb_slug')->groupStart();
+                $first = true;
+                foreach ($variations as $v) {
+                    if ($first) {
+                        $slugBuilder->where('slu_slug', $v);
+                        $first = false;
+                    } else {
+                        $slugBuilder->orWhere('slu_slug', $v);
+                    }
+                }
+                $slugRow = $slugBuilder->groupEnd()
+                    ->where('slu_produto >', 0)
+                    ->orderBy('slu_id', 'DESC')
+                    ->get()
+                    ->getRowArray();
 
-            if (!empty($slugRow['slu_produto'])) {
-                $produto = $this->select($selectCols)
-                    ->join('tb_parceiros', 'tb_produtos.pro_parceiro = tb_parceiros.par_id', 'left')
-                    ->join('tb_cidades', 'tb_produtos.pro_cidade = tb_cidades.cid_id', 'left')
-                    ->join('tb_categorias', 'tb_produtos.pro_categoria = tb_categorias.cat_id', 'left')
-                    ->join('tb_fotos_produtos as ft', 'tb_produtos.pro_id = ft.fot_produto AND ft.fot_ordem = 0', 'left')
-                    ->where('tb_produtos.pro_id', (int)$slugRow['slu_produto'])
-                    ->first();
+                if (!empty($slugRow['slu_produto'])) {
+                    $produto = $this->select($selectCols)
+                        ->join('tb_parceiros', 'tb_produtos.pro_parceiro = tb_parceiros.par_id', 'left')
+                        ->join('tb_cidades', 'tb_produtos.pro_cidade = tb_cidades.cid_id', 'left')
+                        ->join('tb_categorias', 'tb_produtos.pro_categoria = tb_categorias.cat_id', 'left')
+                        ->join('tb_fotos_produtos as ft', 'tb_produtos.pro_id = ft.fot_produto AND ft.fot_ordem = 0', 'left')
+                        ->where('tb_produtos.pro_id', (int)$slugRow['slu_produto'])
+                        ->first();
+                }
             }
         }
 
@@ -238,20 +251,64 @@ class ProdutoModel extends Model
             return null;
         }
 
-        $slug = trim($slug);
-        $slugSemTraco = rtrim($slug, '-');
+        $variations = $this->getSlugVariations($slug);
+        if (empty($variations)) {
+            return null;
+        }
 
-        $row = $this->db->table('tb_slug')
-            ->groupStart()
-                ->where('slu_slug', $slug)
-                ->orWhere('slu_slug', $slugSemTraco)
-                ->orWhere('slu_slug', $slugSemTraco . '-')
-            ->groupEnd()
+        $builder = $this->db->table('tb_slug')->groupStart();
+        $first = true;
+        foreach ($variations as $v) {
+            if ($first) {
+                $builder->where('slu_slug', $v);
+                $first = false;
+            } else {
+                $builder->orWhere('slu_slug', $v);
+            }
+        }
+        $row = $builder->groupEnd()
             ->orderBy('slu_id', 'DESC')
             ->get()
             ->getRowArray();
 
         return $row ?: null;
+    }
+
+    /**
+     * Gera lista de variações normalizadas de um slug para busca flexível (com/sem acento, url-decoded, traço final)
+     *
+     * @return string[]
+     */
+    protected function getSlugVariations(string $slug): array
+    {
+        $slug = trim($slug);
+        if ($slug === '') {
+            return [];
+        }
+
+        helper('text');
+        $decoded = urldecode($slug);
+        $rawDecoded = rawurldecode($slug);
+        $unaccented = function_exists('convert_accented_characters') ? convert_accented_characters($slug) : $slug;
+        $unaccentedDecoded = function_exists('convert_accented_characters') ? convert_accented_characters($decoded) : $decoded;
+
+        $items = [
+            $slug,
+            rtrim($slug, '-'),
+            rtrim($slug, '-') . '-',
+            $decoded,
+            rtrim($decoded, '-'),
+            $rawDecoded,
+            $unaccented,
+            rtrim($unaccented, '-'),
+            $unaccentedDecoded,
+            rtrim($unaccentedDecoded, '-'),
+            str_replace([' ', '+'], '-', $slug),
+            str_replace([' ', '+'], '-', $decoded),
+            str_replace([' ', '+'], '-', $unaccentedDecoded),
+        ];
+
+        return array_values(array_unique(array_filter($items)));
     }
 
     /**
