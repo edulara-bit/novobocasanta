@@ -58,10 +58,9 @@ class EmailService
     public function getCandidateTargets(): array
     {
         $defaultTargets = [
-            ['host' => $this->host, 'port' => $this->port, 'tls' => ($this->port === 587)],
+            ['host' => $this->host, 'port' => $this->port, 'tls' => true],
             ['host' => 'poste', 'port' => 587, 'tls' => true],
             ['host' => 'poste', 'port' => 25, 'tls' => true],
-            ['host' => 'poste', 'port' => 25, 'tls' => false],
             ['host' => '129.121.41.139', 'port' => 587, 'tls' => true],
             ['host' => '129.121.41.139', 'port' => 25, 'tls' => true],
             ['host' => '172.17.0.1', 'port' => 587, 'tls' => true],
@@ -198,7 +197,12 @@ class EmailService
                 $dataPrompt = $this->sendCommand($fp, "DATA", ['354']);
                 $this->transcript[] = "  >> DATA -> {$dataPrompt}";
 
-                // 8. Envio MIME
+                // 8. Envio MIME com normalização rigorosa para CRLF (RFC 5321 / RFC 2822)
+                // O Haraka/Poste.io rejeita terminantemente qualquer "\n" avulso com "451 Bare line-feed"
+                $normalizedBody = str_replace(["\r\n", "\r"], "\n", $htmlBody);
+                $normalizedBody = preg_replace('/^\./m', '..', $normalizedBody);
+                $normalizedBody = str_replace("\n", "\r\n", $normalizedBody);
+
                 $headers = [];
                 $headers[] = "From: =?UTF-8?B?" . base64_encode($fromName) . "?= <{$actualFrom}>";
                 $headers[] = "To: " . implode(', ', $toAddresses);
@@ -210,7 +214,7 @@ class EmailService
                 $headers[] = "Content-Transfer-Encoding: 8bit";
                 $headers[] = "X-Mailer: BocaSanta/1.0 (PHP/" . PHP_VERSION . ")";
 
-                $messageData = implode("\r\n", $headers) . "\r\n\r\n" . $htmlBody . "\r\n.\r\n";
+                $messageData = implode("\r\n", $headers) . "\r\n\r\n" . $normalizedBody . "\r\n.\r\n";
                 $this->sendRaw($fp, $messageData);
                 $finalResp = $this->expectResponse($fp, ['250']);
                 $this->transcript[] = "  << {$finalResp}";
@@ -301,7 +305,8 @@ class EmailService
 
     protected function sendRaw($fp, string $data): void
     {
-        fputs($fp, $data);
+        fwrite($fp, $data);
+        fflush($fp);
     }
 
     protected function expectResponse($fp, array $expectedCodes): string
