@@ -246,7 +246,27 @@ class Parceiro extends Entity
      */
     public function isLinefastAtivo(): bool
     {
-        return !empty($this->attributes['linefast_partner_id']) && (bool) ($this->attributes['linefast_ativo'] ?? false);
+        $hasId = !empty($this->attributes['linefast_partner_id']);
+        $isAtivo = !empty($this->attributes['linefast_ativo']) && ((string)$this->attributes['linefast_ativo'] === '1' || $this->attributes['linefast_ativo'] === true);
+        return $hasId && $isAtivo;
+    }
+
+    /**
+     * Retorna o limite de ofertas do parceiro com base na integração Linefast:
+     * - Integrado com Linefast (Plano Super Destaque / Integração Ativa): 0 (ilimitado)
+     * - Não integrado (Planos Básico e Destaque Local): limitado a 60 ofertas
+     */
+    public function getLimiteOfertas(): int
+    {
+        return $this->isLinefastAtivo() ? 0 : 60;
+    }
+
+    /**
+     * Verifica se o parceiro tem ofertas ilimitadas
+     */
+    public function hasOfertasIlimitadas(): bool
+    {
+        return $this->getLimiteOfertas() === 0;
     }
 
     /**

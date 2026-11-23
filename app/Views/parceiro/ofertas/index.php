@@ -6,7 +6,15 @@
         <div>
             <h3 class="fw-bold text-dark mb-1">
                 <i class="fa-solid fa-tags text-danger me-2"></i> Minhas Ofertas & Produtos
-                <span class="badge bg-light text-secondary border fs-6 ms-2"><?= (int)($totalOfertas ?? count($ofertas)) ?></span>
+                <?php if ($parceiro->hasOfertasIlimitadas()): ?>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle fs-6 ms-2">
+                        <i class="fa-solid fa-bolt me-1"></i> <?= (int)($totalOfertas ?? count($ofertas)) ?> ofertas (Ilimitadas - Linefast)
+                    </span>
+                <?php else: ?>
+                    <span class="badge bg-light text-secondary border fs-6 ms-2">
+                        <?= (int)($totalOfertas ?? count($ofertas)) ?> / 60 ofertas
+                    </span>
+                <?php endif; ?>
             </h3>
             <p class="text-muted small mb-0">Cadastre e gerencie as ofertas da sua empresa exibidas no portal Boca Santa.</p>
         </div>

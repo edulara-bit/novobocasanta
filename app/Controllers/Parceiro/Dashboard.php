@@ -172,6 +172,13 @@ class Dashboard extends BaseController
         $parceiro = $this->getParceiroLogado();
         if (!$parceiro) return redirect()->to(base_url('parceiro/login'));
 
+        if (!$parceiro->hasOfertasIlimitadas()) {
+            $totalAtual = $this->produtoModel->where('pro_parceiro', $parceiro->par_id)->countAllResults();
+            if ($totalAtual >= 60) {
+                return redirect()->to(base_url('parceiro/ofertas'))->with('error', 'Seu plano atual permite cadastrar até 60 ofertas (atingido: ' . $totalAtual . '/60). Para ter ofertas ilimitadas e sincronização de estoque, ative a integração com o Linefast.');
+            }
+        }
+
         return view('parceiro/ofertas/form', [
             'title'         => 'Cadastrar Nova Oferta',
             'parceiro'      => $parceiro,
@@ -188,6 +195,13 @@ class Dashboard extends BaseController
     {
         $parceiro = $this->getParceiroLogado();
         if (!$parceiro) return redirect()->to(base_url('parceiro/login'));
+
+        if (!$parceiro->hasOfertasIlimitadas()) {
+            $totalAtual = $this->produtoModel->where('pro_parceiro', $parceiro->par_id)->countAllResults();
+            if ($totalAtual >= 60) {
+                return redirect()->to(base_url('parceiro/ofertas'))->with('error', 'Limite de 60 ofertas atingido para o seu plano. Faça upgrade para o plano com Linefast para ofertas ilimitadas.');
+            }
+        }
 
         $titulo = trim((string)$this->request->getPost('pro_titulo'));
         if (empty($titulo)) {

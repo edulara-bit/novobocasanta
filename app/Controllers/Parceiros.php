@@ -82,10 +82,12 @@ class Parceiros extends BaseController
             throw PageNotFoundException::forPageNotFound("Parceiro não encontrado.");
         }
 
-        // Busca todas as ofertas/produtos do parceiro (limite 0 = sem restrição, exibe o catálogo completo)
+        // Parceiro integrado com Linefast possui catálogo ilimitado (0); caso contrário, limitado a 60 ofertas (Planos Básico e Destaque Local)
+        $limiteOfertas = $parceiro->getLimiteOfertas();
+
         $ofertas = $this->produtoModel->getOfertas([
             'parceiro_id' => $parceiro->par_id,
-        ], 0);
+        ], $limiteOfertas);
 
         $todasCidades = $this->cidadeModel->getCidades();
         $principaisCidades = $this->cidadeModel->getPrincipaisCidades(4);
