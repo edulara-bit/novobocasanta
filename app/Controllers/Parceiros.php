@@ -82,9 +82,10 @@ class Parceiros extends BaseController
             throw PageNotFoundException::forPageNotFound("Parceiro não encontrado.");
         }
 
+        // Busca todas as ofertas/produtos do parceiro (limite 0 = sem restrição, exibe o catálogo completo)
         $ofertas = $this->produtoModel->getOfertas([
             'parceiro_id' => $parceiro->par_id,
-        ], 30);
+        ], 0);
 
         $todasCidades = $this->cidadeModel->getCidades();
         $principaisCidades = $this->cidadeModel->getPrincipaisCidades(4);

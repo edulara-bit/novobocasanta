@@ -111,6 +111,20 @@ class Parceiros extends BaseController
             $this->parceiroModel->update($novoId, ['par_imagem' => $nomeLogo]);
         }
 
+        // Se integração com Linefast estiver configurada e ativa, dispara sincronização automática do catálogo
+        if (!empty($filteredData['linefast_partner_id']) && !empty($filteredData['linefast_ativo']) && $novoId) {
+            try {
+                $linefastService = new \App\Services\LinefastService();
+                $syncResult = $linefastService->syncPartnerCatalog((int)$novoId);
+                if (!empty($syncResult['success'])) {
+                    $msgSync = " (" . ($syncResult['synced'] ?? 0) . " produtos sincronizados do Linefast)";
+                    return redirect()->to(base_url('admin/parceiros'))->with('success', 'Parceiro cadastrado com sucesso!' . $msgSync);
+                }
+            } catch (\Throwable $e) {
+                log_message('error', 'Auto sync Linefast ao cadastrar parceiro: ' . $e->getMessage());
+            }
+        }
+
         return redirect()->to(base_url('admin/parceiros'))->with('success', 'Parceiro cadastrado com sucesso!');
     }
 
@@ -182,6 +196,20 @@ class Parceiros extends BaseController
         $filteredData = array_intersect_key($data, array_flip($existingFields));
 
         $this->parceiroModel->update($id, $filteredData);
+
+        // Se integração com Linefast estiver configurada e ativa, dispara sincronização automática do catálogo
+        if (!empty($filteredData['linefast_partner_id']) && !empty($filteredData['linefast_ativo'])) {
+            try {
+                $linefastService = new \App\Services\LinefastService();
+                $syncResult = $linefastService->syncPartnerCatalog($id);
+                if (!empty($syncResult['success'])) {
+                    $msgSync = " (" . ($syncResult['synced'] ?? 0) . " produtos sincronizados do Linefast)";
+                    return redirect()->to(base_url('admin/parceiros'))->with('success', 'Dados do parceiro atualizados com sucesso!' . $msgSync);
+                }
+            } catch (\Throwable $e) {
+                log_message('error', 'Auto sync Linefast ao salvar parceiro: ' . $e->getMessage());
+            }
+        }
 
         return redirect()->to(base_url('admin/parceiros'))->with('success', 'Dados do parceiro atualizados com sucesso!');
     }
