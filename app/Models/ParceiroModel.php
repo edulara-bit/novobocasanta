@@ -21,7 +21,7 @@ class ParceiroModel extends Model
         'par_endereco', 'par_numero', 'par_complemento', 'par_alteracoes',
         'par_visitas', 'par_cep', 'par_telefone', 'par_telefone2', 'par_telefone3',
         'par_senha', 'par_bairro', 'par_cidade', 'par_razao', 'par_cnpj', 'par_site',
-        'par_facebook', 'par_twitter', 'par_google', 'par_email', 'par_alteracao',
+        'par_facebook', 'par_twitter', 'par_google', 'par_instagram', 'par_email', 'par_alteracao',
         'par_descricao', 'par_vendedor', 'par_tipo', 'par_ie', 'par_ativo',
         'par_apelido', 'par_acesso', 'par_whatsapp', 'par_maps', 'par_fidelidade',
         'linefast_partner_id', 'linefast_store_id', 'linefast_ativo', 'linefast_is_test', 'linefast_sync_at',

@@ -94,7 +94,11 @@ class Parceiros extends BaseController
             'par_datacadastro'=> date('Y-m-d'),
         ];
 
-        $this->parceiroModel->insert($data);
+        $this->ensureParceiroColumns();
+        $existingFields = $this->parceiroModel->db->getFieldNames('tb_parceiros');
+        $filteredData = array_intersect_key($data, array_flip($existingFields));
+
+        $this->parceiroModel->insert($filteredData);
         $novoId = $this->parceiroModel->getInsertID();
 
         // Logo Upload
@@ -173,9 +177,39 @@ class Parceiros extends BaseController
             $data['par_imagem'] = $nomeLogo;
         }
 
-        $this->parceiroModel->update($id, $data);
+        $this->ensureParceiroColumns();
+        $existingFields = $this->parceiroModel->db->getFieldNames('tb_parceiros');
+        $filteredData = array_intersect_key($data, array_flip($existingFields));
+
+        $this->parceiroModel->update($id, $filteredData);
 
         return redirect()->to(base_url('admin/parceiros'))->with('success', 'Dados do parceiro atualizados com sucesso!');
+    }
+
+    /**
+     * Garante a criação de colunas essenciais na tabela tb_parceiros (ex: par_instagram, linefast_partner_id)
+     */
+    protected function ensureParceiroColumns(): void
+    {
+        $db = $this->parceiroModel->db;
+        $missing = [
+            'par_instagram'       => "VARCHAR(255) DEFAULT NULL",
+            'linefast_partner_id' => "VARCHAR(100) DEFAULT NULL",
+            'linefast_ativo'      => "TINYINT(1) DEFAULT 0",
+            'linefast_is_test'    => "TINYINT(1) NOT NULL DEFAULT 0",
+            'linefast_store_id'   => "VARCHAR(100) DEFAULT NULL",
+            'linefast_sync_at'    => "DATETIME DEFAULT NULL",
+        ];
+
+        foreach ($missing as $col => $def) {
+            try {
+                if (!$db->fieldExists($col, 'tb_parceiros')) {
+                    $db->query("ALTER TABLE `tb_parceiros` ADD `{$col}` {$def}");
+                }
+            } catch (\Throwable $e) {
+                log_message('warning', "ensureParceiroColumns: erro ao verificar/adicionar {$col}: " . $e->getMessage());
+            }
+        }
     }
 
     public function excluir(int $id)

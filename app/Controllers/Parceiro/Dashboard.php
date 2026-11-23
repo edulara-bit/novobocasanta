@@ -124,7 +124,9 @@ class Dashboard extends BaseController
             $data['par_imagem'] = $nomeLogo;
         }
 
-        $this->parceiroModel->update($parceiro->par_id, $data);
+        $existingFields = $this->parceiroModel->db->getFieldNames('tb_parceiros');
+        $filteredData = array_intersect_key($data, array_flip($existingFields));
+        $this->parceiroModel->update($parceiro->par_id, $filteredData);
         return redirect()->to(base_url('parceiro/perfil'))->with('success', 'Dados da empresa atualizados com sucesso!');
     }
 
