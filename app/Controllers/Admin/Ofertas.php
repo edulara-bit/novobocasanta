@@ -130,10 +130,15 @@ class Ofertas extends BaseController
         if ($foto && $foto->isValid() && !$foto->hasMoved()) {
             $uploadPath = ROOTPATH . 'public/upimg/produtos/' . $parceiroId;
             if (!is_dir($uploadPath)) {
-                mkdir($uploadPath, 0777, true);
+                @mkdir($uploadPath, 0777, true);
+            }
+            if (!is_dir($uploadPath) || !is_writable($uploadPath)) {
+                $uploadPath = ROOTPATH . 'public/upimg/produtos';
             }
             $novoNome = $novoId . '_' . $foto->getRandomName();
             $foto->move($uploadPath, $novoNome);
+
+            $this->produtoModel->update($novoId, ['pro_foto' => $novoNome]);
 
             $db = Database::connect();
             $db->table('tb_fotos_produtos')->insert([
@@ -141,7 +146,7 @@ class Ofertas extends BaseController
                 'fot_parceiro' => $parceiroId,
                 'fot_imagem'   => $novoNome,
                 'fot_thumb'    => $novoNome,
-                'fot_ordem'    => 1,
+                'fot_ordem'    => 0,
             ]);
         }
 
@@ -238,18 +243,24 @@ class Ofertas extends BaseController
         if ($foto && $foto->isValid() && !$foto->hasMoved()) {
             $uploadPath = ROOTPATH . 'public/upimg/produtos/' . $parceiroId;
             if (!is_dir($uploadPath)) {
-                mkdir($uploadPath, 0777, true);
+                @mkdir($uploadPath, 0777, true);
+            }
+            if (!is_dir($uploadPath) || !is_writable($uploadPath)) {
+                $uploadPath = ROOTPATH . 'public/upimg/produtos';
             }
             $novoNome = $id . '_' . $foto->getRandomName();
             $foto->move($uploadPath, $novoNome);
 
+            $this->produtoModel->update($id, ['pro_foto' => $novoNome]);
+
             $db = Database::connect();
+            $db->table('tb_fotos_produtos')->where('fot_produto', $id)->delete();
             $db->table('tb_fotos_produtos')->insert([
                 'fot_produto'  => $id,
                 'fot_parceiro' => $parceiroId,
                 'fot_imagem'   => $novoNome,
                 'fot_thumb'    => $novoNome,
-                'fot_ordem'    => 1,
+                'fot_ordem'    => 0,
             ]);
         }
 

@@ -147,7 +147,11 @@ class Debug extends Controller
         }
 
         $logPath = WRITEPATH . 'logs/';
-        $files = glob($logPath . 'log-*.log') ?: [];
+        $files = array_merge(
+            glob($logPath . 'log-*.php') ?: [],
+            glob($logPath . 'log-*.log') ?: []
+        );
+        $files = array_unique($files);
         rsort($files);
 
         $selectedFile = (string)$this->request->getGet('file');
@@ -166,25 +170,33 @@ class Debug extends Controller
 
         if (!empty($selectedFile) && file_exists($logPath . $selectedFile)) {
             $filePath = $logPath . $selectedFile;
-            $fileSize = filesize($filePath) ?: 0;
-            $lastModified = date('d/m/Y H:i:s', filemtime($filePath) ?: time());
+            try {
+                $fileSize = filesize($filePath) ?: 0;
+                $lastModified = date('d/m/Y H:i:s', filemtime($filePath) ?: time());
 
-            $rawContent = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
-            
-            // Filtro por texto e nível
-            foreach ($rawContent as $rawLine) {
-                if (!empty($level) && !str_contains($rawLine, $level)) {
-                    continue;
+                $rawContent = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
+
+                // Filtro por texto e nível
+                foreach ($rawContent as $rawLine) {
+                    // Ignora cabeçalhos PHP de segurança do CodeIgniter
+                    if (str_contains($rawLine, 'defined(\'SYSTEMPATH\')') || str_contains($rawLine, '<?php')) {
+                        continue;
+                    }
+                    if (!empty($level) && !str_contains($rawLine, $level)) {
+                        continue;
+                    }
+                    if (!empty($filter) && stripos($rawLine, $filter) === false) {
+                        continue;
+                    }
+                    $lines[] = $rawLine;
                 }
-                if (!empty($filter) && stripos($rawLine, $filter) === false) {
-                    continue;
-                }
-                $lines[] = $rawLine;
+
+                // Pega as últimas 500 linhas e inverte para o topo ser o mais recente
+                $lines = array_slice($lines, -500);
+                $lines = array_reverse($lines);
+            } catch (\Throwable $e) {
+                $lines[] = 'Erro ao ler arquivo de log: ' . $e->getMessage();
             }
-
-            // Pega as últimas 500 linhas e inverte para o topo ser o mais recente
-            $lines = array_slice($lines, -500);
-            $lines = array_reverse($lines);
         }
 
         return view('debug/logs', [

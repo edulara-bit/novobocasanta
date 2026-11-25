@@ -55,6 +55,19 @@ class LinefastService
             ];
         }
 
+        // Remove quaisquer produtos mock/teste residuais deste parceiro
+        try {
+            $this->produtoModel->where('pro_parceiro', $parceiroId)
+                ->groupStart()
+                    ->like('linefast_product_id', 'LF-', 'after')
+                    ->orLike('pro_titulo', 'Combo Especial Linefast', 'both')
+                    ->orLike('pro_titulo', 'Kit Premium Parceiro', 'both')
+                ->groupEnd()
+                ->delete();
+        } catch (\Throwable $e) {
+            log_message('warning', 'Erro ao limpar mocks do parceiro: ' . $e->getMessage());
+        }
+
         try {
             $url = rtrim($this->config->apiBaseUrl, '/') . "/partners/{$parceiro->linefast_partner_id}/products";
             $response = $this->getClient()->get($url);
@@ -64,6 +77,12 @@ class LinefastService
             if ($statusCode !== 200 || !isset($body['data'])) {
                 $errMsg = $body['message'] ?? "Código HTTP {$statusCode}";
                 log_message('warning', "API Linefast respondeu sem dados para parceiro {$parceiroId}: {$errMsg}");
+                if (ENVIRONMENT === 'production') {
+                    return [
+                        'success' => false,
+                        'message' => "Falha ao obter catálogo no Linefast ({$errMsg}). Verifique se o parceiro está ativo e possui produtos publicados.",
+                    ];
+                }
                 return $this->mockSyncForLocalTesting($parceiro);
             }
 
@@ -89,6 +108,12 @@ class LinefastService
             ];
         } catch (\Throwable $e) {
             log_message('error', 'Erro na sincronização com Linefast: ' . $e->getMessage());
+            if (ENVIRONMENT === 'production') {
+                return [
+                    'success' => false,
+                    'message' => 'Erro ao comunicar com o Linefast: ' . $e->getMessage(),
+                ];
+            }
             return $this->mockSyncForLocalTesting($parceiro);
         }
     }

@@ -256,9 +256,19 @@ class Dashboard extends BaseController
         $foto = $this->request->getFile('foto');
         if ($foto && $foto->isValid() && !$foto->hasMoved()) {
             $uploadPath = ROOTPATH . 'public/upimg/produtos/' . $parceiro->par_id;
-            if (!is_dir($uploadPath)) mkdir($uploadPath, 0777, true);
+            if (!is_dir($uploadPath)) {
+                @mkdir($uploadPath, 0777, true);
+            }
+            // Fallback para raiz de produtos se falhar criar subpasta
+            if (!is_dir($uploadPath) || !is_writable($uploadPath)) {
+                $uploadPath = ROOTPATH . 'public/upimg/produtos';
+            }
+
             $nomeFoto = $novoId . '_' . $foto->getRandomName();
             $foto->move($uploadPath, $nomeFoto);
+
+            // Atualiza tb_produtos com o nome da foto principal
+            $this->produtoModel->update($novoId, ['pro_foto' => $nomeFoto]);
 
             $db = Database::connect();
             $db->table('tb_fotos_produtos')->insert([
@@ -266,7 +276,7 @@ class Dashboard extends BaseController
                 'fot_parceiro' => $parceiro->par_id,
                 'fot_imagem'   => $nomeFoto,
                 'fot_thumb'    => $nomeFoto,
-                'fot_ordem'    => 1,
+                'fot_ordem'    => 0,
             ]);
         }
 
@@ -362,17 +372,28 @@ class Dashboard extends BaseController
         $foto = $this->request->getFile('foto');
         if ($foto && $foto->isValid() && !$foto->hasMoved()) {
             $uploadPath = ROOTPATH . 'public/upimg/produtos/' . $parceiro->par_id;
-            if (!is_dir($uploadPath)) mkdir($uploadPath, 0777, true);
+            if (!is_dir($uploadPath)) {
+                @mkdir($uploadPath, 0777, true);
+            }
+            if (!is_dir($uploadPath) || !is_writable($uploadPath)) {
+                $uploadPath = ROOTPATH . 'public/upimg/produtos';
+            }
+
             $nomeFoto = $id . '_' . $foto->getRandomName();
             $foto->move($uploadPath, $nomeFoto);
 
+            // Atualiza tb_produtos com a foto principal
+            $this->produtoModel->update($id, ['pro_foto' => $nomeFoto]);
+
             $db = Database::connect();
+            // Remove registro antigo para não duplicar
+            $db->table('tb_fotos_produtos')->where('fot_produto', $id)->delete();
             $db->table('tb_fotos_produtos')->insert([
                 'fot_produto'  => $id,
                 'fot_parceiro' => $parceiro->par_id,
                 'fot_imagem'   => $nomeFoto,
                 'fot_thumb'    => $nomeFoto,
-                'fot_ordem'    => 1,
+                'fot_ordem'    => 0,
             ]);
         }
 

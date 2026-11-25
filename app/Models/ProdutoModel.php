@@ -34,7 +34,7 @@ class ProdutoModel extends Model
             ->join('tb_parceiros', 'tb_produtos.pro_parceiro = tb_parceiros.par_id', 'left')
             ->join('tb_cidades', 'tb_produtos.pro_cidade = tb_cidades.cid_id', 'left')
             ->join('tb_categorias', 'tb_produtos.pro_categoria = tb_categorias.cat_id', 'left')
-            ->join('tb_fotos_produtos as ft', 'tb_produtos.pro_id = ft.fot_produto AND ft.fot_ordem = 0', 'left');
+            ->join('tb_fotos_produtos as ft', 'tb_produtos.pro_id = ft.fot_produto AND (ft.fot_ordem = 0 OR ft.fot_ordem = 1)', 'left');
 
         if (!empty($params['cidade_id'])) {
             $builder->where('tb_produtos.pro_cidade', (int)$params['cidade_id']);
@@ -174,7 +174,7 @@ class ProdutoModel extends Model
             ->join('tb_parceiros', 'tb_produtos.pro_parceiro = tb_parceiros.par_id', 'left')
             ->join('tb_cidades', 'tb_produtos.pro_cidade = tb_cidades.cid_id', 'left')
             ->join('tb_categorias', 'tb_produtos.pro_categoria = tb_categorias.cat_id', 'left')
-            ->join('tb_fotos_produtos as ft', 'tb_produtos.pro_id = ft.fot_produto AND ft.fot_ordem = 0', 'left');
+            ->join('tb_fotos_produtos as ft', 'tb_produtos.pro_id = ft.fot_produto AND (ft.fot_ordem = 0 OR ft.fot_ordem = 1)', 'left');
 
         if (is_numeric($idOrSlug)) {
             $builder->where('tb_produtos.pro_id', (int)$idOrSlug);
@@ -227,7 +227,7 @@ class ProdutoModel extends Model
                         ->join('tb_parceiros', 'tb_produtos.pro_parceiro = tb_parceiros.par_id', 'left')
                         ->join('tb_cidades', 'tb_produtos.pro_cidade = tb_cidades.cid_id', 'left')
                         ->join('tb_categorias', 'tb_produtos.pro_categoria = tb_categorias.cat_id', 'left')
-                        ->join('tb_fotos_produtos as ft', 'tb_produtos.pro_id = ft.fot_produto AND ft.fot_ordem = 0', 'left')
+                        ->join('tb_fotos_produtos as ft', 'tb_produtos.pro_id = ft.fot_produto AND (ft.fot_ordem = 0 OR ft.fot_ordem = 1)', 'left')
                         ->where('tb_produtos.pro_id', (int)$slugRow['slu_produto'])
                         ->first();
                 }
@@ -350,6 +350,25 @@ class ProdutoModel extends Model
             $fotos[] = $url;
         }
 
+        if (empty($fotos)) {
+            $prod = $this->select('pro_foto, pro_parceiro')->find($proId);
+            if ($prod && !empty($prod->pro_foto)) {
+                $img = $prod->pro_foto;
+                $pId = !empty($prod->pro_parceiro) ? $prod->pro_parceiro : $parceiroId;
+                if (str_starts_with($img, 'http://') || str_starts_with($img, 'https://')) {
+                    $fotos[] = $img;
+                } elseif (!empty($pId) && file_exists(FCPATH . 'upimg/produtos/' . $pId . '/' . $img)) {
+                    $fotos[] = base_url('upimg/produtos/' . $pId . '/' . $img);
+                } elseif (file_exists(FCPATH . 'upimg/produtos/' . $img)) {
+                    $fotos[] = base_url('upimg/produtos/' . $img);
+                } elseif (!empty($pId)) {
+                    $fotos[] = "https://www.bocasantaofertas.com.br/upimg/produtos/{$pId}/{$img}";
+                } else {
+                    $fotos[] = "https://www.bocasantaofertas.com.br/upimg/produtos/{$img}";
+                }
+            }
+        }
+
         return array_values(array_unique($fotos));
     }
 
@@ -362,7 +381,7 @@ class ProdutoModel extends Model
             ->join('tb_parceiros', 'tb_produtos.pro_parceiro = tb_parceiros.par_id', 'left')
             ->join('tb_cidades', 'tb_produtos.pro_cidade = tb_cidades.cid_id', 'left')
             ->join('tb_categorias', 'tb_produtos.pro_categoria = tb_categorias.cat_id', 'left')
-            ->join('tb_fotos_produtos as ft', 'tb_produtos.pro_id = ft.fot_produto AND ft.fot_ordem = 0', 'left')
+            ->join('tb_fotos_produtos as ft', 'tb_produtos.pro_id = ft.fot_produto AND (ft.fot_ordem = 0 OR ft.fot_ordem = 1)', 'left')
             ->where('tb_produtos.pro_id !=', $produto->pro_id)
             ->where('tb_produtos.pro_categoria', $produto->pro_categoria)
             ->orderBy('RAND()')

@@ -233,3 +233,7 @@ CREATE TABLE IF NOT EXISTS `tb_lc_resgates` (
   KEY `idx_lcr_lojista` (`lcr_lojista_id`),
   KEY `idx_lcr_status` (`lcr_status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 7. REMOÇÃO DE PRODUTOS MOCK DE HOMOLOGAÇÃO (SALADA UNSPLASH)
+DELETE FROM `tb_produtos` WHERE `linefast_product_id` LIKE 'LF-%' OR `pro_titulo` LIKE 'Combo Especial Linefast%' OR `pro_titulo` LIKE 'Kit Premium Parceiro%';
+

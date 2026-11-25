@@ -28,13 +28,10 @@ fi
 # Garante permissões em pastas de escrita (sem travar no chown recursivo de 31 mil fotos em produtos)
 chown -R www-data:www-data /var/www/html/writable /var/www/html/public/upimg/banners || true
 chmod -R 775 /var/www/html/writable /var/www/html/public/upimg/banners || true
-chown www-data:www-data /var/www/html/public/upimg \
-                        /var/www/html/public/upimg/parceiros \
-                        /var/www/html/public/upimg/produtos \
-                        /var/www/html/public/upimg/premios || true
+chown -R www-data:www-data /var/www/html/public/upimg || true
+chmod -R 777 /var/www/html/public/upimg/produtos || true
 chmod 775 /var/www/html/public/upimg \
           /var/www/html/public/upimg/parceiros \
-          /var/www/html/public/upimg/produtos \
           /var/www/html/public/upimg/premios || true
 
 # Executa migrações automáticas de schema do banco se necessário

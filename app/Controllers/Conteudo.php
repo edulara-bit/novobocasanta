@@ -46,6 +46,72 @@ class Conteudo extends BaseController
 
     public function enviarProposta()
     {
+        $ip = $this->request->getIPAddress();
+        $cache = \Config\Services::cache();
+
+        // 1. Defesa Honeypot: Robôs preenchem campos ocultos automaticamente
+        $honeypot = trim((string)$this->request->getPost('boca_website_hp'));
+        if (!empty($honeypot)) {
+            log_message('warning', "[Anti-Bot] Bloqueado por Honeypot. IP: {$ip} | Conteúdo: {$honeypot}");
+            // Retorna como se tivesse dado certo para enganar o robô e não alertá-lo
+            return redirect()->to(base_url('anuncie#formularioAnuncio'))
+                ->with('success', 'Sua solicitação de anúncio foi enviada com sucesso! Em breve o consultor Lowel entrará em contato.');
+        }
+
+        // 2. Defesa Time Gate: Formulário enviado em menos de 3 segundos (ação de script/bot)
+        $formTime = (int)$this->request->getPost('boca_form_time');
+        $formToken = (string)$this->request->getPost('boca_form_token');
+        $formSecret = config('App')->appTimezone ?? 'bocasanta_anti_bot_2026';
+        $expectedToken = hash_hmac('sha256', (string)$formTime, $formSecret);
+
+        if ($formTime <= 0 || !hash_equals($expectedToken, $formToken) || (time() - $formTime) < 3) {
+            log_message('warning', "[Anti-Bot] Bloqueado por Time Gate (<3s ou token inválido). IP: {$ip} | Tempo decorrido: " . (time() - $formTime) . "s");
+            return redirect()->to(base_url('anuncie#formularioAnuncio'))
+                ->with('success', 'Sua solicitação de anúncio foi enviada com sucesso! Em breve o consultor Lowel entrará em contato.');
+        }
+
+        // 3. Rate Limiting por IP (Máximo 3 solicitações por IP a cada 10 minutos)
+        $rateKey = 'anuncie_rate_' . md5($ip);
+        $attempts = (int)$cache->get($rateKey);
+        if ($attempts >= 3) {
+            log_message('warning', "[Anti-Bot] Bloqueado por Rate Limit. IP: {$ip} | Tentativas: {$attempts}");
+            return redirect()->to(base_url('anuncie#formularioAnuncio'))
+                ->with('error', 'Muitas solicitações recebidas em pouco tempo. Por favor, aguarde alguns minutos antes de tentar novamente ou fale diretamente com o consultor Lowel no WhatsApp.');
+        }
+        $cache->save($rateKey, $attempts + 1, 600);
+
+        // 4. Google reCAPTCHA (se configurado nas variáveis de ambiente)
+        $recaptchaSecret = env('RECAPTCHA_SECRET_KEY') ?: '';
+        if (!empty($recaptchaSecret)) {
+            $recaptchaResponse = (string)$this->request->getPost('g-recaptcha-response');
+            if (empty($recaptchaResponse)) {
+                return redirect()->to(base_url('anuncie#formularioAnuncio'))
+                    ->withInput()
+                    ->with('error', 'Por favor, marque a caixa de verificação "Não sou um robô" (reCAPTCHA).');
+            }
+            $verifyUrl = 'https://www.google.com/recaptcha/api/siteverify';
+            try {
+                $client = \Config\Services::curlrequest();
+                $res = $client->post($verifyUrl, [
+                    'form_params' => [
+                        'secret'   => $recaptchaSecret,
+                        'response' => $recaptchaResponse,
+                        'remoteip' => $ip,
+                    ],
+                    'timeout' => 5,
+                ]);
+                $resBody = json_decode($res->getBody(), true);
+                if (empty($resBody['success'])) {
+                    log_message('warning', "[Anti-Bot] Falha na validação do reCAPTCHA Google. IP: {$ip}");
+                    return redirect()->to(base_url('anuncie#formularioAnuncio'))
+                        ->withInput()
+                        ->with('error', 'A verificação de segurança reCAPTCHA falhou. Por favor, tente novamente.');
+                }
+            } catch (\Throwable $e) {
+                log_message('error', '[Anti-Bot] Erro ao consultar API do reCAPTCHA: ' . $e->getMessage());
+            }
+        }
+
         $rules = [
             'nome'     => 'required|min_length[3]|max_length[200]',
             'empresa'  => 'required|min_length[2]|max_length[200]',

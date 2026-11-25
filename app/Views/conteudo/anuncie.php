@@ -147,8 +147,24 @@
                     </div>
                 <?php endif; ?>
 
-                <form action="<?= base_url('anuncie/enviar') ?>" method="POST">
+                <?php
+                    $formTimestamp = time();
+                    $formSecret = config('App')->appTimezone ?? 'bocasanta_anti_bot_2026';
+                    $formToken = hash_hmac('sha256', (string)$formTimestamp, $formSecret);
+                    $recaptchaSiteKey = env('RECAPTCHA_SITE_KEY') ?: '';
+                ?>
+                <form action="<?= base_url('anuncie/enviar') ?>" method="POST" id="formAnuncie">
                     <?= csrf_field() ?>
+
+                    <!-- Proteção Anti-Spam: Time Gate e Honeypot -->
+                    <input type="hidden" name="boca_form_time" value="<?= $formTimestamp ?>">
+                    <input type="hidden" name="boca_form_token" value="<?= $formToken ?>">
+
+                    <!-- Honeypot: invisível para humanos, captura robôs automáticos -->
+                    <div style="position: absolute !important; left: -9999px !important; top: -9999px !important; width: 0 !important; height: 0 !important; overflow: hidden !important;" aria-hidden="true">
+                        <label for="boca_website_hp">Deixe este campo em branco</label>
+                        <input type="text" name="boca_website_hp" id="boca_website_hp" tabindex="-1" autocomplete="off" value="">
+                    </div>
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Nome do Responsável <span class="text-danger">*</span></label>
@@ -185,6 +201,13 @@
                             </select>
                         </div>
                     </div>
+
+                    <?php if (!empty($recaptchaSiteKey)): ?>
+                        <div class="mb-4 d-flex justify-content-center">
+                            <div class="g-recaptcha" data-sitekey="<?= esc($recaptchaSiteKey) ?>"></div>
+                        </div>
+                        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+                    <?php endif; ?>
 
                     <button type="submit" class="btn btn-danger btn-lg fw-bold rounded-pill w-100 shadow-sm py-3">
                         <i class="fa-solid fa-paper-plane me-2"></i> Solicitar Ativação Online

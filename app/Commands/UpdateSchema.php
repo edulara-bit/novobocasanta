@@ -272,6 +272,15 @@ class UpdateSchema extends BaseCommand
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
         CLI::write("  ✓ Tabelas LGPD verificadas", 'green');
 
+        // 6. LIMPEZA DE PRODUTOS MOCK (SALADA UNSPLASH DE TESTES)
+        CLI::write("\n[6/6] Limpando produtos mock de testes...", 'cyan');
+        try {
+            $db->query("DELETE FROM `tb_produtos` WHERE `linefast_product_id` LIKE 'LF-%' OR `pro_titulo` LIKE 'Combo Especial Linefast%' OR `pro_titulo` LIKE 'Kit Premium Parceiro%';");
+            CLI::write("  ✓ Mocks de teste removidos de tb_produtos", 'green');
+        } catch (\Throwable $e) {
+            CLI::write("  ! Limpeza de mocks: " . $e->getMessage(), 'yellow');
+        }
+
         CLI::write("\n=======================================================", 'green');
         CLI::write(" TODAS AS ATUALIZAÇÕES FORAM APLICADAS COM SUCESSO!", 'green');
         CLI::write("=======================================================\n", 'green');
