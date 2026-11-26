@@ -219,10 +219,19 @@ class Dashboard extends BaseController
             $proCategoriaPai = $catPaiId;
         }
 
-        $slug = url_title(mb_strtolower($titulo), '-', true);
+        $cidadeId = (int)$parceiro->par_cidade;
+
+        // Permite URL Amigável personalizada (Lowel SEO com múltiplas cidades) ou gera a partir do título
+        $slugPost = trim((string)$this->request->getPost('pro_slug'));
+        if (!empty($slugPost)) {
+            $slug = url_title(mb_strtolower($slugPost), '-', true);
+        } else {
+            $slug = url_title(mb_strtolower($titulo), '-', true);
+        }
+
         $catObj = $this->categoriaModel->find($proCategoria);
         $catUrl = $catObj ? $catObj->cat_url : 'ofertas';
-        $cidObj = $this->cidadeModel->find((int)$parceiro->par_cidade);
+        $cidObj = $this->cidadeModel->find($cidadeId);
         $cidUrl = $cidObj ? $cidObj['cid_url'] : 'piracicaba';
         $proSlug2 = "{$cidUrl}/{$catUrl}/{$slug}";
 
@@ -339,10 +348,19 @@ class Dashboard extends BaseController
             $proCategoriaPai = $catPaiId;
         }
 
-        $slug = url_title(mb_strtolower($titulo), '-', true);
+        $cidadeId = (int)$parceiro->par_cidade;
+
+        // Permite URL Amigável personalizada (Lowel SEO com múltiplas cidades) ou gera a partir do título
+        $slugPost = trim((string)$this->request->getPost('pro_slug'));
+        if (!empty($slugPost)) {
+            $slug = url_title(mb_strtolower($slugPost), '-', true);
+        } else {
+            $slug = url_title(mb_strtolower($titulo), '-', true);
+        }
+
         $catObj = $this->categoriaModel->find($proCategoria);
         $catUrl = $catObj ? $catObj->cat_url : 'ofertas';
-        $cidObj = $this->cidadeModel->find((int)$parceiro->par_cidade);
+        $cidObj = $this->cidadeModel->find($cidadeId);
         $cidUrl = $cidObj ? $cidObj['cid_url'] : 'piracicaba';
         $proSlug2 = "{$cidUrl}/{$catUrl}/{$slug}";
 

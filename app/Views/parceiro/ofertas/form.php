@@ -11,7 +11,21 @@
 
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Título da Oferta / Nome do Produto <span class="text-danger">*</span></label>
-                    <input type="text" name="pro_titulo" class="form-control" value="<?= esc($oferta->pro_titulo ?? old('pro_titulo') ?? '') ?>" placeholder="Ex: Marmitex Executiva, Troca de Óleo, Consultoria..." required>
+                    <input type="text" name="pro_titulo" id="pro_titulo" class="form-control" value="<?= esc($oferta->pro_titulo ?? old('pro_titulo') ?? '') ?>" placeholder="Ex: Marmitex Executiva, Troca de Óleo, Consultoria..." required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="pro_slug">URL Amigável (Slug) <small class="text-muted fw-normal">(Palavras-chave e cidades para ranquear no Google)</small></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted small"><i class="fa-solid fa-link me-1"></i> .../categoria/</span>
+                        <input type="text" name="pro_slug" id="pro_slug" class="form-control" value="<?= esc($oferta->pro_slug ?? old('pro_slug') ?? '') ?>" placeholder="ex: carreto-pick-up-campinas-sumare-valinhos">
+                        <button type="button" id="btnGerarSlug" class="btn btn-outline-secondary" title="Gerar URL Amigável a partir do Título">
+                            <i class="fa-solid fa-arrows-rotate me-1"></i> Gerar do Título
+                        </button>
+                    </div>
+                    <small class="text-muted d-block mt-1">
+                        <i class="fa-solid fa-circle-info text-info me-1"></i> Preenchida automaticamente ao digitar o título. Você pode personalizá-la incluindo outras cidades ou palavras-chave para SEO no Google, e ela não será apagada se você ajustar o título depois.
+                    </small>
                 </div>
 
                 <div class="row g-3 mb-3">
@@ -186,6 +200,41 @@ document.addEventListener('DOMContentLoaded', function () {
         // Se já houver categoria principal selecionada e as subcategorias não vierem do servidor
         if (catPaiSelect.value && subCatSelect.options.length <= 1) {
             carregarSubcategorias(catPaiSelect.value, initialSubId);
+        }
+    }
+
+    // Gerenciador de URL Amigável (Slug)
+    const tituloInput = document.getElementById('pro_titulo');
+    const slugInput = document.getElementById('pro_slug');
+    const btnGerarSlug = document.getElementById('btnGerarSlug');
+    let slugAlteradoManualmente = slugInput && slugInput.value.trim() !== '';
+
+    function slugify(text) {
+        return text.toString().toLowerCase().trim()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
+            .replace(/[^a-z0-9\s-]/g, '') // remove caracteres especiais
+            .replace(/[\s_-]+/g, '-') // espaços viram traços
+            .replace(/^-+|-+$/g, ''); // limpa pontas
+    }
+
+    if (tituloInput && slugInput) {
+        tituloInput.addEventListener('input', function() {
+            if (!slugAlteradoManualmente) {
+                slugInput.value = slugify(this.value);
+            }
+        });
+
+        slugInput.addEventListener('input', function() {
+            slugAlteradoManualmente = true;
+        });
+
+        if (btnGerarSlug) {
+            btnGerarSlug.addEventListener('click', function() {
+                if (tituloInput.value.trim() !== '') {
+                    slugInput.value = slugify(tituloInput.value);
+                    slugAlteradoManualmente = false;
+                }
+            });
         }
     }
 });

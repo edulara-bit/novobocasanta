@@ -32,6 +32,24 @@
                         </div>
                     </div>
 
+                    <div class="form-group">
+                        <label for="pro_slug">URL Amigável (Slug) <small class="text-muted">(Palavras-chave e cidades para indexação no Google)</small></label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-light text-muted small"><i class="fas fa-link mr-1"></i> .../categoria/</span>
+                            </div>
+                            <input type="text" name="pro_slug" id="pro_slug" class="form-control" value="<?= esc($oferta->pro_slug ?? old('pro_slug') ?? '') ?>" placeholder="ex: carreto-pick-up-campinas-sumare-valinhos">
+                            <div class="input-group-append">
+                                <button type="button" id="btnGerarSlug" class="btn btn-outline-secondary" title="Gerar URL Amigável a partir do Título">
+                                    <i class="fas fa-sync-alt mr-1"></i> Gerar do Título
+                                </button>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle text-info mr-1"></i> Gerada automaticamente ao digitar o título. Você pode personalizá-la incluindo outras cidades ou palavras-chave antes de salvar, e ela não será sobrescrita caso você altere o título depois.
+                        </small>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6 form-group">
                             <label for="pro_categoria_pai">Categoria Principal <span class="text-danger">*</span></label>
@@ -231,6 +249,41 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (catPaiSelect.value && subCatSelect.options.length <= 1) {
             carregarSubcategorias(catPaiSelect.value, initialSubId);
+        }
+    }
+
+    // Gerenciador de URL Amigável (Slug)
+    const tituloInput = document.getElementById('pro_titulo');
+    const slugInput = document.getElementById('pro_slug');
+    const btnGerarSlug = document.getElementById('btnGerarSlug');
+    let slugAlteradoManualmente = slugInput && slugInput.value.trim() !== '';
+
+    function slugify(text) {
+        return text.toString().toLowerCase().trim()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
+            .replace(/[^a-z0-9\s-]/g, '') // remove caracteres especiais
+            .replace(/[\s_-]+/g, '-') // espaços viram traços
+            .replace(/^-+|-+$/g, ''); // limpa pontas
+    }
+
+    if (tituloInput && slugInput) {
+        tituloInput.addEventListener('input', function() {
+            if (!slugAlteradoManualmente) {
+                slugInput.value = slugify(this.value);
+            }
+        });
+
+        slugInput.addEventListener('input', function() {
+            slugAlteradoManualmente = true;
+        });
+
+        if (btnGerarSlug) {
+            btnGerarSlug.addEventListener('click', function() {
+                if (tituloInput.value.trim() !== '') {
+                    slugInput.value = slugify(tituloInput.value);
+                    slugAlteradoManualmente = false;
+                }
+            });
         }
     }
 });

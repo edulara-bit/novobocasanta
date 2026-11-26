@@ -93,7 +93,15 @@ class Ofertas extends BaseController
         }
 
         $cidadeId = (int)$this->request->getPost('pro_cidade');
-        $slug = url_title(mb_strtolower($titulo), '-', true);
+
+        // Permite URL Amigável personalizada (Lowel SEO com múltiplas cidades) ou gera a partir do título
+        $slugPost = trim((string)$this->request->getPost('pro_slug'));
+        if (!empty($slugPost)) {
+            $slug = url_title(mb_strtolower($slugPost), '-', true);
+        } else {
+            $slug = url_title(mb_strtolower($titulo), '-', true);
+        }
+
         $catObj = $this->categoriaModel->find($proCategoria);
         $catUrl = $catObj ? $catObj->cat_url : 'ofertas';
         $cidObj = $this->cidadeModel->find($cidadeId);
@@ -208,12 +216,37 @@ class Ofertas extends BaseController
         }
 
         $cidadeId = (int)$this->request->getPost('pro_cidade');
-        $slug = url_title(mb_strtolower($titulo), '-', true);
+        $ofertaExistente = $this->produtoModel->find($id);
+
+        // Preserva slug existente ou atualiza caso o usuário tenha preenchido explicitamente
+        $slugPost = trim((string)$this->request->getPost('pro_slug'));
+        if (!empty($slugPost)) {
+            $slug = url_title(mb_strtolower($slugPost), '-', true);
+        } elseif (!empty($ofertaExistente->pro_slug)) {
+            $slug = $ofertaExistente->pro_slug;
+        } else {
+            $slug = url_title(mb_strtolower($titulo), '-', true);
+        }
+
         $catObj = $this->categoriaModel->find($proCategoria);
         $catUrl = $catObj ? $catObj->cat_url : 'ofertas';
         $cidObj = $this->cidadeModel->find($cidadeId);
         $cidUrl = $cidObj ? $cidObj['cid_url'] : 'piracicaba';
         $proSlug2 = "{$cidUrl}/{$catUrl}/{$slug}";
+
+        // Registra slug antigo no histórico tb_slug caso tenha mudado (Garante redirecionamento 301 do Google)
+        $db = Database::connect();
+        if ($db->tableExists('tb_slug') && !empty($ofertaExistente->pro_slug) && $ofertaExistente->pro_slug !== $slug) {
+            try {
+                $db->table('tb_slug')->insert([
+                    'slu_slug'      => $ofertaExistente->pro_slug,
+                    'slu_produto'   => $id,
+                    'slu_parceiro'  => $parceiroId,
+                    'slu_categoria' => $catUrl,
+                    'slu_cidade'    => $cidUrl,
+                ]);
+            } catch (\Throwable $e) {}
+        }
 
         $data = [
             'pro_titulo'          => $titulo,
